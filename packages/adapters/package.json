@@ -1,0 +1,8 @@
+{
+  "name": "@pipewarp/adapters",
+  "version": "0.0.0",
+  "private": "true",
+  "type": "module",
+  "scripts": {},
+  "packageManager": "pnpm@10.17.1"
+}
