@@ -1,0 +1,12 @@
+# releases and packages
+node_modules/
+dist/
+
+# run artifacts
+runs/
+
+# temp files
+*.temp.*
+
+# os files
+.DS_Store
