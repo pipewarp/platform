@@ -1,6 +1,7 @@
 # releases and packages
 node_modules/
 dist/
+.turbo/
 
 # run artifacts
 runs/
