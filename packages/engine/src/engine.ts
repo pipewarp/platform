@@ -10,8 +10,11 @@ import type {
   StartFlowInput,
   StartFlowResult,
 } from "../../core/src/ports/engine.port.js";
-import { FlowDb } from "../flows/flow.db.js";
-import { type McpId, McpManager } from "../managers/mcp.manager.js";
+import { FlowDb } from "../../adapters/src/flow-store/flow.store.js";
+import {
+  type McpId,
+  McpManager,
+} from "../../adapters/src/step-executor/mcp.manager.js";
 import type {
   StepEvent,
   EventEnvelope,
@@ -51,6 +54,7 @@ export class Engine implements EnginePort {
       flowName: flow.name,
       status: "running",
       globals: {},
+      exports: {},
       inputs: {},
       steps: {},
     };
@@ -72,6 +76,7 @@ export class Engine implements EnginePort {
       const event: EventEnvelope = {
         id: randomUUID().slice(0, 8),
         type: "start.step",
+        time: new Date().toISOString(),
         data: {
           stepName: flow.start,
           runId: context.runId,
@@ -85,8 +90,7 @@ export class Engine implements EnginePort {
   }
 
   async startStepRunners(): Promise<void> {
-    // NOTE: iterator doesnt need to be async
-    for await (const [mcpId, mcpDb] of this.mcps) {
+    for await (const [mcpId] of this.mcps) {
       const stepRunner = await this.stepRunner(mcpId);
       stepRunner.start();
       this.#runners.set(mcpId, await this.stepRunner(mcpId));
@@ -96,7 +100,7 @@ export class Engine implements EnginePort {
   enqueue(mcpId: string, event: EventEnvelope) {
     if (this.#queues.has(mcpId)) {
       const queue = this.#queues.get(mcpId);
-      queue.push(event);
+      queue!.push(event);
     } else {
       this.#queues.set(mcpId, [event]);
     }
@@ -108,7 +112,7 @@ export class Engine implements EnginePort {
 
   dequeue(mcpId: McpId): EventEnvelope | false {
     if (!this.#queues.has(mcpId)) return false;
-    const event = this.#queues.get(mcpId).shift() ?? false;
+    const event = this.#queues.get(mcpId)!.shift() ?? false;
     if (event) {
       console.log(`[dequeue] event from mcpId queue: ${mcpId}`);
     }
@@ -127,6 +131,11 @@ export class Engine implements EnginePort {
     }
 
     const context = this.#runs.get(cmd.runId);
+    if (context === undefined) {
+      console.error(`[engine] context is undefined for runId ${cmd.runId}`);
+      return;
+    }
+
     const flow = this.flowDb.get(context.flowName);
     if (!flow) {
       console.log(`[engine] executeStep(): no flow for ${context.flowName}`);
@@ -156,8 +165,12 @@ export class Engine implements EnginePort {
       console.log(`[engine] executeStep response:`, response);
 
       // record result
+      const content = response.content as Array<Record<string, unknown>>;
       context.steps[cmd.stepName] = {
-        result: response.content[0],
+        result: content[0],
+        status: response.isError ? "error" : "success",
+        attempt: cmd.attempt,
+        exports: {},
       };
 
       context.status = "running";
@@ -171,13 +184,10 @@ export class Engine implements EnginePort {
     }
 
     // get next steps
-    if (flow) {
-      const nextStepName = flow.steps[cmd.stepName].on.success;
 
-      if (nextStepName.length <= 0) {
-        console.log("[engine] executStep(): no next step, ending run");
-        return;
-      }
+    const currentStep = flow?.steps[cmd.stepName];
+    const nextStepName = currentStep?.on?.success;
+    if (flow && nextStepName && nextStepName.length > 0) {
       const nextStep = flow.steps[nextStepName] as ToolStep;
 
       // queue next step
@@ -201,7 +211,7 @@ export class Engine implements EnginePort {
     return;
   }
 
-  async stepRunner(mcpId): Promise<McpRunnerPort> {
+  async stepRunner(mcpId: McpId): Promise<McpRunnerPort> {
     let isRunning = false;
 
     const engine = this;
@@ -232,6 +242,7 @@ export class Engine implements EnginePort {
                 stepName: event.stepName,
                 runId: event.runId,
                 mcpId: event.mcpId,
+                taskId: "",
               };
 
               console.log(`[runner] executing command`);

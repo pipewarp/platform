@@ -51,6 +51,6 @@ export const ExecuteStepResultSchema = z.object({
 });
 
 export interface EnginePort {
-  startFlow(input: StartFlowInput): Promise<StartFlowResult>;
-  executeStep(cmd: ExecuteStepCommand): Promise<ExecuteStepCommand>;
+  startFlow(input: StartFlowInput): Promise<StartFlowResult | undefined>;
+  executeStep(cmd: ExecuteStepCommand): Promise<ExecuteStepCommand | undefined>;
 }
