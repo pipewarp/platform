@@ -1,4 +1,4 @@
-import { EventEnvelope } from "../types/event-bus.types";
+import { EventEnvelope } from "../types/event-bus.types.js";
 
 export interface McpRunnerPort {
   start(): Promise<void>;

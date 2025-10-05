@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
-import { EventBusPort } from "../../../core/src/ports/event-bus.port.js";
-import { EventEnvelope } from "../../../core/src/types/event-bus.types.js";
+import { EventBusPort } from "@pipewarp/core/ports";
+import { EventEnvelope } from "@pipewarp/core/types";
 
 export class InMemoryEventBus implements EventBusPort {
   #ee = new EventEmitter().setMaxListeners(0);

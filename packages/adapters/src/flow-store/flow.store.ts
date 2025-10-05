@@ -1,5 +1,5 @@
-import { type Flow, FlowSchema } from "../../../core/src/types/engine.types";
-export class FlowDb {
+import { type Flow, FlowSchema } from "@pipewarp/core/types";
+export class FlowStore {
   #flows = new Map<string, Flow>();
 
   constructor() {}

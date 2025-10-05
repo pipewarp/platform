@@ -3,23 +3,18 @@ import type {
   RunContext,
   ToolStep,
   StepArgs,
-} from "../../core/src/types/engine.types.js";
+  StepEvent,
+  EventEnvelope,
+} from "@pipewarp/core/types";
 import type {
   EnginePort,
   ExecuteStepCommand,
   StartFlowInput,
   StartFlowResult,
-} from "../../core/src/ports/engine.port.js";
-import { FlowDb } from "../../adapters/src/flow-store/flow.store.js";
-import {
-  type McpId,
-  McpManager,
-} from "../../adapters/src/step-executor/mcp.manager.js";
-import type {
-  StepEvent,
-  EventEnvelope,
-} from "../../core/src/types/event-bus.types.js";
-import type { McpRunnerPort } from "../../core/src/ports/mcp-runner.port.js";
+} from "@pipewarp/core/ports";
+import { FlowStore } from "@pipewarp/adapters/flow-store";
+import { type McpId, McpManager } from "@pipewarp/adapters/step-executor";
+import type { McpRunnerPort } from "@pipewarp/core/ports";
 import { resolveStepArgs } from "./resolve.js";
 
 export type StepRunner = {
@@ -31,7 +26,7 @@ export class Engine implements EnginePort {
   #queues = new Map<McpId, EventEnvelope[]>();
   #runners = new Map<string, McpRunnerPort>();
 
-  constructor(private flowDb: FlowDb, private mcps: McpManager) {
+  constructor(private flowDb: FlowStore, private mcps: McpManager) {
     console.log("[engine] constructor");
   }
 

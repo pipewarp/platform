@@ -3,13 +3,29 @@
   "version": "0.0.0",
   "private": "true",
   "type": "module",
+  "exports": {
+    "./event-bus": {
+      "types": "./dist/event-bus/index.d.ts",
+      "imports": "./dist/event-bus/index.ts"
+    },
+    "./flow-store": {
+      "types": "./dist/flow-store/index.d.ts",
+      "imports": "./dist/flow-store/index.ts"
+    },
+    "./step-executor": {
+      "types": "./dist/step-executor/index.d.ts",
+      "imports": "./dist/step-executor/index.ts"
+    }
+  },
   "scripts": {
-    "build": "echo build",
+    "build": "tsc --incremental false",
+    "typecheck": "tsc --noEmit",
     "test": "echo test",
     "lint": "echo lint"
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.19.1"
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "@pipewarp/core": "workspace:*"
   }
 }

@@ -3,10 +3,21 @@
   "version": "0.0.0",
   "private": "true",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.js",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "build": "echo build",
+    "build": "tsc --incremental false",
+    "typecheck": "tsc --noEmit",
     "test": "echo test",
     "lint": "echo lint"
   },
-  "packageManager": "pnpm@10.17.1"
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "@pipewarp/core": "workspace:*",
+    "@pipewarp/adapters": "workspace:*"
+  }
 }

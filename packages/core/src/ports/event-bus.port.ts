@@ -1,4 +1,4 @@
-import type { EventEnvelope } from "../types/event-bus.types";
+import type { EventEnvelope } from "../types/event-bus.types.js";
 
 export interface EventBusPort {
   publish(topic: string, event: EventEnvelope): Promise<void>;
