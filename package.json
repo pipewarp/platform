@@ -5,6 +5,7 @@
   "private": "true",
   "scripts": {
     "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
     "test": "turbo run test --filter=...[.]",
     "lint": "turbo run lint"
   },

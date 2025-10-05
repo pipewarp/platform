@@ -4,13 +4,15 @@
   "private": "true",
   "type": "module",
   "scripts": {
-    "build": "echo build",
+    "build": "tsc --incremental false",
+    "typecheck": "tsc --noEmit",
     "test": "echo test",
     "lint": "echo lint",
     "start": "npx tsx ./src/main.ts"
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "commander": "^14.0.1"
+    "commander": "^14.0.1",
+    "@pipewarp/adapters": "workspace:*"
   }
 }
