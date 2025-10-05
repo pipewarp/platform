@@ -6,7 +6,11 @@
   "scripts": {
     "build": "echo build",
     "test": "echo test",
-    "lint": "echo lint"
+    "lint": "echo lint",
+    "start": "npx tsx ./src/main.ts"
   },
-  "packageManager": "pnpm@10.17.1"
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "commander": "^14.0.1"
+  }
 }
