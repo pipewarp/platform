@@ -25,7 +25,11 @@ importers:
 
   packages/adapters: {}
 
-  packages/core: {}
+  packages/core:
+    dependencies:
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
 
   packages/engine: {}
 
@@ -253,6 +257,9 @@ packages:
   undici-types@7.12.0:
     resolution: {integrity: sha512-goOacqME2GYyOZZfb5Lgtu+1IDmAlAEu5xnD3+xTzS10hT0vzpf0SPjkXwAw9Jm+4n/mQGDP3LO8CPbYROeBfQ==}
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
 snapshots:
 
   '@esbuild/aix-ppc64@0.25.10':
@@ -412,3 +419,5 @@ snapshots:
   typescript@5.9.2: {}
 
   undici-types@7.12.0: {}
+
+  zod@3.25.76: {}
