@@ -15,6 +15,8 @@ export const StartFlowInputSchema = z.object({
   flowName: FlowNameSchema,
   inputs: z.unknown(),
   correlationId: z.string(),
+  test: z.boolean().default(false).optional(),
+  outfile: z.string().default("runs/").optional(),
 });
 
 export type StartFlowInput = z.infer<typeof StartFlowInputSchema>;
