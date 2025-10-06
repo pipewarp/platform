@@ -12,7 +12,11 @@
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "@pipewarp/adapters": "workspace:*",
+    "@pipewarp/core": "workspace:*",
+    "@pipewarp/engine": "workspace:*",
     "commander": "^14.0.1",
-    "@pipewarp/adapters": "workspace:*"
+    "zod": "3.25.76"
   }
 }
