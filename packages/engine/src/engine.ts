@@ -16,6 +16,7 @@ import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { type McpId, McpManager } from "@pipewarp/adapters/step-executor";
 import type { McpRunnerPort } from "@pipewarp/core/ports";
 import { resolveStepArgs } from "./resolve.js";
+import fs from "fs";
 
 export type StepRunner = {
   run: () => Promise<void>;
@@ -45,7 +46,8 @@ export class Engine implements EnginePort {
 
     // results, response, output, out,
     const context: RunContext = {
-      runId: randomUUID(),
+      runId: input.test ? "test-run-id" : randomUUID(),
+      test: input.test ? true : false,
       flowName: flow.name,
       status: "running",
       globals: {},
@@ -202,6 +204,10 @@ export class Engine implements EnginePort {
         };
         this.enqueue(nextStep.mcp, event);
       }
+    } else {
+      console.log("no next step");
+      console.log("final context:", JSON.stringify(context, null, 2));
+      this.writeRunContext(cmd.runId, "path");
     }
     return;
   }
@@ -210,7 +216,7 @@ export class Engine implements EnginePort {
     let isRunning = false;
 
     const engine = this;
-    const ms = 5000;
+    const ms = 1000;
 
     const sleep = async (): Promise<void> =>
       new Promise((resolve) => setTimeout(resolve, ms));
@@ -251,5 +257,11 @@ export class Engine implements EnginePort {
       },
     };
     return runner;
+  }
+
+  writeRunContext(runId: string, outPath: string): void {
+    const context = this.#runs.get(runId);
+    fs.writeFileSync("./output.json", JSON.stringify(context));
+    return;
   }
 }

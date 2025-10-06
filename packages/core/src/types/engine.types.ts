@@ -62,6 +62,7 @@ export const RunStepContextSchema = z.object({
 export const RunContextSchema = z.object({
   runId: z.string().min(1),
   flowName: z.string().min(1),
+  test: z.boolean().default(false).optional(),
   inputs: z.record(z.string(), z.unknown()),
   exports: z.record(z.string(), z.unknown()),
   globals: z.record(z.string(), z.unknown()),

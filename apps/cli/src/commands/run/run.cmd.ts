@@ -7,11 +7,16 @@ import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { McpManager } from "@pipewarp/adapters/step-executor";
 import { Engine } from "@pipewarp/engine";
 import { StartFlowInput } from "@pipewarp/core/ports";
+
 export async function cliRunAction(
   flowPath: string,
-  outPath: string
+  options: { out?: string; test?: boolean }
 ): Promise<void> {
   console.log("running run");
+  console.log("options", options);
+
+  const { out, test = false } = options;
+
   const resolvedFlowPath = resolve(cwd(), flowPath);
   const resolvedOutPath = resolve(cwd(), flowPath);
   // open json file
@@ -47,6 +52,7 @@ export async function cliRunAction(
   const input: StartFlowInput = {
     flowName: "stt-flow",
     correlationId: "temp-id",
+    test,
   };
 
   const response = await engine.startFlow(input);
@@ -57,6 +63,7 @@ export function registerRunCmd(program: Command): Command {
   program
     .command("run <flowPath>")
     .option("-o, --out <outPath>", "path to write output")
+    .option("-t, --test", "run in test mode")
     .description("run a workflow definition from a flow.json file")
     .action(cliRunAction);
 
