@@ -7,7 +7,10 @@ import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { McpManager } from "@pipewarp/adapters/step-executor";
 import { Engine } from "@pipewarp/engine";
 import { StartFlowInput } from "@pipewarp/core/ports";
-async function cliRunAction(flowPath: string, outPath: string): Promise<void> {
+export async function cliRunAction(
+  flowPath: string,
+  outPath: string
+): Promise<void> {
   console.log("running run");
   const resolvedFlowPath = resolve(cwd(), flowPath);
   const resolvedOutPath = resolve(cwd(), flowPath);
