@@ -48,6 +48,8 @@ export class Engine implements EnginePort {
     const context: RunContext = {
       runId: input.test ? "test-run-id" : randomUUID(),
       test: input.test ? true : false,
+      outFile: input.outfile ?? "./output.json",
+
       flowName: flow.name,
       status: "running",
       globals: {},
@@ -261,7 +263,10 @@ export class Engine implements EnginePort {
 
   writeRunContext(runId: string, outPath: string): void {
     const context = this.#runs.get(runId);
-    fs.writeFileSync("./output.json", JSON.stringify(context));
+    const file =
+      context?.outFile !== undefined ? context.outFile : "./output.json";
+
+    fs.writeFileSync(file, JSON.stringify(context));
     return;
   }
 }

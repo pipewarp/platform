@@ -1,9 +1,9 @@
-import { before } from "node:test";
 import { cliRunAction } from "../../src/commands/run/run.cmd.js";
 import { RunMockServer } from "../mock-mcp/mock-server.js";
 import { describe, it, expect, beforeAll } from "vitest";
 import fs from "fs";
-import { set } from "zod";
+import { cwd } from "process";
+import { resolve } from "path";
 
 describe("cli run command e2e test", () => {
   beforeAll(async () => {
@@ -28,16 +28,20 @@ describe("cli run command e2e test", () => {
   };
 
   it("should output a proper json file", async () => {
-    const filePath = "./output.json";
+    const outPath = "./test-run.json";
+    const resolvedOutPath = resolve(cwd(), outPath);
     const result = await cliRunAction("./tests/fixtures/test-flow.json", {
       test: true,
+      out: outPath,
     });
 
-    const fileExists = await waitForFile(filePath, 10);
+    const fileExists = await waitForFile(resolvedOutPath, 10);
     if (fileExists) {
-      const raw = fs.readFileSync(filePath, { encoding: "utf-8" });
+      const raw = fs.readFileSync(resolvedOutPath, { encoding: "utf-8" });
       const json = JSON.parse(raw);
       expect(json.runId).toBe("test-run-id");
+
+      fs.unlinkSync(outPath);
     }
   });
 });

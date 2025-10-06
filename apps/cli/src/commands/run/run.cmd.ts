@@ -15,10 +15,12 @@ export async function cliRunAction(
   console.log("running run");
   console.log("options", options);
 
-  const { out, test = false } = options;
+  const { out = "./output.json", test = false } = options;
 
   const resolvedFlowPath = resolve(cwd(), flowPath);
-  const resolvedOutPath = resolve(cwd(), flowPath);
+  const resolvedOutPath = resolve(cwd(), out);
+
+  console.log(resolvedOutPath);
   // open json file
   const raw = fs.readFileSync(resolvedFlowPath, { encoding: "utf-8" });
 
@@ -53,6 +55,7 @@ export async function cliRunAction(
     flowName: "stt-flow",
     correlationId: "temp-id",
     test,
+    outfile: resolvedOutPath,
   };
 
   const response = await engine.startFlow(input);
