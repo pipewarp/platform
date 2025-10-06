@@ -23,12 +23,24 @@ importers:
 
   apps/cli:
     dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.19.1
+        version: 1.19.1
       '@pipewarp/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
+      '@pipewarp/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@pipewarp/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       commander:
         specifier: ^14.0.1
         version: 14.0.1
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
 
   packages/adapters:
     dependencies:

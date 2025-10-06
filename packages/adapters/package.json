@@ -6,15 +6,15 @@
   "exports": {
     "./event-bus": {
       "types": "./dist/event-bus/index.d.ts",
-      "imports": "./dist/event-bus/index.ts"
+      "import": "./dist/event-bus/index.js"
     },
     "./flow-store": {
       "types": "./dist/flow-store/index.d.ts",
-      "imports": "./dist/flow-store/index.ts"
+      "import": "./dist/flow-store/index.js"
     },
     "./step-executor": {
       "types": "./dist/step-executor/index.d.ts",
-      "imports": "./dist/step-executor/index.ts"
+      "import": "./dist/step-executor/index.js"
     }
   },
   "scripts": {
