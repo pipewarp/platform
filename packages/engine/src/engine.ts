@@ -4,6 +4,7 @@ import type {
   ToolStep,
   StepArgs,
   StepEvent,
+  Status,
   EventEnvelope,
 } from "@pipewarp/core/types";
 import type {
@@ -16,6 +17,7 @@ import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { type McpId, McpManager } from "@pipewarp/adapters/step-executor";
 import type { McpRunnerPort } from "@pipewarp/core/ports";
 import { resolveStepArgs } from "./resolve.js";
+
 import fs from "fs";
 
 export type StepRunner = {
@@ -130,6 +132,7 @@ export class Engine implements EnginePort {
     }
 
     const context = this.#runs.get(cmd.runId);
+
     if (context === undefined) {
       console.error(`[engine] context is undefined for runId ${cmd.runId}`);
       return;
@@ -140,13 +143,22 @@ export class Engine implements EnginePort {
       console.log(`[engine] executeStep(): no flow for ${context.flowName}`);
       return;
     }
-    const step = flow.steps[cmd.stepName]; // get client handler // resolve args
 
-    // invoke tool
+    const step = flow.steps[cmd.stepName];
+
     if (step.type === "tool") {
       const mcpDb = this.mcps.get(step.mcp);
       if (!mcpDb) {
-        console.log(`[engine] executeStep(): no mcp for ${step.mcp}`);
+        const log = `[engine] executeStep(): no mcp for ${step.mcp}`;
+        console.log(log);
+
+        this.saveStepStatus(
+          context,
+          cmd.stepName,
+          "failure",
+          `No mcp found for ${step.mcp}`
+        );
+        this.writeRunContext(cmd.runId);
         return;
       }
       const mcpClient = mcpDb.client;
@@ -157,35 +169,55 @@ export class Engine implements EnginePort {
         args = step.args;
       }
 
-      const response = await mcpClient.callTool({
-        name: step.tool,
-        arguments: args,
-      });
-      console.log(`[engine] executeStep response:`, response);
+      try {
+        const response = await mcpClient.callTool({
+          name: step.tool,
+          arguments: args,
+        });
+        console.log(`[engine] executeStep response:`, response);
 
-      // record result
-      const content = response.content as Array<Record<string, unknown>>;
-      context.steps[cmd.stepName] = {
-        result: content[0],
-        status: response.isError ? "error" : "success",
-        attempt: cmd.attempt,
-        exports: {},
-      };
+        // record result
+        const content = response.content as Array<Record<string, unknown>>;
+        context.steps[cmd.stepName] = {
+          result: content[0],
+          status: response.isError ? "failure" : "success",
+          attempt: cmd.attempt,
+          exports: {},
+        };
 
-      context.status = "running";
+        if (response.isError) {
+          const reason = `callTool '${step.tool}' returned an error`;
+          context.steps[cmd.stepName].reason = reason;
+          context.status = "failure";
+        }
 
-      this.#runs.set(cmd.runId, context);
+        this.#runs.set(cmd.runId, context);
 
-      console.log(
-        `[engine] executeStep context`,
-        JSON.stringify(context, null, 2)
-      );
+        console.log(
+          `[engine] executeStep context`,
+          JSON.stringify(context, null, 2)
+        );
+      } catch (e) {
+        const error = e as Error;
+
+        console.error(error.message);
+
+        this.saveStepStatus(context, cmd.stepName, "failure", error.message);
+        this.writeRunContext(cmd.runId);
+      }
     }
+
+    const stepOutcome = context.steps[cmd.stepName].status;
 
     // get next steps
 
     const currentStep = flow?.steps[cmd.stepName];
-    const nextStepName = currentStep?.on?.success;
+
+    const nextStepName =
+      stepOutcome === "success"
+        ? currentStep?.on?.success
+        : currentStep?.on?.failure;
+
     if (flow && nextStepName && nextStepName.length > 0) {
       const nextStep = flow.steps[nextStepName] as ToolStep;
 
@@ -209,7 +241,7 @@ export class Engine implements EnginePort {
     } else {
       console.log("no next step");
       console.log("final context:", JSON.stringify(context, null, 2));
-      this.writeRunContext(cmd.runId, "path");
+      this.writeRunContext(cmd.runId);
     }
     return;
   }
@@ -261,12 +293,35 @@ export class Engine implements EnginePort {
     return runner;
   }
 
-  writeRunContext(runId: string, outPath: string): void {
+  saveStepStatus(
+    context: RunContext,
+    stepName: string,
+    status: Status,
+    message?: string
+  ) {
+    if (context.steps[stepName] === undefined) {
+      context.steps[stepName] = {
+        attempt: 1,
+        exports: {},
+        result: {},
+        status,
+      };
+    } else {
+      context.steps[stepName].status = status;
+    }
+
+    if (message !== undefined) {
+      context.steps[stepName]["reason"] = message;
+    }
+    context.status = status;
+  }
+
+  writeRunContext(runId: string): void {
     const context = this.#runs.get(runId);
     const file =
       context?.outFile !== undefined ? context.outFile : "./output.json";
 
-    fs.writeFileSync(file, JSON.stringify(context));
+    fs.writeFileSync(file, JSON.stringify(context, null, 2));
     return;
   }
 }

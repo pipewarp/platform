@@ -7,11 +7,11 @@
       "mcp": "stt-client",
       "tool": "transcribe",
       "args": {
-        "text": "alligator"
+        "text": "first text"
       },
       "on": {
         "success": "second",
-        "failure": "second"
+        "failure": "third"
       }
     },
     "second": {
@@ -19,7 +19,19 @@
       "mcp": "stt-client",
       "tool": "transcribe",
       "args": {
-        "text": "${steps.transcribe.text}"
+        "text": "${steps.transcribe.texts}"
+      },
+      "on": {
+        "success": "third",
+        "failure": "third"
+      }
+    },
+    "third": {
+      "type": "tool",
+      "mcp": "stt-client",
+      "tool": "transcribe",
+      "args": {
+        "text": "it failed"
       }
     }
   }

@@ -55,6 +55,9 @@ export const StatusSchema = z.enum([
   "failure",
   "error",
 ]);
+
+export type Status = z.infer<typeof StatusSchema>;
+
 export const RunStepContextSchema = z.object({
   status: StatusSchema,
 });
@@ -72,6 +75,7 @@ export const RunContextSchema = z.object({
     z.string(),
     z.object({
       status: StatusSchema,
+      reason: z.string().optional(),
       attempt: z.number(),
       exports: z.record(z.string(), z.unknown()),
       result: z.record(z.string(), z.unknown()),
