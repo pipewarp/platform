@@ -308,7 +308,7 @@ export class Engine implements EnginePort {
     stepName: string,
     status: Status,
     message?: string
-  ) {
+  ): void {
     if (context.steps[stepName] === undefined) {
       context.steps[stepName] = {
         attempt: 1,
