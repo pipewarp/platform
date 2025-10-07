@@ -1,0 +1,34 @@
+{
+  "name": "stt-flow",
+  "start": "first",
+  "steps": {
+    "first": {
+      "type": "tool",
+      "mcp": "stt-client",
+      "tool": "transcribe",
+      "args": {
+        "text": "first text"
+      },
+      "on": {
+        "success": "second",
+        "failure": "third"
+      }
+    },
+    "second": {
+      "type": "tool",
+      "mcp": "stt-client",
+      "tool": "transcribe",
+      "args": {
+        "text": "${steps.first.text}"
+      }
+    },
+    "third": {
+      "type": "tool",
+      "mcp": "stt-client",
+      "tool": "transcribe",
+      "args": {
+        "text": "it failed"
+      }
+    }
+  }
+}

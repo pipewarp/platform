@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const OnSchema = z.object({
-  success: z.string(),
-  failure: z.string(),
+  success: z.string().optional(),
+  failure: z.string().optional(),
 });
 
 export const StepArgsSchema = z.record(z.string(), z.unknown());

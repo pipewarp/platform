@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": "true",
   "type": "module",
+  "bin": {
+    "pwp": "./dist/main.js"
+  },
   "scripts": {
     "build": "tsc --incremental false",
     "typecheck": "tsc --noEmit",

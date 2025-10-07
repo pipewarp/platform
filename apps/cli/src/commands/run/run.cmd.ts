@@ -10,12 +10,16 @@ import { StartFlowInput } from "@pipewarp/core/ports";
 
 export async function cliRunAction(
   flowPath: string,
-  options: { out?: string; test?: boolean }
+  options: { out?: string; test?: boolean; server?: string }
 ): Promise<void> {
   console.log("running run");
   console.log("options", options);
 
-  const { out = "./output.json", test = false } = options;
+  const {
+    out = "./output.json",
+    test = false,
+    server = "./src/mcp-server.ts",
+  } = options;
 
   const resolvedFlowPath = resolve(cwd(), flowPath);
   const resolvedOutPath = resolve(cwd(), out);
@@ -45,7 +49,7 @@ export async function cliRunAction(
   const mcpStore = new McpManager();
 
   // create mcp client
-  await mcpStore.addStdioClient("./src/mcp-server.ts", "stt-client");
+  await mcpStore.addStdioClient(server, "stt-client");
 
   // create engine
   const engine = new Engine(flowStore, mcpStore);
@@ -67,6 +71,7 @@ export function registerRunCmd(program: Command): Command {
     .command("run <flowPath>")
     .option("-o, --out <outPath>", "path to write output")
     .option("-t, --test", "run in test mode")
+    .option("-s, --server <serverPath>", "stdio server path to connect to")
     .description("run a workflow definition from a flow.json file")
     .action(cliRunAction);
 
