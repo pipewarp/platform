@@ -189,6 +189,16 @@ export class Engine implements EnginePort {
           const reason = `callTool '${step.tool}' returned an error`;
           context.steps[cmd.stepName].reason = reason;
           context.status = "failure";
+        } else if (
+          !Array.isArray(response.content) ||
+          response.content.length <= 0
+        ) {
+          this.saveStepStatus(
+            context,
+            cmd.stepName,
+            "failure",
+            "Mcp tool returned invalid data shape"
+          );
         }
 
         this.#runs.set(cmd.runId, context);
