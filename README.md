@@ -1,10 +1,10 @@
 # pipewarp
 
-```
-ⓘ Alpha Software
+## ⓘ Alpha Software
 
 Functionality is minimal. Interfaces and behavior will evolve over time, expect breaking changes between versions.
-```
+
+## Overview
 
 Pipewarp is a local first workflow engine designed to orchestrate MCP servers and other supporting AI pipeline actions.
 
@@ -34,15 +34,17 @@ Future adapters will include step calls over HTTP and offer local actions.
 
 ## Packages
 
-| Package                | Purpose                                       |
-| ---------------------- | --------------------------------------------- |
-| **@pipewarp/core**     | Core Ports and Types                          |
-| **@pipewarp/adapters** | Implementations of core ports                 |
-| **@pipewarp/engine**   | Engine, flow loader, routing, and validation. |
-| **@pipewarp/cli**      | CLI for running and validating flows.         |
-| **examples/**          | Sample flows used in docs.                    |
+| Package                | Purpose                               |
+| ---------------------- | ------------------------------------- |
+| **@pipewarp/core**     | Core Ports and Types.                 |
+| **@pipewarp/adapters** | Implementations of core ports.        |
+| **@pipewarp/engine**   | Engine, flow loader, routing.         |
+| **@pipewarp/cli**      | CLI for running and validating flows. |
+| **examples/**          | Sample flows used in docs.            |
 
 ## Roadmap
+
+General outline of planned features
 
 - Per step explicit exports
 - Real adapters (mcp, http, local)
@@ -55,3 +57,5 @@ Future adapters will include step calls over HTTP and offer local actions.
   - step runners / resource managers
 - MCP / HTTP server wrapped engine
 - Visual flow editor
+- Observability through events
+- MCP Auth flows
