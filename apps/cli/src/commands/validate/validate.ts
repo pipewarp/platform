@@ -1,12 +1,11 @@
 import { Command } from "commander";
 import fs from "fs";
-import { cwd } from "process";
-import { resolve } from "path";
+import { resolveCliPath } from "../../resolve-path.js";
 
 import { FlowSchema } from "@pipewarp/core/types";
 
 export function cliValidateAction(flowPath: string) {
-  const resolvedFlowPath = resolve(cwd(), flowPath);
+  const resolvedFlowPath = resolveCliPath(flowPath);
   const raw = fs.readFileSync(resolvedFlowPath, { encoding: "utf-8" });
 
   try {

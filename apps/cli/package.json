@@ -12,7 +12,8 @@
     "test": "echo test",
     "e2e": "vitest test",
     "lint": "echo lint",
-    "start": "npx tsx ./src/main.ts"
+    "start": "node ./dist/main.js",
+    "dev": "npx tsx ./src/main.ts"
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {

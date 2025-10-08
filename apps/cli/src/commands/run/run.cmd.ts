@@ -1,7 +1,6 @@
 import { Command } from "commander";
 import fs from "fs";
-import { cwd } from "process";
-import { resolve } from "path";
+import { resolveCliPath } from "../../resolve-path.js";
 
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { McpManager } from "@pipewarp/adapters/step-executor";
@@ -21,10 +20,12 @@ export async function cliRunAction(
     server = "./src/mcp-server.ts",
   } = options;
 
-  const resolvedFlowPath = resolve(cwd(), flowPath);
-  const resolvedOutPath = resolve(cwd(), out);
+  // INIT_CWD is set by pnpm if invoked with pnpm
+  // Resolve path this way to handle invocation from pnpm or directly
 
-  console.log(resolvedOutPath);
+  const resolvedFlowPath = resolveCliPath(flowPath);
+  const resolvedOutPath = resolveCliPath(out);
+
   // open json file
   const raw = fs.readFileSync(resolvedFlowPath, { encoding: "utf-8" });
 
