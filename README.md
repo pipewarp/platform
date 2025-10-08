@@ -1,7 +1,5 @@
 # pipewarp
 
-![pipewarp](pipewarp-g.png)
-
 ## ⓘ Alpha Software
 
 Functionality is minimal. Interfaces and behavior will evolve over time, expect breaking changes between versions.
