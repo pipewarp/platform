@@ -1,0 +1,30 @@
+{
+  "name": "@pipewarp/cli",
+  "version": "0.1.0-alpha.0",
+  "private": "true",
+  "type": "module",
+  "bin": {
+    "pwp": "./dist/main.js"
+  },
+  "scripts": {
+    "build": "tsc --incremental false",
+    "typecheck": "tsc --noEmit",
+    "test": "echo test",
+    "e2e": "vitest test",
+    "lint": "echo lint",
+    "start": "node ./dist/main.js",
+    "dev": "npx tsx ./src/main.ts"
+  },
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "@pipewarp/adapters": "workspace:*",
+    "@pipewarp/core": "workspace:*",
+    "@pipewarp/engine": "workspace:*",
+    "commander": "^14.0.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

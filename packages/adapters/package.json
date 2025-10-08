@@ -1,0 +1,31 @@
+{
+  "name": "@pipewarp/adapters",
+  "version": "0.1.0-alpha.0",
+  "private": "true",
+  "type": "module",
+  "exports": {
+    "./event-bus": {
+      "types": "./dist/event-bus/index.d.ts",
+      "import": "./dist/event-bus/index.js"
+    },
+    "./flow-store": {
+      "types": "./dist/flow-store/index.d.ts",
+      "import": "./dist/flow-store/index.js"
+    },
+    "./step-executor": {
+      "types": "./dist/step-executor/index.d.ts",
+      "import": "./dist/step-executor/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --incremental false",
+    "typecheck": "tsc --noEmit",
+    "test": "echo test",
+    "lint": "echo lint"
+  },
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "@pipewarp/core": "workspace:*"
+  }
+}

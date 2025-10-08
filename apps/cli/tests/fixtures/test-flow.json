@@ -1,0 +1,26 @@
+{
+  "name": "stt-flow",
+  "start": "transcribe",
+  "steps": {
+    "transcribe": {
+      "type": "tool",
+      "mcp": "stt-client",
+      "tool": "transcribe",
+      "args": {
+        "text": "alligator"
+      },
+      "on": {
+        "success": "second",
+        "failure": "second"
+      }
+    },
+    "second": {
+      "type": "tool",
+      "mcp": "stt-client",
+      "tool": "transcribe",
+      "args": {
+        "text": "${steps.transcribe.text}"
+      }
+    }
+  }
+}

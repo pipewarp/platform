@@ -1,0 +1,26 @@
+{
+  "name": "@pipewarp/core",
+  "version": "0.1.0-alpha.0",
+  "private": "true",
+  "type": "module",
+  "exports": {
+    "./ports": {
+      "types": "./dist/ports/index.d.ts",
+      "import": "./dist/ports/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --incremental false",
+    "typecheck": "tsc --noEmit",
+    "test": "echo test",
+    "lint": "echo lint"
+  },
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "zod": "3.25.76"
+  }
+}
