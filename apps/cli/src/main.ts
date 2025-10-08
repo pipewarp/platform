@@ -7,8 +7,6 @@ async function main(): Promise<void> {
   program.description("cli tool for pipewarp workflows");
   registerCommands(program);
   program.parseAsync();
-
-  console.log("pipewarp wip cli");
 }
 
 (async () => await main())();
