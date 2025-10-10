@@ -57,26 +57,3 @@ export const FlowSchema = z.object({
 });
 
 export type Flow = z.infer<typeof FlowSchema>;
-
-/**
- * maybe make step executor generic? or does the engine read the type and
- * execute it? or just hold a registry lookup of it?  it must
- * read type to know what to do in some sense.
- *
- * so it must do a lookup key, but the think it invokes could be generic
- * in that its a StepExecutor or StepCall object, StepInvoker
- * WarpInvoker implements StepInvoker
- *
- * type: warp -> warpInvoker()
- * if its generic it will need generic arguments like (RunContext, Args, Step)
- * because Warp will need:
- *
- * - level
- * - world
- * - play: {}
- * in this sense, the step executor parses the step if the entire step is passed to it
- *
- *
- * engine is a conduit to emit events, invoke stuff it sees.  but doesnt do much
- * egnining, it hands it off to generic things?
- */
