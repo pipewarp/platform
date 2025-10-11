@@ -54,6 +54,12 @@ importers:
       '@pipewarp/core':
         specifier: workspace:*
         version: link:../core
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@pipewarp/specs':
+        specifier: workspace:*
+        version: link:../specs
 
   packages/core:
     dependencies:
