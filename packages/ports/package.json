@@ -1,0 +1,22 @@
+{
+  "name": "@pipewarp/ports",
+  "version": "0.1.0-alpha.0",
+  "private": "true",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --incremental false",
+    "typecheck": "tsc --noEmit",
+    "test": "echo test",
+    "lint": "echo lint"
+  },
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "zod": "3.25.76"
+  }
+}
