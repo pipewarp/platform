@@ -1,12 +1,13 @@
 {
   "name": "@pipewarp/platform",
-  "version": "0.1.0-alpha.0",
+  "version": "0.0.0",
   "type": "module",
   "private": "true",
   "scripts": {
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test --filter=...[.]",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint"
   },
   "packageManager": "pnpm@10.17.1",

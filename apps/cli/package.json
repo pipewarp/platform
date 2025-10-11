@@ -10,7 +10,7 @@
     "build": "tsc --incremental false",
     "typecheck": "tsc --noEmit",
     "test": "echo test",
-    "e2e": "vitest test",
+    "test:e2e": "vitest test",
     "lint": "echo lint",
     "start": "node ./dist/main.js",
     "dev": "npx tsx ./src/main.ts"

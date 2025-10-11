@@ -20,11 +20,14 @@
   "scripts": {
     "build": "tsc --incremental false",
     "typecheck": "tsc --noEmit",
-    "test": "echo test",
+    "test": "vitest",
     "lint": "echo lint"
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
     "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }
