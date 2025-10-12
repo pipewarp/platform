@@ -9,7 +9,7 @@ export class InMemoryEventBus implements EventBusPort {
   /**
    * publish an event to a specific channel
    * @param topic bus channel "string" to publish to
-   * @param event EventEvenlope to send on that channel
+   * @param event EventEnvelope to send on that channel
    * @returns Promise<void>
    * @description Uses the queueMicrotask to postpone emission slightly to
    * prefent recursive loops or having other emitions prempt the execution and
