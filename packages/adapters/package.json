@@ -26,8 +26,8 @@
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.1",
-    "@pipewarp/core": "workspace:*",
     "@pipewarp/ports": "workspace:*",
-    "@pipewarp/specs": "workspace:*"
+    "@pipewarp/specs": "workspace:*",
+    "zod": "3.25.76"
   }
 }

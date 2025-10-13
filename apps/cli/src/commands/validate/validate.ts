@@ -2,7 +2,7 @@ import { Command } from "commander";
 import fs from "fs";
 import { resolveCliPath } from "../../resolve-path.js";
 
-import { FlowSchema } from "@pipewarp/core/types";
+import { FlowSchema } from "@pipewarp/specs";
 
 export function cliValidateAction(flowPath: string) {
   const resolvedFlowPath = resolveCliPath(flowPath);
