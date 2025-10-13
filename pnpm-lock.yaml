@@ -54,15 +54,15 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.19.1
         version: 1.19.1
-      '@pipewarp/core':
-        specifier: workspace:*
-        version: link:../core
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../ports
       '@pipewarp/specs':
         specifier: workspace:*
         version: link:../specs
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
 
   packages/core:
     dependencies:
@@ -79,9 +79,6 @@ importers:
       '@pipewarp/adapters':
         specifier: workspace:*
         version: link:../adapters
-      '@pipewarp/core':
-        specifier: workspace:*
-        version: link:../core
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../ports
