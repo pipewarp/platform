@@ -13,25 +13,40 @@ export const BaseStepSchema = z.object({
   on: OnSchema.optional(),
 });
 
+// TODO: Old step format; to be removed
 export const ToolStepSchema = BaseStepSchema.extend({
-  type: z.enum(["tool"]),
+  type: z.literal("tool"),
   mcp: z.string().min(1),
   tool: z.string().min(1),
 });
 
+export const ActionStepSchema = BaseStepSchema.extend({
+  type: z.literal("action"),
+  tool: z.string().min(1),
+  op: z.string().min(1),
+  target: z
+    .object({
+      profile: z.string().min(1).optional(),
+      service: z.string().min(1).optional(),
+    })
+    .optional(),
+});
+
 export const HttpStepSchema = BaseStepSchema.extend({
-  type: z.enum(["http"]),
+  type: z.literal("http"),
   url: z.string().url(),
 });
 
 export const StepSchema = z.discriminatedUnion("type", [
   ToolStepSchema,
   HttpStepSchema,
+  ActionStepSchema,
 ]);
 
 export type Step = z.infer<typeof StepSchema>;
 export type ToolStep = z.infer<typeof ToolStepSchema>;
 export type HttpStep = z.infer<typeof HttpStepSchema>;
+export type ActionStep = z.infer<typeof ActionStepSchema>;
 
 export const FlowSchema = z.object({
   name: z.string().min(1),
@@ -42,46 +57,3 @@ export const FlowSchema = z.object({
 });
 
 export type Flow = z.infer<typeof FlowSchema>;
-
-export const StatusSchema = z.enum([
-  "running",
-  "waiting",
-  "queued",
-  "idle",
-  "started",
-  "stopped",
-  "aborted",
-  "success",
-  "failure",
-  "error",
-]);
-
-export type Status = z.infer<typeof StatusSchema>;
-
-export const RunStepContextSchema = z.object({
-  status: StatusSchema,
-});
-
-export const RunContextSchema = z.object({
-  runId: z.string().min(1),
-  flowName: z.string().min(1),
-  test: z.boolean().default(false).optional(),
-  outFile: z.string().default("./output.json").optional(),
-  inputs: z.record(z.string(), z.unknown()),
-  exports: z.record(z.string(), z.unknown()),
-  globals: z.record(z.string(), z.unknown()),
-  status: StatusSchema,
-  steps: z.record(
-    z.string(),
-    z.object({
-      status: StatusSchema,
-      reason: z.string().optional(),
-      attempt: z.number(),
-      exports: z.record(z.string(), z.unknown()),
-      result: z.record(z.string(), z.unknown()),
-      // TODO: implement history, an array of attemps and outputs
-    })
-  ),
-});
-
-export type RunContext = z.infer<typeof RunContextSchema>;

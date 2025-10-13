@@ -1,4 +1,4 @@
-import type { RunContext, StepArgs } from "@pipewarp/core/types";
+import type { RunContext, StepArgs } from "@pipewarp/specs";
 
 export function split(path: string): string[] {
   return path ? path.split(".") : [];

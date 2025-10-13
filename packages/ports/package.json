@@ -1,16 +1,12 @@
 {
-  "name": "@pipewarp/core",
-  "version": "0.1.0-alpha.0",
+  "name": "@pipewarp/ports",
+  "version": "0.1.0-alpha.1",
   "private": "true",
   "type": "module",
   "exports": {
-    "./ports": {
-      "types": "./dist/ports/index.d.ts",
-      "import": "./dist/ports/index.js"
-    },
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/types/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "scripts": {

@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
-import { EventBusPort } from "@pipewarp/core/ports";
-import { EventEnvelope } from "@pipewarp/core/types";
+import type { EventEnvelope, EventBusPort } from "@pipewarp/ports";
+import { parseEvent } from "./parseEvent.js";
 
 export class InMemoryEventBus implements EventBusPort {
   #ee = new EventEmitter().setMaxListeners(0);
@@ -9,7 +9,7 @@ export class InMemoryEventBus implements EventBusPort {
   /**
    * publish an event to a specific channel
    * @param topic bus channel "string" to publish to
-   * @param event EventEvenlope to send on that channel
+   * @param event EventEnvelope to send on that channel
    * @returns Promise<void>
    * @description Uses the queueMicrotask to postpone emission slightly to
    * prefent recursive loops or having other emitions prempt the execution and
@@ -18,7 +18,20 @@ export class InMemoryEventBus implements EventBusPort {
    * Uses EventEmitter under the hood.
    */
   async publish(topic: string, event: EventEnvelope): Promise<void> {
-    const payload = Object.freeze(event);
+    if (event == undefined || event.kind == undefined) {
+      console.error(
+        "[inmemory-bus] cannot publish event. event or event.kind is undefined"
+      );
+      return;
+    }
+
+    const parsedEvent = parseEvent(event.kind, event);
+    if (parsedEvent === undefined) {
+      console.error("[inmemory-bus] could not parse event");
+      return;
+    }
+
+    const payload = Object.freeze(parsedEvent);
 
     queueMicrotask(() => {
       try {

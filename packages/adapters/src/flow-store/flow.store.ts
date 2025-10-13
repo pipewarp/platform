@@ -1,4 +1,4 @@
-import { type Flow, FlowSchema } from "@pipewarp/core/types";
+import { type Flow, FlowSchema } from "@pipewarp/specs";
 export class FlowStore {
   #flows = new Map<string, Flow>();
 

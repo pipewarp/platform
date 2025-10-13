@@ -1,5 +1,5 @@
 {
-  "name": "@pipewarp/engine",
+  "name": "@pipewarp/specs",
   "version": "0.1.0-alpha.1",
   "private": "true",
   "type": "module",
@@ -17,8 +17,6 @@
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "@pipewarp/adapters": "workspace:*",
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/specs": "workspace:*"
+    "zod": "3.25.76"
   }
 }

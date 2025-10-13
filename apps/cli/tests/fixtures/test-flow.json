@@ -3,9 +3,9 @@
   "start": "transcribe",
   "steps": {
     "transcribe": {
-      "type": "tool",
-      "mcp": "stt-client",
-      "tool": "transcribe",
+      "type": "action",
+      "tool": "stt-client",
+      "op": "transcribe",
       "args": {
         "text": "alligator"
       },
@@ -15,9 +15,9 @@
       }
     },
     "second": {
-      "type": "tool",
-      "mcp": "stt-client",
-      "tool": "transcribe",
+      "type": "action",
+      "tool": "stt-client",
+      "op": "transcribe",
       "args": {
         "text": "${steps.transcribe.text}"
       }

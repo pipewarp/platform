@@ -1,0 +1,11 @@
+{
+  "name": "Warp Example",
+  "start": "go",
+  "steps": {
+    "go": {
+      "type": "warp",
+      "world": "stt-world",
+      "level": "transcribe"
+    }
+  }
+}
