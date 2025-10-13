@@ -1,5 +1,5 @@
 import { Ports } from "@pipewarp/ports";
-import { Step, WarpStepSchema } from "@pipewarp/specs";
+import { Step, ActionStepSchema } from "@pipewarp/specs";
 import type { StepExecutor, StepResult } from "@pipewarp/ports";
 
 export const actionExecutor: StepExecutor =

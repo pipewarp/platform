@@ -5,7 +5,12 @@ import { resolveCliPath } from "../../resolve-path.js";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { McpManager } from "@pipewarp/adapters/step-executor";
 import { Engine } from "@pipewarp/engine";
-import { StartFlowInput } from "@pipewarp/core/ports";
+import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
+import {
+  type FlowQueuedEvent,
+  type EventEnvelope,
+  type StartFlowInput,
+} from "@pipewarp/ports";
 
 export async function cliRunAction(
   flowPath: string,
@@ -53,18 +58,34 @@ export async function cliRunAction(
   await mcpStore.addStdioClient(server, "stt-client");
 
   // create engine
-  const engine = new Engine(flowStore, mcpStore);
+  const bus = new InMemoryEventBus();
+  const engine = new Engine(flowStore, mcpStore, bus);
 
-  // start engine
-  const input: StartFlowInput = {
-    flowName: "stt-flow",
-    correlationId: "temp-id",
-    test,
-    outfile: resolvedOutPath,
+  const startFlow: EventEnvelope = {
+    correlationId: "123-cid",
+    id: "123-eid",
+    time: new Date().toISOString(),
+    kind: "flow.queued",
+    data: {
+      flowName: flow.name,
+      inputs: { text: "text" },
+      test,
+      outfile: resolvedOutPath,
+    },
   };
 
-  const response = await engine.startFlow(input);
-  console.log(response);
+  await bus.publish("flows.lifecycle", startFlow);
+
+  // start engine
+  // const input: StartFlowInput = {
+  //   flowName: "stt-flow",
+  //   correlationId: "temp-id",
+  //   test,
+  //   outfile: resolvedOutPath,
+  // };
+
+  // const response = await engine.startFlow(input);
+  // console.log(response);
 }
 
 export function registerRunCmd(program: Command): Command {

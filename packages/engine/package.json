@@ -17,7 +17,8 @@
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "@pipewarp/core": "workspace:*",
-    "@pipewarp/adapters": "workspace:*"
+    "@pipewarp/adapters": "workspace:*",
+    "@pipewarp/ports": "workspace:*",
+    "@pipewarp/specs": "workspace:*"
   }
 }

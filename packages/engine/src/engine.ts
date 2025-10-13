@@ -3,19 +3,23 @@ import type {
   RunContext,
   ToolStep,
   StepArgs,
-  StepEvent,
+  // StepEvent,
   Status,
-  EventEnvelope,
-} from "@pipewarp/core/types";
+  ActionStep,
+} from "@pipewarp/specs";
 import type {
   EnginePort,
+  EventBusPort,
+  EventEnvelope,
   ExecuteStepCommand,
   StartFlowInput,
   StartFlowResult,
-} from "@pipewarp/core/ports";
+  McpRunnerPort,
+  StepQueuedEvent,
+  ActionQueuedData,
+} from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { type McpId, McpManager } from "@pipewarp/adapters/step-executor";
-import type { McpRunnerPort } from "@pipewarp/core/ports";
 import { resolveStepArgs } from "./resolve.js";
 
 import fs from "fs";
@@ -24,13 +28,35 @@ export type StepRunner = {
   run: () => Promise<void>;
 };
 
-export class Engine implements EnginePort {
+export class Engine {
   #runs = new Map<string, RunContext>();
   #queues = new Map<McpId, EventEnvelope[]>();
   #runners = new Map<string, McpRunnerPort>();
 
-  constructor(private flowDb: FlowStore, private mcps: McpManager) {
+  constructor(
+    private flowDb: FlowStore,
+    private mcps: McpManager,
+    private bus: EventBusPort
+  ) {
     console.log("[engine] constructor");
+    this.bus = bus;
+    this.bus.subscribe("flows.lifecycle", async (e: EventEnvelope) => {
+      console.log("[engine bus] flows.lifecycle event:", e);
+      if (e.kind === "flow.queued") {
+        await this.startFlow({
+          correlationId: e.correlationId,
+          flowName: e.data.flowName,
+          outfile: e.data.outfile,
+          test: e.data.test,
+        });
+      }
+    });
+    this.bus.subscribe("steps.lifecycle", async (e: EventEnvelope) => {
+      console.log("[engine bus] steps.lifecycle event:", e);
+      if (e.kind === "step.queued" && e.data.stepType === "action") {
+        this.enqueue(e.data.tool, e);
+      }
+    });
   }
 
   async startFlow(input: StartFlowInput): Promise<StartFlowResult | undefined> {
@@ -69,24 +95,25 @@ export class Engine implements EnginePort {
     console.log("[engine] running step runners");
 
     // get first step data
-    if (flow.steps[flow.start].type === "tool") {
-      const startStep: ToolStep = flow.steps[flow.start] as ToolStep;
-      startStep.mcp;
-      const resourceKey = startStep.mcp;
+    if (flow.steps[flow.start].type === "action") {
+      const startStep: ActionStep = flow.steps[flow.start] as ActionStep;
 
       const event: EventEnvelope = {
         id: randomUUID().slice(0, 8),
-        type: "start.step",
+        correlationId: randomUUID().slice(0, 8),
+        kind: "step.queued",
         time: new Date().toISOString(),
+        runId: context.runId,
         data: {
           stepName: flow.start,
-          runId: context.runId,
-          flowName: flow.name,
-          mcpId: startStep.mcp,
+          stepType: startStep.type,
+          tool: startStep.tool,
+          op: startStep.op,
         },
       };
 
-      this.enqueue(startStep.mcp, event);
+      this.bus.publish("steps.lifecycle", event);
+      // this.enqueue(startStep.mcp, event);
     }
   }
 
@@ -146,17 +173,17 @@ export class Engine implements EnginePort {
 
     const step = flow.steps[cmd.stepName];
 
-    if (step.type === "tool") {
-      const mcpDb = this.mcps.get(step.mcp);
+    if (step.type === "action") {
+      const mcpDb = this.mcps.get(step.tool);
       if (!mcpDb) {
-        const log = `[engine] executeStep(): no mcp for ${step.mcp}`;
+        const log = `[engine] executeStep(): no mcp for ${step.tool}`;
         console.log(log);
 
         this.saveStepStatus(
           context,
           cmd.stepName,
           "failure",
-          `No mcp found for ${step.mcp}`
+          `No mcp found for ${step.tool}`
         );
         this.writeRunContext(cmd.runId);
         return;
@@ -171,7 +198,7 @@ export class Engine implements EnginePort {
 
       try {
         const response = await mcpClient.callTool({
-          name: step.tool,
+          name: step.op,
           arguments: args,
         });
         console.log(`[engine] executeStep response:`, response);
@@ -229,24 +256,26 @@ export class Engine implements EnginePort {
         : currentStep?.on?.failure;
 
     if (flow && nextStepName && nextStepName.length > 0) {
-      const nextStep = flow.steps[nextStepName] as ToolStep;
+      const nextStep = flow.steps[nextStepName] as ActionStep;
 
-      // queue next step
+      // publish step queued event
       if (nextStep) {
-        const data: StepEvent = {
-          mcpId: nextStep.mcp,
-          flowName: flow.name,
-          runId: cmd.runId,
-          stepName: nextStepName,
-          args: nextStep.args,
-        };
         const event: EventEnvelope = {
           id: "executeStepId",
           time: new Date().toISOString(),
-          type: "start.step",
-          data,
+          kind: "step.queued",
+          runId: cmd.runId,
+          correlationId: "an-id",
+          data: {
+            stepType: "action",
+            stepName: nextStepName,
+            tool: nextStep.tool,
+            op: nextStep.op,
+            args: nextStep.args,
+          },
         };
-        this.enqueue(nextStep.mcp, event);
+        this.bus.publish("steps.lifecycle", event);
+        // this.enqueue(nextStep.mcp, event);
       }
     } else {
       console.log("no next step");
@@ -271,28 +300,42 @@ export class Engine implements EnginePort {
 
         console.log(`[runner] looping for ${mcpId} every ${ms}ms`);
         while (isRunning) {
-          const result = engine.dequeue(mcpId);
+          const event = engine.dequeue(mcpId);
 
-          if (!result) {
+          if (!event) {
             await sleep();
             continue;
           } else {
             console.log(`[runner] handling dequeued event`);
 
-            if (result.type === "start.step") {
-              const event = result.data as StepEvent;
-
-              const cmd: ExecuteStepCommand = {
-                attempt: 1,
-                stepName: event.stepName,
-                runId: event.runId,
-                mcpId: event.mcpId,
-                taskId: "",
-              };
-
-              console.log(`[runner] executing command`);
-              await engine.executeStep(cmd);
+            if (event.kind === "step.queued") {
+              if (event.data.stepType === "action") {
+                const cmd: ExecuteStepCommand = {
+                  attempt: 1,
+                  stepName: event.data.stepName,
+                  runId: event.runId ?? "run-id",
+                  mcpId: event.data.tool,
+                  args: event.data.args,
+                  taskId: "task-id",
+                };
+                console.log(`[runner] executing command`);
+                await engine.executeStep(cmd);
+              }
+              event as StepQueuedEvent;
             }
+
+            // if (event.kind === "step.queued" && event.data.stepType === "action") {
+            //   const event = event as ActionStep;
+
+            //   const cmd: ExecuteStepCommand = {
+            //     attempt: 1,
+            //     stepName: event.stepName,
+            //     runId: event.runId,
+            //     mcpId: event.mcpId,
+            //     taskId: "",
+            //   };
+
+            // }
           }
         }
       },
