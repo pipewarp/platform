@@ -17,6 +17,9 @@ export class McpManager {
   add(mcpId: McpId, client: McpDb): void {
     this.mcps.set(mcpId, client);
   }
+  has(mcpId: McpId): boolean {
+    return this.mcps.has(mcpId);
+  }
 
   get(mcpId: McpId): McpDb | false {
     if (!this.mcps.has(mcpId)) return false;

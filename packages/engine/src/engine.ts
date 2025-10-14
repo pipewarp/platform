@@ -268,7 +268,7 @@ export class Engine {
           // const event = engine.dequeue(mcpId);
 
           if (!event) {
-            await sleep();
+            // await sleep();
             continue;
           } else {
             console.log(`[runner] handling dequeued event`);

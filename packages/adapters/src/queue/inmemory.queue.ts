@@ -4,33 +4,51 @@ import { EventEnvelope, QueuePort } from "@pipewarp/ports";
  * First implementation:
  * No rety; ack and nack are noop
  * FIFO queue as array.  May not scale well
- * Reserve acts as 'dequeue'.  Message lost if worker process fails.
+ * Reserve now acts as a dequeue but uses promise resolution to prevent resovling
+ * until something is in the queue.  This way, consumers of the queue do not need
+ * to poll.
  * No persistance.
  */
 export class InMemoryQueue implements QueuePort {
   #queues = new Map<string, EventEnvelope[]>();
+  #waiters = new Map<string, Array<(e: EventEnvelope) => void>>();
 
   async enqueue(queue: string, event: EventEnvelope): Promise<void> {
     console.log("[inmemory-queue] enqueue() called;");
     const q = this.#queues.get(queue) ?? []; // allow queues to be made on the fly
-    q.push(event);
+    const w = this.#waiters.get(queue) ?? [];
+
+    // if waiters are waiting on this queue, just send it to that directly now
+    if (w.length > 0) {
+      console.log("[inmemory-queue] shifting to waiting callback in enqueue()");
+      const cb = w.shift();
+      if (cb !== undefined) cb(event); // call resolve method on this waiter
+    } else {
+      q.push(event);
+    }
     this.#queues.set(queue, q);
   }
 
-  // NOTE: currently does not 'reserve' but simply 'dequeues'
   async reserve(
     queue: string,
     workerId: string,
     holdMs?: number
-  ): Promise<EventEnvelope | null> {
+  ): Promise<EventEnvelope> {
     console.log("[inmemory-queue] reserve() called;");
     const q = this.#queues.get(queue) ?? [];
-    if (!q || q.length === 0) return null;
 
-    const event = q.shift();
-    if (event === undefined) return null;
+    // quick fullfilled promise if queue is not empty
+    if (q.length > 0) return q.shift()!;
+    console.log("[inmemory-queue] returning promise not yet resolved");
+    // nothing in queue, return a promise we resolve later in this.enqueue()
+    return new Promise<EventEnvelope>((resolve, reject) => {
+      const waiterResolvers = this.#waiters.get(queue) ?? [];
 
-    return event;
+      waiterResolvers.push((e: EventEnvelope) => {
+        resolve(e);
+      });
+      this.#waiters.set(queue, waiterResolvers);
+    });
   }
   ack(queue: string, eventId: string): Promise<void> {
     throw new Error("Method not implemented.");
