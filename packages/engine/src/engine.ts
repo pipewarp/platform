@@ -1,14 +1,6 @@
 import { randomUUID } from "crypto";
+import type { RunContext, StepArgs, Status, ActionStep } from "@pipewarp/specs";
 import type {
-  RunContext,
-  ToolStep,
-  StepArgs,
-  // StepEvent,
-  Status,
-  ActionStep,
-} from "@pipewarp/specs";
-import type {
-  EnginePort,
   EventBusPort,
   EventEnvelope,
   ExecuteStepCommand,
@@ -16,7 +8,7 @@ import type {
   StartFlowResult,
   McpRunnerPort,
   StepQueuedEvent,
-  ActionQueuedData,
+  QueuePort,
 } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { type McpId, McpManager } from "@pipewarp/adapters/step-executor";
@@ -30,13 +22,13 @@ export type StepRunner = {
 
 export class Engine {
   #runs = new Map<string, RunContext>();
-  #queues = new Map<McpId, EventEnvelope[]>();
   #runners = new Map<string, McpRunnerPort>();
 
   constructor(
-    private flowDb: FlowStore,
-    private mcps: McpManager,
-    private bus: EventBusPort
+    private readonly flowDb: FlowStore,
+    private readonly mcps: McpManager,
+    private readonly bus: EventBusPort,
+    private readonly queues: QueuePort
   ) {
     console.log("[engine] constructor");
     this.bus = bus;
@@ -49,12 +41,6 @@ export class Engine {
           outfile: e.data.outfile,
           test: e.data.test,
         });
-      }
-    });
-    this.bus.subscribe("steps.lifecycle", async (e: EventEnvelope) => {
-      console.log("[engine bus] steps.lifecycle event:", e);
-      if (e.kind === "step.queued" && e.data.stepType === "action") {
-        this.enqueue(e.data.tool, e);
       }
     });
   }
@@ -123,28 +109,6 @@ export class Engine {
       stepRunner.start();
       this.#runners.set(mcpId, await this.stepRunner(mcpId));
     }
-  }
-
-  enqueue(mcpId: string, event: EventEnvelope) {
-    if (this.#queues.has(mcpId)) {
-      const queue = this.#queues.get(mcpId);
-      queue!.push(event);
-    } else {
-      this.#queues.set(mcpId, [event]);
-    }
-    console.log(
-      `[enqueue] full queue for mcpid: ${mcpId};`,
-      JSON.stringify(this.#queues.get(mcpId), null, 2)
-    );
-  }
-
-  dequeue(mcpId: McpId): EventEnvelope | false {
-    if (!this.#queues.has(mcpId)) return false;
-    const event = this.#queues.get(mcpId)!.shift() ?? false;
-    if (event) {
-      console.log(`[dequeue] event from mcpId queue: ${mcpId}`);
-    }
-    return event;
   }
 
   async executeStep(
@@ -300,7 +264,8 @@ export class Engine {
 
         console.log(`[runner] looping for ${mcpId} every ${ms}ms`);
         while (isRunning) {
-          const event = engine.dequeue(mcpId);
+          const event = await engine.queues.reserve(mcpId, "w");
+          // const event = engine.dequeue(mcpId);
 
           if (!event) {
             await sleep();
@@ -323,19 +288,6 @@ export class Engine {
               }
               event as StepQueuedEvent;
             }
-
-            // if (event.kind === "step.queued" && event.data.stepType === "action") {
-            //   const event = event as ActionStep;
-
-            //   const cmd: ExecuteStepCommand = {
-            //     attempt: 1,
-            //     stepName: event.stepName,
-            //     runId: event.runId,
-            //     mcpId: event.mcpId,
-            //     taskId: "",
-            //   };
-
-            // }
           }
         }
       },
