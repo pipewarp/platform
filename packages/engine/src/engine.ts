@@ -77,13 +77,17 @@ export class Engine {
 
     // start step runners
 
-    await this.startStepRunners();
-    console.log("[engine] running step runners");
+    console.log("[engine] starting step runners");
 
     // get first step data
     if (flow.steps[flow.start].type === "action") {
       const startStep: ActionStep = flow.steps[flow.start] as ActionStep;
 
+      let args;
+      if (startStep.args !== undefined) {
+        args = resolveStepArgs(context, startStep.args);
+      }
+      console.log(args);
       const event: EventEnvelope = {
         id: randomUUID().slice(0, 8),
         correlationId: randomUUID().slice(0, 8),
@@ -95,6 +99,7 @@ export class Engine {
           stepType: startStep.type,
           tool: startStep.tool,
           op: startStep.op,
+          args: args,
         },
       };
 
@@ -103,13 +108,13 @@ export class Engine {
     }
   }
 
-  async startStepRunners(): Promise<void> {
-    for await (const [mcpId] of this.mcps) {
-      const stepRunner = await this.stepRunner(mcpId);
-      stepRunner.start();
-      this.#runners.set(mcpId, await this.stepRunner(mcpId));
-    }
-  }
+  // async startStepRunners(): Promise<void> {
+  //   for await (const [mcpId] of this.mcps) {
+  //     const stepRunner = await this.stepRunner(mcpId);
+  //     stepRunner.start();
+  //     this.#runners.set(mcpId, await this.stepRunner(mcpId));
+  //   }
+  // }
 
   async executeStep(
     cmd: ExecuteStepCommand
