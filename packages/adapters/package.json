@@ -15,6 +15,14 @@
     "./step-executor": {
       "types": "./dist/step-executor/index.d.ts",
       "import": "./dist/step-executor/index.js"
+    },
+    "./router": {
+      "types": "./dist/router/index.d.ts",
+      "import": "./dist/router/index.js"
+    },
+    "./queue": {
+      "types": "./dist/queue/index.d.ts",
+      "import": "./dist/queue/index.js"
     }
   },
   "scripts": {
