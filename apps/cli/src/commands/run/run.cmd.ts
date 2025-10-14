@@ -11,6 +11,8 @@ import {
   type EventEnvelope,
   type StartFlowInput,
 } from "@pipewarp/ports";
+import { InMemoryQueue } from "@pipewarp/adapters/queue";
+import { NodeRouter } from "@pipewarp/adapters/router";
 
 export async function cliRunAction(
   flowPath: string,
@@ -57,9 +59,14 @@ export async function cliRunAction(
   // create mcp client
   await mcpStore.addStdioClient(server, "stt-client");
 
-  // create engine
+  const queue = new InMemoryQueue();
+
   const bus = new InMemoryEventBus();
-  const engine = new Engine(flowStore, mcpStore, bus);
+
+  const router = new NodeRouter(bus, queue);
+  await router.start();
+
+  const engine = new Engine(flowStore, mcpStore, bus, queue);
 
   const startFlow: EventEnvelope = {
     correlationId: "123-cid",

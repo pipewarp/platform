@@ -11,6 +11,7 @@ export class InMemoryQueue implements QueuePort {
   #queues = new Map<string, EventEnvelope[]>();
 
   async enqueue(queue: string, event: EventEnvelope): Promise<void> {
+    console.log("[inmemory-queue] enqueue() called;");
     const q = this.#queues.get(queue) ?? []; // allow queues to be made on the fly
     q.push(event);
     this.#queues.set(queue, q);
@@ -22,6 +23,7 @@ export class InMemoryQueue implements QueuePort {
     workerId: string,
     holdMs?: number
   ): Promise<EventEnvelope | null> {
+    console.log("[inmemory-queue] reserve() called;");
     const q = this.#queues.get(queue) ?? [];
     if (!q || q.length === 0) return null;
 

@@ -17,6 +17,7 @@ import type {
   McpRunnerPort,
   StepQueuedEvent,
   ActionQueuedData,
+  QueuePort,
 } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { type McpId, McpManager } from "@pipewarp/adapters/step-executor";
@@ -36,7 +37,8 @@ export class Engine {
   constructor(
     private flowDb: FlowStore,
     private mcps: McpManager,
-    private bus: EventBusPort
+    private bus: EventBusPort,
+    private readonly queues: QueuePort
   ) {
     console.log("[engine] constructor");
     this.bus = bus;
@@ -51,12 +53,13 @@ export class Engine {
         });
       }
     });
-    this.bus.subscribe("steps.lifecycle", async (e: EventEnvelope) => {
-      console.log("[engine bus] steps.lifecycle event:", e);
-      if (e.kind === "step.queued" && e.data.stepType === "action") {
-        this.enqueue(e.data.tool, e);
-      }
-    });
+    // this.bus.subscribe("steps.lifecycle", async (e: EventEnvelope) => {
+    //   console.log("[engine bus] steps.lifecycle event:", e);
+    //   if (e.kind === "step.queued" && e.data.stepType === "action") {
+    //     this.queues.enqueue(e.data.tool, e);
+    //     this.enqueue(e.data.tool, e);
+    //   }
+    // });
   }
 
   async startFlow(input: StartFlowInput): Promise<StartFlowResult | undefined> {
@@ -300,7 +303,8 @@ export class Engine {
 
         console.log(`[runner] looping for ${mcpId} every ${ms}ms`);
         while (isRunning) {
-          const event = engine.dequeue(mcpId);
+          const event = await engine.queues.reserve(mcpId, "w");
+          // const event = engine.dequeue(mcpId);
 
           if (!event) {
             await sleep();
