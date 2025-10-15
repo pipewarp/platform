@@ -1,34 +1,29 @@
 import { randomUUID } from "crypto";
-import type { RunContext, StepArgs, Status, ActionStep } from "@pipewarp/specs";
+import type {
+  RunContext,
+  Status,
+  ActionStep,
+  Flow,
+  Step,
+} from "@pipewarp/specs";
 import type {
   EventBusPort,
   EventEnvelope,
-  ExecuteStepCommand,
   StartFlowInput,
   StartFlowResult,
-  McpRunnerPort,
-  StepQueuedEvent,
-  QueuePort,
+  StepCompletedEvent,
 } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
-import { type McpId, McpManager } from "@pipewarp/adapters/step-executor";
 import { resolveStepArgs } from "./resolve.js";
 
 import fs from "fs";
 
-export type StepRunner = {
-  run: () => Promise<void>;
-};
-
 export class Engine {
   #runs = new Map<string, RunContext>();
-  #runners = new Map<string, McpRunnerPort>();
 
   constructor(
     private readonly flowDb: FlowStore,
-    private readonly mcps: McpManager,
-    private readonly bus: EventBusPort,
-    private readonly queues: QueuePort
+    private readonly bus: EventBusPort
   ) {
     console.log("[engine] constructor");
     this.bus = bus;
@@ -41,6 +36,13 @@ export class Engine {
           outfile: e.data.outfile,
           test: e.data.test,
         });
+      }
+    });
+
+    this.bus.subscribe("steps.lifecycle", async (e: EventEnvelope) => {
+      console.log("[engine bus] steps.lifecycle event:", e);
+      if (e.kind === "step.completed") {
+        await this.handleWorkerDone(e);
       }
     });
   }
@@ -108,199 +110,93 @@ export class Engine {
     }
   }
 
-  // async startStepRunners(): Promise<void> {
-  //   for await (const [mcpId] of this.mcps) {
-  //     const stepRunner = await this.stepRunner(mcpId);
-  //     stepRunner.start();
-  //     this.#runners.set(mcpId, await this.stepRunner(mcpId));
-  //   }
-  // }
+  createNextStepEvent(
+    flow: Flow,
+    context: RunContext,
+    currentStep: Step,
+    status: "success" | "failure"
+  ): EventEnvelope | undefined {
+    const nextStepName = currentStep.on?.[status];
+    if (!nextStepName) return;
 
-  async executeStep(
-    cmd: ExecuteStepCommand
-  ): Promise<ExecuteStepCommand | undefined> {
-    // load run/step state; mark as running
-    if (!this.#runs.has(cmd.runId)) {
-      console.error(
-        `[engine] executeStep(): no context for runId: ${cmd.runId}`
-      );
-      return;
+    if (flow.steps[nextStepName].type === "action") {
+      const nextStep: ActionStep = flow.steps[nextStepName] as ActionStep;
+
+      let args;
+      if (nextStep.args !== undefined) {
+        args = resolveStepArgs(context, nextStep.args);
+      }
+      console.log(args);
+      const event: EventEnvelope = {
+        id: randomUUID().slice(0, 8),
+        correlationId: randomUUID().slice(0, 8),
+        kind: "step.queued",
+        time: new Date().toISOString(),
+        runId: context.runId,
+        data: {
+          stepName: nextStepName,
+          stepType: nextStep.type,
+          tool: nextStep.tool,
+          op: nextStep.op,
+          args: args,
+        },
+      };
+      return event;
     }
+  }
 
-    const context = this.#runs.get(cmd.runId);
+  async handleWorkerDone(e: StepCompletedEvent): Promise<void> {
+    // handle step return value
+    const context = this.#runs.get(e.runId);
 
     if (context === undefined) {
-      console.error(`[engine] context is undefined for runId ${cmd.runId}`);
+      console.error(`[engine] context is undefined for runId ${e.runId}`);
       return;
     }
 
+    const result = e.data.result
+      ? (e.data.result as Array<Record<string, unknown>>)
+      : [];
+
+    const stepStatus = e.data.ok ? "success" : "failure";
+    if (context?.steps[e.data.stepName] === undefined) {
+      context!.steps[e.data.stepName] = {
+        attempt: 1,
+        exports: {},
+        result: result[0],
+        status: stepStatus,
+      };
+    }
+
+    if (e.data.ok === false) {
+      context.status = "failure";
+      const m = `[engine] worker tool returned error response: ${e.data.result}`;
+      context.steps[e.data.stepName].reason = m + " " + e.data.error;
+      this.saveStepStatus(context, e.data.stepName, "failure", m);
+    } else {
+      this.saveStepStatus(context, e.data.stepName, "success");
+    }
+
+    this.#runs.set(e.runId, context);
+    this.writeRunContext(e.runId);
+
+    // now get next step and start it.
     const flow = this.flowDb.get(context.flowName);
+
     if (!flow) {
       console.log(`[engine] executeStep(): no flow for ${context.flowName}`);
       return;
     }
+    const step = flow.steps[e.data.stepName];
+    const event = this.createNextStepEvent(flow, context, step, stepStatus);
 
-    const step = flow.steps[cmd.stepName];
-
-    if (step.type === "action") {
-      const mcpDb = this.mcps.get(step.tool);
-      if (!mcpDb) {
-        const log = `[engine] executeStep(): no mcp for ${step.tool}`;
-        console.log(log);
-
-        this.saveStepStatus(
-          context,
-          cmd.stepName,
-          "failure",
-          `No mcp found for ${step.tool}`
-        );
-        this.writeRunContext(cmd.runId);
-        return;
-      }
-      const mcpClient = mcpDb.client;
-
-      let args: StepArgs = {};
-      if (step.args) {
-        resolveStepArgs(context, step.args);
-        args = step.args;
-      }
-
-      try {
-        const response = await mcpClient.callTool({
-          name: step.op,
-          arguments: args,
-        });
-        console.log(`[engine] executeStep response:`, response);
-
-        // record result
-        const content = response.content as Array<Record<string, unknown>>;
-        context.steps[cmd.stepName] = {
-          result: content[0],
-          status: response.isError ? "failure" : "success",
-          attempt: cmd.attempt,
-          exports: {},
-        };
-
-        if (response.isError) {
-          const reason = `callTool '${step.tool}' returned an error`;
-          context.steps[cmd.stepName].reason = reason;
-          context.status = "failure";
-        } else if (
-          !Array.isArray(response.content) ||
-          response.content.length <= 0
-        ) {
-          this.saveStepStatus(
-            context,
-            cmd.stepName,
-            "failure",
-            "Mcp tool returned invalid data shape"
-          );
-        }
-
-        this.#runs.set(cmd.runId, context);
-
-        console.log(
-          `[engine] executeStep context`,
-          JSON.stringify(context, null, 2)
-        );
-      } catch (e) {
-        const error = e as Error;
-
-        console.error(error.message);
-
-        this.saveStepStatus(context, cmd.stepName, "failure", error.message);
-        this.writeRunContext(cmd.runId);
-      }
+    if (event === undefined) {
+      console.log("[engine] no next step; run ended;");
+      return;
     }
 
-    const stepOutcome = context.steps[cmd.stepName].status;
-
-    // get next steps
-
-    const currentStep = flow?.steps[cmd.stepName];
-
-    const nextStepName =
-      stepOutcome === "success"
-        ? currentStep?.on?.success
-        : currentStep?.on?.failure;
-
-    if (flow && nextStepName && nextStepName.length > 0) {
-      const nextStep = flow.steps[nextStepName] as ActionStep;
-
-      // publish step queued event
-      if (nextStep) {
-        const event: EventEnvelope = {
-          id: "executeStepId",
-          time: new Date().toISOString(),
-          kind: "step.queued",
-          runId: cmd.runId,
-          correlationId: "an-id",
-          data: {
-            stepType: "action",
-            stepName: nextStepName,
-            tool: nextStep.tool,
-            op: nextStep.op,
-            args: nextStep.args,
-          },
-        };
-        this.bus.publish("steps.lifecycle", event);
-        // this.enqueue(nextStep.mcp, event);
-      }
-    } else {
-      console.log("no next step");
-      console.log("final context:", JSON.stringify(context, null, 2));
-      this.writeRunContext(cmd.runId);
-    }
-    return;
-  }
-
-  async stepRunner(mcpId: McpId): Promise<McpRunnerPort> {
-    let isRunning = false;
-
-    const engine = this;
-    const ms = 1000;
-
-    const sleep = async (): Promise<void> =>
-      new Promise((resolve) => setTimeout(resolve, ms));
-
-    const runner: McpRunnerPort = {
-      async start() {
-        isRunning = true;
-
-        console.log(`[runner] looping for ${mcpId} every ${ms}ms`);
-        while (isRunning) {
-          const event = await engine.queues.reserve(mcpId, "w");
-          // const event = engine.dequeue(mcpId);
-
-          if (!event) {
-            // await sleep();
-            continue;
-          } else {
-            console.log(`[runner] handling dequeued event`);
-
-            if (event.kind === "step.queued") {
-              if (event.data.stepType === "action") {
-                const cmd: ExecuteStepCommand = {
-                  attempt: 1,
-                  stepName: event.data.stepName,
-                  runId: event.runId ?? "run-id",
-                  mcpId: event.data.tool,
-                  args: event.data.args,
-                  taskId: "task-id",
-                };
-                console.log(`[runner] executing command`);
-                await engine.executeStep(cmd);
-              }
-              event as StepQueuedEvent;
-            }
-          }
-        }
-      },
-      async stop() {
-        isRunning = false;
-      },
-    };
-    return runner;
+    console.log("[engine] next event: ", event);
+    await this.bus.publish("steps.lifecycle", event);
   }
 
   saveStepStatus(
@@ -327,6 +223,7 @@ export class Engine {
   }
 
   writeRunContext(runId: string): void {
+    console.log("[engine] writing context to disk");
     const context = this.#runs.get(runId);
     const file =
       context?.outFile !== undefined ? context.outFile : "./output.json";

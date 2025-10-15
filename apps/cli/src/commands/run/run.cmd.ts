@@ -56,7 +56,7 @@ export async function cliRunAction(
 
   await router.start();
 
-  const engine = new Engine(flowStore, mcpStore, bus, queue);
+  const engine = new Engine(flowStore, bus);
 
   const startFlow: EventEnvelope = {
     correlationId: "123-cid",

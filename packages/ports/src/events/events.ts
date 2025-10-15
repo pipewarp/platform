@@ -28,6 +28,7 @@ export const StepQueuedDataSchema = z.discriminatedUnion("stepType", [
 
 export const StepQueuedEventSchema = EventEnvelopeBaseSchema.extend({
   kind: z.literal("step.queued"),
+  runId: z.string().min(1),
   data: StepQueuedDataSchema,
 });
 export const FlowQueuedSchema = EventEnvelopeBaseSchema.extend({
@@ -39,12 +40,36 @@ export const FlowQueuedSchema = EventEnvelopeBaseSchema.extend({
     outfile: z.string(),
   }),
 });
+
+export const StepCompletedSchema = EventEnvelopeBaseSchema.extend({
+  kind: z.literal("step.completed"),
+  runId: z.string().min(1),
+  data: z.object({
+    stepName: z.string(),
+    ok: z.boolean(),
+    result: z.unknown().optional(),
+    error: z.string().optional(),
+  }),
+});
+
+export const Step = EventEnvelopeBaseSchema.extend({
+  kind: z.literal("flow.queued"),
+  data: z.object({
+    flowName: z.string().min(1),
+    inputs: z.record(z.string(), z.unknown()),
+    test: z.boolean().default(false),
+    outfile: z.string(),
+  }),
+});
+
 export const EventEnvelopeSchema = z.discriminatedUnion("kind", [
   StepQueuedEventSchema,
+  StepCompletedSchema,
   FlowQueuedSchema,
 ]);
 
 export type ActionQueuedData = z.infer<typeof ActionQueuedSchema>;
 export type StepQueuedEvent = z.infer<typeof StepQueuedEventSchema>;
+export type StepCompletedEvent = z.infer<typeof StepCompletedSchema>;
 export type FlowQueuedEvent = z.infer<typeof FlowQueuedSchema>;
 export type EventEnvelope = z.infer<typeof EventEnvelopeSchema>;
