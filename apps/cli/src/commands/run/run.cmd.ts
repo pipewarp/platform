@@ -8,6 +8,7 @@ import { McpManager } from "@pipewarp/adapters/step-executor";
 import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
+import { McpWorker } from "@pipewarp/adapters/worker";
 import { Engine } from "@pipewarp/engine";
 
 export async function cliRunAction(
@@ -46,9 +47,16 @@ export async function cliRunAction(
   const queue = new InMemoryQueue();
   const bus = new InMemoryEventBus();
   const router = new NodeRouter(bus, queue);
+
+  const mcpWorker = new McpWorker(queue, bus, mcpStore);
+
+  for await (const [mcpId] of mcpStore.mcps) {
+    await mcpWorker.startMcp(mcpId);
+  }
+
   await router.start();
 
-  const engine = new Engine(flowStore, mcpStore, bus, queue);
+  const engine = new Engine(flowStore, bus);
 
   const startFlow: EventEnvelope = {
     correlationId: "123-cid",

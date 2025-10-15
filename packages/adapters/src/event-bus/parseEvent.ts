@@ -2,12 +2,14 @@ import {
   type EventEnvelope,
   StepQueuedEventSchema,
   FlowQueuedSchema,
+  StepCompletedSchema,
 } from "@pipewarp/ports";
 import { z } from "zod";
 
 const SchemaMap = new Map<string, z.ZodTypeAny>([
   ["flow.queued", FlowQueuedSchema],
   ["step.queued", StepQueuedEventSchema],
+  ["step.completed", StepCompletedSchema],
 ]);
 
 export function parseEvent(
