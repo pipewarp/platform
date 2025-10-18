@@ -16,9 +16,10 @@
     "test:e2e": "vitest test",
     "lint": "echo lint",
     "start": "node ./dist/main.js",
-    "dev:ascii": "npx tsx ./mcp-servers/ascii.mcp.ts",
-    "dev:ascii-client": "npx tsx ./mcp-servers/ascii.client.ts",
-    "dev:buffer": "npx tsx ./mcp-servers/buffer.mcp.ts",
+    "dev:unicode": "npx tsx ./mcp-servers/unicode.server.ts",
+    "dev:unicode-client": "npx tsx ./mcp-servers/unicode.client.ts",
+    "dev:transform": "npx tsx ./mcp-servers/transform.server.ts",
+    "dev:transform-client": "npx tsx ./mcp-servers/transform.client.ts",
     "dev:print": "npx tsx ./mcp-servers/print.mcp.ts"
   },
   "packageManager": "pnpm@10.17.1",

@@ -10,12 +10,12 @@ app.use(express.json());
 const sessions = new Map<string, SSEServerTransport>();
 const port = 3004;
 const mcp = new McpServer({
-  name: "ascii-server",
+  name: "unicode-server",
   version: "0.1.0",
   capabilities: { logging: {} },
 });
 
-// 12x16 unicode art, not exactly ascii but demonstrates streaming
+// 12x16 unicode art
 // 🟥
 // ⬜
 // 🟧
@@ -47,17 +47,16 @@ mcp.registerTool(
   "draw",
   {
     title: "draw",
-    description: "updates ascii resource",
-    inputSchema: { delayMs: z.number() },
+    description: "produces unicode individual strings in a SSE stream",
+    inputSchema: { delayMs: z.number(), stream: z.boolean() },
     outputSchema: { result: z.string() },
   },
-  async ({ delayMs }, ctx) => {
-    // const charArray = [...gameArt];
+  async ({ delayMs, stream }, ctx) => {
     const { sessionId } = ctx;
-    console.log("[ascii-server] sessionId:", sessionId);
+    console.log("[unicode-server] sessionId:", sessionId);
 
     if (!sessionId) {
-      console.log("[ascii-server] no session");
+      console.log("[unicode-server] no session");
       const result = { result: "no session" };
       return {
         content: [{ type: "text", text: JSON.stringify(result) }],
@@ -78,13 +77,34 @@ mcp.registerTool(
     // using delayMS and unawaited promise to return before this starts
     // hopefully.  this is just a mock MCP server for demo purposes.
     // this feature would be kicked off by an unawaited promise
-    // or set timeout to make sure return reaches the client before
+    // or set timeout to m
+    // ake sure return reaches the client before
     // sending over SSE
     (async () => {
+      if (!stream) {
+        let artString = "";
+        await new Promise((r) => setTimeout(r, delayMs));
+        for (let i = 0; i < artArray.length; i++) {
+          for (let j = 0; j < artArray[i].length; j++) {
+            artString += artArray[i][j];
+          }
+          artString += "\n";
+        }
+        console.log(artString);
+        await transport.send({
+          jsonrpc: "2.0",
+          method: "notifications/message",
+          params: {
+            level: "info",
+            message: artString,
+          },
+        });
+        return;
+      }
       for (let i = 0; i < artArray.length; i++) {
         for (let j = 0; j < artArray[i].length; j++) {
           await new Promise((r) => setTimeout(r, delayMs));
-          console.log("[ascii-server] sending:", artArray[i][j]);
+          console.log("[unicode-server] sending:", artArray[i][j]);
           await transport.send({
             jsonrpc: "2.0",
             method: "notifications/message",
@@ -100,7 +120,7 @@ mcp.registerTool(
         // would put this in art but it gets messed up because of prettier
         // formatting =(.
         await new Promise((r) => setTimeout(r, delayMs));
-        console.log("[ascii-server] sending:", "\\n");
+        console.log("[unicode-server] sending:", "\\n");
         await transport.send({
           jsonrpc: "2.0",
           method: "notifications/message",
@@ -124,7 +144,7 @@ mcp.registerTool(
 
 // endpoint for created th sse connection
 app.get("/sse", async (_req, res) => {
-  console.log("[ascii-server] connecting /sse");
+  console.log("[unicode-server] connecting /sse");
   const transport = new SSEServerTransport("/messages", res);
   sessions.set(transport.sessionId, transport);
 
@@ -139,7 +159,7 @@ app.get("/sse", async (_req, res) => {
 // endpoint for handling other non SSE stuff like tool calls
 // POST /messages or /messages/:sessionId JSON-RPC calls
 app.post(["/messages", "/messages/:sessionId"], async (req, res) => {
-  console.log("[ascii-server] received messages post request");
+  console.log("[unicode-server] received messages post request");
 
   // /messages/:sessionId
   const paramId = (req.params as any)?.sessionId as string | undefined;
@@ -152,7 +172,7 @@ app.post(["/messages", "/messages/:sessionId"], async (req, res) => {
 
   if (!transport) {
     console.error(
-      "[ascii-server] Error; No transport for sessionId:",
+      "[unicode-server] Error; No transport for sessionId:",
       sessionId,
       "path:",
       req.path
@@ -164,7 +184,7 @@ app.post(["/messages", "/messages/:sessionId"], async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log("[ascii-server] ascii MCP SSE server running.");
-  console.log(`[ascii-server] Listening on http://localhost:${port}`);
-  console.log(`[ascii-server] GET /sse, POST /messages`);
+  console.log("[unicode-server] unicode MCP SSE server running.");
+  console.log(`[unicode-server] Listening on http://localhost:${port}`);
+  console.log(`[unicode-server] GET /sse, POST /messages`);
 });
