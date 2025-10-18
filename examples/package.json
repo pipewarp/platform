@@ -1,0 +1,39 @@
+{
+  "name": "@pipewarp/examples",
+  "version": "0.1.0-alpha.1",
+  "private": "true",
+  "type": "module",
+  "exports": {
+    "./mcp-servers/": {
+      "types": "./dist/mcp-servers/index.d.ts",
+      "import": "./dist/mcp-servers/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --incremental false",
+    "typecheck": "tsc --noEmit",
+    "test": "echo test",
+    "test:e2e": "vitest test",
+    "lint": "echo lint",
+    "start": "node ./dist/main.js",
+    "dev:ascii": "npx tsx ./mcp-servers/ascii.mcp.ts",
+    "dev:ascii-client": "npx tsx ./mcp-servers/ascii.client.ts",
+    "dev:buffer": "npx tsx ./mcp-servers/buffer.mcp.ts",
+    "dev:print": "npx tsx ./mcp-servers/print.mcp.ts"
+  },
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "@pipewarp/adapters": "workspace:*",
+    "@pipewarp/engine": "workspace:*",
+    "@pipewarp/ports": "workspace:*",
+    "@pipewarp/specs": "workspace:*",
+    "commander": "^14.0.1",
+    "express": "^5.1.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "vitest": "^3.2.4"
+  }
+}
