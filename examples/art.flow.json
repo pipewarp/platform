@@ -1,0 +1,28 @@
+{
+  "name": "unicode-art",
+  "start": "mario",
+  "steps": {
+    "mario": {
+      "type": "action",
+      "tool": "unicode",
+      "op": "draw",
+      "args": {
+        "delayMs": 25,
+        "useStream": false
+      },
+      "on": {
+        "success": "luigi"
+      }
+    },
+    "luigi": {
+      "type": "action",
+      "tool": "transform",
+      "op": "transform",
+      "args": {
+        "art": "${steps.mario.text}",
+        "isStreaming": false,
+        "delayMs": 10
+      }
+    }
+  }
+}

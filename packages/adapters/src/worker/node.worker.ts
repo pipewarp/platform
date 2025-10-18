@@ -97,6 +97,7 @@ export class McpWorker {
 
   async startWaiter(mcpId: string): Promise<void> {
     this.#waiters.set(mcpId, true);
+    console.log("[worker] starting waiter for mcpId:", mcpId);
     while (this.#waiters.get(mcpId)) {
       const event = await this.queues.reserve(mcpId, mcpId);
       if (event === null || event.kind === undefined) continue;

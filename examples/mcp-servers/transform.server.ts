@@ -88,7 +88,7 @@ mcp.registerTool(
         data: newArt,
       };
       return {
-        content: [{ type: "text", text: JSON.stringify(output) }],
+        content: [{ type: "text", text: output.data ?? "" }],
         structuredContent: output,
       };
     }

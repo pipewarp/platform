@@ -64,6 +64,7 @@ mcp.registerTool(
   },
   async ({ delayMs, useStream }, ctx) => {
     // just return the full art if not streaming
+
     if (!useStream) {
       const output: DrawOutput = {
         ok: true,
@@ -72,7 +73,7 @@ mcp.registerTool(
       };
       console.log("ok");
       return {
-        content: [{ type: "text", text: JSON.stringify(output) }],
+        content: [{ type: "text", text: output.data ?? "" }],
         structuredContent: output,
       };
     }

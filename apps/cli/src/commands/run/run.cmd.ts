@@ -42,7 +42,19 @@ export async function cliRunAction(
   flowStore.add(flow);
 
   const mcpStore = new McpManager();
-  await mcpStore.addStdioClient(server, "stt-client");
+  // await mcpStore.addStdioClient(server, "stt-client");
+  await mcpStore.addSseClient(
+    "http://localhost:3004/sse",
+    "unicode",
+    "unicode-client",
+    "0.1.0-alpha.1"
+  );
+  await mcpStore.addSseClient(
+    "http://localhost:3005/sse",
+    "transform",
+    "transform-client",
+    "0.1.0-alpha.1"
+  );
 
   const queue = new InMemoryQueue();
   const bus = new InMemoryEventBus();
@@ -51,6 +63,7 @@ export async function cliRunAction(
   const mcpWorker = new McpWorker(queue, bus, mcpStore);
 
   for await (const [mcpId] of mcpStore.mcps) {
+    console.log(`starting mcpid: ${mcpId}`);
     await mcpWorker.startMcp(mcpId);
   }
 
