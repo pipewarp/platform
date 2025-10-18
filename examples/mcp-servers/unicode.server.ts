@@ -11,7 +11,7 @@ const sessions = new Map<string, SSEServerTransport>();
 const port = 3004;
 const mcp = new McpServer({
   name: "unicode-server",
-  version: "0.1.0",
+  version: "0.1.0-alpha.1",
   capabilities: { logging: {} },
 });
 
@@ -23,53 +23,84 @@ const mcp = new McpServer({
 // 🟫
 // 🟦
 
-const artArray = [
-  ["⬜", "⬜", "⬜", "🟥", "🟥", "🟥", "🟥", "🟥", "⬜", "⬜", "⬜", "⬜"],
-  ["⬜", "⬜", "🟥", "🟥", "🟥", "🟥", "🟥", "🟥", "🟥", "🟥", "🟥", "⬜"],
-  ["⬜", "⬜", "🟫", "🟫", "🟫", "🟧", "🟧", "⬛️", "🟧", "⬜", "⬜", "⬜"],
-  ["⬜", "🟫", "🟧", "🟫", "🟧", "🟧", "🟧", "⬛️", "🟧", "🟧", "🟧", "⬜"],
-  ["⬜", "🟫", "🟧", "🟫", "🟫", "🟧", "🟧", "🟧", "⬛️", "🟧", "🟧", "🟧"],
-  ["⬜", "🟫", "🟫", "🟧", "🟧", "🟧", "🟧", "⬛️", "⬛️", "⬛️", "⬛️", "⬜"],
-  ["⬜", "⬜", "⬜", "🟧", "🟧", "🟧", "🟧", "🟧", "🟧", "🟧", "⬜", "⬜"],
-  ["⬜", "⬜", "🟥", "🟥", "🟦", "🟥", "🟥", "🟥", "🟥", "⬜", "⬜", "⬜"],
-  ["⬜", "🟥", "🟥", "🟥", "🟦", "🟥", "🟥", "🟦", "🟥", "🟥", "🟥", "⬜"],
-  ["🟥", "🟥", "🟥", "🟥", "🟦", "🟦", "🟦", "🟦", "🟥", "🟥", "🟥", "🟥"],
-  ["🟧", "🟧", "🟥", "🟦", "🟧", "🟦", "🟦", "🟧", "🟦", "🟥", "🟧", "🟧"],
-  ["🟧", "🟧", "🟧", "🟦", "🟦", "🟦", "🟦", "🟦", "🟦", "🟧", "🟧", "🟧"],
-  ["🟧", "🟧", "🟦", "🟦", "🟦", "🟦", "🟦", "🟦", "🟦", "🟦", "🟧", "🟧"],
-  ["⬜", "⬜", "🟦", "🟦", "🟦", "⬜", "⬜", "🟦", "🟦", "🟦", "⬜", "⬜"],
-  ["⬜", "🟫", "🟫", "🟫", "⬜", "⬜", "⬜", "⬜", "🟫", "🟫", "🟫", "⬜"],
-  ["🟫", "🟫", "🟫", "🟫", "⬜", "⬜", "⬜", "⬜", "🟫", "🟫", "🟫", "🟫"],
-];
+const art = `
+⬜⬜⬜🟥🟥🟥🟥🟥⬜⬜⬜⬜
+⬜⬜🟥🟥🟥🟥🟥🟥🟥🟥🟥⬜
+⬜⬜🟫🟫🟫🟧🟧⬛️🟧⬜⬜⬜
+⬜🟫🟧🟫🟧🟧🟧⬛️🟧🟧🟧⬜
+⬜🟫🟧🟫🟫🟧🟧🟧⬛️🟧🟧🟧
+⬜🟫🟫🟧🟧🟧🟧⬛️⬛️⬛️⬛️⬜
+⬜⬜⬜🟧🟧🟧🟧🟧🟧🟧⬜⬜
+⬜⬜🟥🟥🟦🟥🟥🟥🟥⬜⬜⬜
+⬜🟥🟥🟥🟦🟥🟥🟦🟥🟥🟥⬜
+🟥🟥🟥🟥🟦🟦🟦🟦🟥🟥🟥🟥
+🟧🟧🟥🟦🟧🟦🟦🟧🟦🟥🟧🟧
+🟧🟧🟧🟦🟦🟦🟦🟦🟦🟧🟧🟧
+🟧🟧🟦🟦🟦🟦🟦🟦🟦🟦🟧🟧
+⬜⬜🟦🟦🟦⬜⬜🟦🟦🟦⬜⬜
+⬜🟫🟫🟫⬜⬜⬜⬜🟫🟫🟫⬜
+🟫🟫🟫🟫⬜⬜⬜⬜🟫🟫🟫🟫`.trim();
 
 // draw tool that updates the SSE with transport.send() messages
+
+const DrawOutputSchema = z.object({
+  ok: z.boolean(),
+  message: z.string().optional(),
+  data: z.string().optional(),
+});
+type DrawOutput = z.infer<typeof DrawOutputSchema>;
+
 mcp.registerTool(
   "draw",
   {
     title: "draw",
     description: "produces unicode individual strings in a SSE stream",
-    inputSchema: { delayMs: z.number(), stream: z.boolean() },
-    outputSchema: { result: z.string() },
+    inputSchema: { delayMs: z.number(), useStream: z.boolean() },
+    outputSchema: {
+      ok: z.boolean(),
+      message: z.string().optional(),
+      data: z.string().optional(),
+    },
   },
-  async ({ delayMs, stream }, ctx) => {
+  async ({ delayMs, useStream }, ctx) => {
+    // just return the full art if not streaming
+    if (!useStream) {
+      const output: DrawOutput = {
+        ok: true,
+        data: art,
+        message: "returning full art",
+      };
+      console.log("ok");
+      return {
+        content: [{ type: "text", text: JSON.stringify(output) }],
+        structuredContent: output,
+      };
+    }
+
     const { sessionId } = ctx;
     console.log("[unicode-server] sessionId:", sessionId);
 
     if (!sessionId) {
       console.log("[unicode-server] no session");
-      const result = { result: "no session" };
+      const output: DrawOutput = {
+        ok: false,
+        message: "no session id provided",
+      };
       return {
-        content: [{ type: "text", text: JSON.stringify(result) }],
-        structuredContent: result,
+        content: [{ type: "text", text: JSON.stringify(output) }],
+        structuredContent: output,
       };
     }
     const transport = sessions.get(sessionId);
 
     if (!sessions.has(sessionId) || transport === undefined) {
-      const result = { result: "no session matched" };
+      const output: DrawOutput = {
+        ok: false,
+        message: "Unable to create session",
+      };
       return {
-        content: [{ type: "text", text: JSON.stringify(result) }],
-        structuredContent: result,
+        content: [{ type: "text", text: JSON.stringify(output) }],
+        structuredContent: output,
       };
     }
 
@@ -81,63 +112,30 @@ mcp.registerTool(
     // ake sure return reaches the client before
     // sending over SSE
     (async () => {
-      if (!stream) {
-        let artString = "";
+      const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+      const chars = [...segmenter.segment(art)].map((seg) => seg.segment);
+      console.log(chars);
+
+      for (const char of chars) {
         await new Promise((r) => setTimeout(r, delayMs));
-        for (let i = 0; i < artArray.length; i++) {
-          for (let j = 0; j < artArray[i].length; j++) {
-            artString += artArray[i][j];
-          }
-          artString += "\n";
-        }
-        console.log(artString);
         await transport.send({
           jsonrpc: "2.0",
           method: "notifications/message",
           params: {
             level: "info",
-            message: artString,
-          },
-        });
-        return;
-      }
-      for (let i = 0; i < artArray.length; i++) {
-        for (let j = 0; j < artArray[i].length; j++) {
-          await new Promise((r) => setTimeout(r, delayMs));
-          console.log("[unicode-server] sending:", artArray[i][j]);
-          await transport.send({
-            jsonrpc: "2.0",
-            method: "notifications/message",
-            params: {
-              level: "info",
-              message: artArray[i][j],
-              row: String(i),
-              col: String(j),
-            },
-          });
-        }
-        // sending newline at the end of each row.
-        // would put this in art but it gets messed up because of prettier
-        // formatting =(.
-        await new Promise((r) => setTimeout(r, delayMs));
-        console.log("[unicode-server] sending:", "\\n");
-        await transport.send({
-          jsonrpc: "2.0",
-          method: "notifications/message",
-          params: {
-            level: "info",
-            message: "\n",
-            row: String(i),
-            col: String(artArray[i].length),
+            message: char,
           },
         });
       }
+      return;
     })();
 
-    const result = { result: `ok ${delayMs}` };
+    const output: DrawOutput = {
+      ok: true,
+    };
     return {
-      content: [{ type: "text", text: JSON.stringify(result) }],
-      structuredContent: result,
+      content: [{ type: "text", text: JSON.stringify(output) }],
+      structuredContent: output,
     };
   }
 );

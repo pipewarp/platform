@@ -7,57 +7,50 @@ const transport = new SSEClientTransport(new URL("http://localhost:3005/sse"));
 console.log("[transform-client] running");
 await client.connect(transport);
 
-let art = "";
+let art = `
+⬜⬜⬜🟥🟥🟥🟥🟥⬜⬜⬜⬜
+⬜⬜🟥🟥🟥🟥🟥🟥🟥🟥🟥⬜
+⬜⬜🟫🟫🟫🟧🟧⬛️🟧⬜⬜⬜
+⬜🟫🟧🟫🟧🟧🟧⬛️🟧🟧🟧⬜
+⬜🟫🟧🟫🟫🟧🟧🟧⬛️🟧🟧🟧
+⬜🟫🟫🟧🟧🟧🟧⬛️⬛️⬛️⬛️⬜
+⬜⬜⬜🟧🟧🟧🟧🟧🟧🟧⬜⬜
+⬜⬜🟥🟥🟦🟥🟥🟥🟥⬜⬜⬜
+⬜🟥🟥🟥🟦🟥🟥🟦🟥🟥🟥⬜
+🟥🟥🟥🟥🟦🟦🟦🟦🟥🟥🟥🟥
+🟧🟧🟥🟦🟧🟦🟦🟧🟦🟥🟧🟧
+🟧🟧🟧🟦🟦🟦🟦🟦🟦🟧🟧🟧
+🟧🟧🟦🟦🟦🟦🟦🟦🟦🟦🟧🟧
+⬜⬜🟦🟦🟦⬜⬜🟦🟦🟦⬜⬜
+⬜🟫🟫🟫⬜⬜⬜⬜🟫🟫🟫⬜
+🟫🟫🟫🟫⬜⬜⬜⬜🟫🟫🟫🟫`.trim();
 
-const inputArt = [
-  "⬜",
-  "⬜",
-  "⬜",
-  "🟥",
-  "🟥",
-  "🟥",
-  "🟥",
-  "🟥",
-  "⬜",
-  "⬜",
-  "⬜",
-  "⬜",
-  "\n",
-  "⬜",
-  "⬜",
-  "🟥",
-  "🟥",
-  "🟥",
-  "🟥",
-  "🟥",
-  "🟥",
-  "🟥",
-  "🟥",
-  "🟥",
-  "⬜",
-  "\n",
-  "⬜",
-  "⬜",
-  "🟫",
-  "🟫",
-  "🟫",
-  "🟧",
-  "🟧",
-  "⬛️",
-  "🟧",
-  "⬜",
-  "⬜",
-  "⬜",
-];
+const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+const chars = [...segmenter.segment(art)].map((seg) => seg.segment);
+// console.log(chars);
 
+let tranformedArt = "";
 client.setNotificationHandler(LoggingMessageNotificationSchema, (n) => {
   console.log("[transform-client] log message arg:", n);
-  art += n.params.message;
-  console.log(art);
+  tranformedArt += n.params.message;
+  console.log(tranformedArt);
 });
 
-const result = await client.callTool({
-  name: "transform",
-  arguments: { delayMs: 2000, inputArt },
-});
-console.log("[transform-client] draw tool result:", result.structuredContent);
+const useStreaming = true;
+
+if (useStreaming) {
+  for (const char of chars) {
+    await new Promise((r) => setTimeout(r, 50));
+    console.log(char);
+    client.callTool({
+      name: "transform",
+      arguments: { delayMs: 10, art: char, isStreaming: useStreaming },
+    });
+  }
+} else {
+  const result = await client.callTool({
+    name: "transform",
+    arguments: { delayMs: 5, art, isStreaming: useStreaming },
+  });
+  console.log("[transform-client] draw tool result:", result.structuredContent);
+}

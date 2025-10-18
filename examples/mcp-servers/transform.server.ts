@@ -24,6 +24,13 @@ const characterSwap = new Map<string, string>([
   ["🟫", "🟩"],
 ]);
 
+const TransformOutputSchema = z.object({
+  ok: z.boolean(),
+  data: z.string().optional(),
+  message: z.string().optional(),
+});
+type TranformOutput = z.infer<typeof TransformOutputSchema>;
+
 mcp.registerTool(
   "transform",
   {
@@ -31,53 +38,88 @@ mcp.registerTool(
     description: "converts unicode characters to an alternate color",
     inputSchema: {
       delayMs: z.number(),
-      inputArt: z.array(z.string()),
+      art: z.string(),
+      isStreaming: z.boolean(),
     },
-    outputSchema: { result: z.string() },
+    outputSchema: {
+      ok: z.boolean(),
+      data: z.string().optional(),
+      message: z.string().optional(),
+    },
   },
-  async ({ delayMs, inputArt }, ctx) => {
+  async ({ delayMs, art, isStreaming }, ctx) => {
     const { sessionId } = ctx;
     console.log("[transform-server] sessionId:", sessionId);
 
+    console.log("client sent art:", art);
+
     if (!sessionId) {
       console.log("[transform-server] no session");
-      const result = { result: "no session" };
+      const output: TranformOutput = {
+        ok: false,
+        message: "no sessionId provided",
+      };
       return {
-        content: [{ type: "text", text: JSON.stringify(result) }],
-        structuredContent: result,
+        content: [{ type: "text", text: JSON.stringify(output) }],
+        structuredContent: output,
       };
     }
     const transport = sessions.get(sessionId);
 
     if (!sessions.has(sessionId) || transport === undefined) {
-      const result = { result: "no session matched" };
+      const output: TranformOutput = { ok: false, message: "invalid session" };
       return {
-        content: [{ type: "text", text: JSON.stringify(result) }],
-        structuredContent: result,
+        content: [{ type: "text", text: JSON.stringify(output) }],
+        structuredContent: output,
+      };
+    }
+
+    if (!isStreaming) {
+      let newArt = "";
+
+      const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+      const chars = [...segmenter.segment(art)].map((seg) => seg.segment);
+
+      for (const char of chars) {
+        newArt += characterSwap.get(char) ?? char;
+      }
+      const output: TranformOutput = {
+        ok: true,
+        data: newArt,
+      };
+      return {
+        content: [{ type: "text", text: JSON.stringify(output) }],
+        structuredContent: output,
       };
     }
 
     // should move this out eventually as own thing, but this is just a demo
     (async () => {
+      if (!isStreaming) return;
       await new Promise((r) => setTimeout(r, delayMs));
-      let char = "";
-      for (let i = 0; i < inputArt.length; i++) {
-        char += characterSwap.get(inputArt[i]) ?? inputArt[i];
+      let newArt = "";
+
+      const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+      const chars = [...segmenter.segment(art)].map((seg) => seg.segment);
+
+      for (const char of chars) {
+        newArt += characterSwap.get(char) ?? char;
       }
-      console.log("transform-server] sending:", char);
+
+      console.log("transform-server] sending:", art);
       await transport.send({
         jsonrpc: "2.0",
         method: "notifications/message",
         params: {
           level: "info",
-          message: char,
+          message: newArt,
         },
       });
     })();
 
     return {
-      content: [],
-      structuredContent: { result: "ok" },
+      content: [{ type: "text", text: art }],
+      structuredContent: { ok: true },
     };
   }
 );

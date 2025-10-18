@@ -2,13 +2,13 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
 
-const client = new Client({ name: "unicode-client", version: "0.1.0" });
+const client = new Client({ name: "unicode-client", version: "0.1.0-alpha.1" });
 const transport = new SSEClientTransport(new URL("http://localhost:3004/sse"));
 console.log("[unicode-client] running");
 await client.connect(transport);
 
 let art = "";
-const stream = true;
+const stream = false;
 client.setNotificationHandler(LoggingMessageNotificationSchema, (n) => {
   if (stream) {
     console.log("[unicode-client] log message arg:", n);
@@ -23,6 +23,6 @@ client.setNotificationHandler(LoggingMessageNotificationSchema, (n) => {
 
 const result = await client.callTool({
   name: "draw",
-  arguments: { delayMs: 25, stream },
+  arguments: { delayMs: 25, useStream: stream },
 });
 console.log("[unicode-client] draw tool result:", result.structuredContent);
