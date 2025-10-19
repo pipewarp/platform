@@ -2,19 +2,19 @@ import { Command } from "commander";
 import fs from "fs";
 import { resolveCliPath } from "../../resolve-path.js";
 
+import { type EventEnvelope } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { McpManager } from "@pipewarp/adapters/step-executor";
-import { Engine } from "@pipewarp/engine";
 import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
-import {
-  type FlowQueuedEvent,
-  type EventEnvelope,
-  type StartFlowInput,
-} from "@pipewarp/ports";
+import { InMemoryQueue } from "@pipewarp/adapters/queue";
+import { NodeRouter } from "@pipewarp/adapters/router";
+import { McpWorker } from "@pipewarp/adapters/worker";
+import { Engine } from "@pipewarp/engine";
+import { startDemoServers } from "./demo.js";
 
 export async function cliRunAction(
   flowPath: string,
-  options: { out?: string; test?: boolean; server?: string }
+  options: { out?: string; test?: boolean; server?: string; demo?: boolean }
 ): Promise<void> {
   console.log("running run");
   console.log("options", options);
@@ -23,23 +23,15 @@ export async function cliRunAction(
     out = "./output.json",
     test = false,
     server = "./src/mcp-server.ts",
+    demo = false,
   } = options;
-
-  // INIT_CWD is set by pnpm if invoked with pnpm
-  // Resolve path this way to handle invocation from pnpm or directly
 
   const resolvedFlowPath = resolveCliPath(flowPath);
   const resolvedOutPath = resolveCliPath(out);
-
-  // open json file
   const raw = fs.readFileSync(resolvedFlowPath, { encoding: "utf-8" });
-
-  // parse json file
   const json = JSON.parse(raw);
 
-  // add to flow db
   const flowStore = new FlowStore();
-
   const { result, flow } = flowStore.validate(json);
   if (!result) {
     console.error(`Invaid flow at ${flowPath}`);
@@ -48,18 +40,56 @@ export async function cliRunAction(
   if (flow === undefined) {
     return;
   }
-
   flowStore.add(flow);
 
-  // make mcp manager
   const mcpStore = new McpManager();
 
-  // create mcp client
-  await mcpStore.addStdioClient(server, "stt-client");
+  if (demo) {
+    console.log("starting demo servers");
+    const managedProcesses = await startDemoServers();
 
-  // create engine
+    if (!managedProcesses) {
+      console.error("error starting servers for demo");
+    }
+    await mcpStore.addSseClient(
+      "http://localhost:3004/sse",
+      "unicode",
+      "unicode-client",
+      "0.1.0-alpha.1"
+    );
+    await mcpStore.addSseClient(
+      "http://localhost:3005/sse",
+      "transform",
+      "transform-client",
+      "0.1.0-alpha.1"
+    );
+
+    process.on("SIGINT", async () => {
+      await mcpStore.close("unicode");
+      await mcpStore.close("transform");
+    });
+    process.on("SIGTERM", async () => {
+      await mcpStore.close("unicode");
+      await mcpStore.close("transform");
+    });
+  } else {
+    await mcpStore.addStdioClient(server, "stt-client");
+  }
+
+  const queue = new InMemoryQueue();
   const bus = new InMemoryEventBus();
-  const engine = new Engine(flowStore, mcpStore, bus);
+  const router = new NodeRouter(bus, queue);
+
+  const mcpWorker = new McpWorker(queue, bus, mcpStore);
+
+  for await (const [mcpId] of mcpStore.mcps) {
+    console.log(`starting mcpid: ${mcpId}`);
+    await mcpWorker.startMcp(mcpId);
+  }
+
+  await router.start();
+
+  const engine = new Engine(flowStore, bus);
 
   const startFlow: EventEnvelope = {
     correlationId: "123-cid",
@@ -74,18 +104,35 @@ export async function cliRunAction(
     },
   };
 
+  process.on("SIGINT", async () => {
+    if (demo) {
+      await mcpWorker.stopMcp("unicode");
+      await mcpWorker.stopMcp("transform");
+    } else {
+      await mcpWorker.stopMcp("stt-client");
+    }
+    queue.abortAll();
+  });
+  process.on("SIGTERM", async () => {
+    if (demo) {
+      await mcpWorker.stopMcp("unicode");
+      await mcpWorker.stopMcp("transform");
+    } else {
+      await mcpWorker.stopMcp("stt-client");
+    }
+    mcpStore.close("unicode");
+  });
+  process.on("exit", async () => {
+    if (demo) {
+      await mcpWorker.stopMcp("unicode");
+      await mcpWorker.stopMcp("transform");
+    } else {
+      await mcpWorker.stopMcp("stt-client");
+    }
+    queue.abortAll();
+  });
+
   await bus.publish("flows.lifecycle", startFlow);
-
-  // start engine
-  // const input: StartFlowInput = {
-  //   flowName: "stt-flow",
-  //   correlationId: "temp-id",
-  //   test,
-  //   outfile: resolvedOutPath,
-  // };
-
-  // const response = await engine.startFlow(input);
-  // console.log(response);
 }
 
 export function registerRunCmd(program: Command): Command {
@@ -93,9 +140,12 @@ export function registerRunCmd(program: Command): Command {
     .command("run <flowPath>")
     .option("-o, --out <outPath>", "path to write output")
     .option("-t, --test", "run in test mode")
+    .option("-d, --demo", "run preconfigured demo")
     .option("-s, --server <serverPath>", "stdio server path to connect to")
     .description("run a workflow definition from a flow.json file")
-    .action(cliRunAction);
+    .action(async (flowPath, options) => {
+      await cliRunAction(flowPath, options);
+    });
 
   return program;
 }

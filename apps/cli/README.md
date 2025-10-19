@@ -36,10 +36,11 @@ pwp run <flow.json>
 - `-t, --test` run engine in test mode
 - `-o, --out <outPath>` output json path, default is `output.json`
 - `-s, --server <serverPath>` path to stdio mcp server, default is `./src/mcp-server.ts`
+- `-d, --demo` run in specific demo mode with supplied localhost MCP servers spawned as child processes.
 
 ### validate
 
-`validate <flowPath>`
+`validate <flowPath>` validates a flow definition file.
 
 ### help
 

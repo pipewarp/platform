@@ -1,6 +1,6 @@
 {
   "name": "@pipewarp/adapters",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "private": "true",
   "type": "module",
   "exports": {
@@ -15,6 +15,18 @@
     "./step-executor": {
       "types": "./dist/step-executor/index.d.ts",
       "import": "./dist/step-executor/index.js"
+    },
+    "./router": {
+      "types": "./dist/router/index.d.ts",
+      "import": "./dist/router/index.js"
+    },
+    "./queue": {
+      "types": "./dist/queue/index.d.ts",
+      "import": "./dist/queue/index.js"
+    },
+    "./worker": {
+      "types": "./dist/worker/index.d.ts",
+      "import": "./dist/worker/index.js"
     }
   },
   "scripts": {

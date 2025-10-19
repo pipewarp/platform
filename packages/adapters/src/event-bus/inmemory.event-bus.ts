@@ -18,6 +18,7 @@ export class InMemoryEventBus implements EventBusPort {
    * Uses EventEmitter under the hood.
    */
   async publish(topic: string, event: EventEnvelope): Promise<void> {
+    console.log("[inmemory-bus] publish() called; topic, event:", topic, event);
     if (event == undefined || event.kind == undefined) {
       console.error(
         "[inmemory-bus] cannot publish event. event or event.kind is undefined"
@@ -46,6 +47,7 @@ export class InMemoryEventBus implements EventBusPort {
     topic: string,
     handler: (e: EventEnvelope, t?: string) => Promise<void>
   ): () => unknown {
+    console.log("[inmemory-bus] subscribe() called;");
     const safeHandler = (e: EventEnvelope, t: string) => {
       try {
         handler(e, t ?? topic);

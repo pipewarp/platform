@@ -1,6 +1,6 @@
 {
   "name": "@pipewarp/platform",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "type": "module",
   "private": "true",
   "scripts": {
@@ -21,6 +21,6 @@
   "workspaces": [
     "apps/*",
     "packages/*",
-    "examples/*"
+    "examples/"
   ]
 }
