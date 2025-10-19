@@ -89,7 +89,7 @@ This cli run command, when run with this flow and the `-d` or `--demo` option, f
 
 5. The engine's `RunContext` is saved as output.json in the root of the repo. It contains details about the run, including the output from each step.
 
-See [app/cli/README.md](apps/cli/README.md) for more commmands details about the cli.
+See [apps/cli/README.md](apps/cli/README.md) for more details about the cli.
 
 ## cli e2e test
 
