@@ -74,6 +74,14 @@ export class McpManager {
     }
   }
 
+  async close(mcpId: McpId): Promise<void> {
+    if (!this.mcps.has(mcpId)) return;
+    const client = this.mcps.get(mcpId);
+    if (!client) return;
+    console.log(`[mcp manager] closing client ${mcpId}`);
+    await client.client.close();
+  }
+
   // Makes the class directly async iterable
   async *[Symbol.asyncIterator](): AsyncGenerator<
     [McpId, McpDb],

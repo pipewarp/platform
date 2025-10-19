@@ -141,8 +141,11 @@ mcp.registerTool(
   }
 );
 
+app.get("/health", async (req, res) => {
+  return res.status(200).send("ok");
+});
 // endpoint for created th sse connection
-app.get("/sse", async (_req, res) => {
+app.get("/sse", async (req, res) => {
   console.log("[unicode-server] connecting /sse");
   const transport = new SSEServerTransport("/messages", res);
   sessions.set(transport.sessionId, transport);
@@ -186,4 +189,13 @@ app.listen(port, () => {
   console.log("[unicode-server] unicode MCP SSE server running.");
   console.log(`[unicode-server] Listening on http://localhost:${port}`);
   console.log(`[unicode-server] GET /sse, POST /messages`);
+});
+process.on("SIGINT", () => {
+  process.exit();
+});
+process.on("SIGTERM", () => {
+  process.exit();
+});
+process.on("exit", () => {
+  process.exit();
 });
