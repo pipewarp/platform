@@ -60,4 +60,15 @@ export class InMemoryQueue implements QueuePort {
     const q = this.#queues.get(queue) ?? [];
     return q.slice(0, number);
   }
+
+  // gracefully shut down and resolve any promises for clean process exit
+  abortAll(): void {
+    for (const [queue, resolvers] of this.#waiters.entries()) {
+      for (const resolver of resolvers) {
+        resolver(null as any);
+      }
+    }
+    this.#waiters.clear();
+    console.log("[inmemory-queue] all waiters aborted and resolved null");
+  }
 }

@@ -64,6 +64,7 @@ mcp.registerTool(
   },
   async ({ delayMs, useStream }, ctx) => {
     // just return the full art if not streaming
+
     if (!useStream) {
       const output: DrawOutput = {
         ok: true,
@@ -72,7 +73,7 @@ mcp.registerTool(
       };
       console.log("ok");
       return {
-        content: [{ type: "text", text: JSON.stringify(output) }],
+        content: [{ type: "text", text: output.data ?? "" }],
         structuredContent: output,
       };
     }
@@ -140,8 +141,11 @@ mcp.registerTool(
   }
 );
 
+app.get("/health", async (req, res) => {
+  return res.status(200).send("ok");
+});
 // endpoint for created th sse connection
-app.get("/sse", async (_req, res) => {
+app.get("/sse", async (req, res) => {
   console.log("[unicode-server] connecting /sse");
   const transport = new SSEServerTransport("/messages", res);
   sessions.set(transport.sessionId, transport);
@@ -185,4 +189,13 @@ app.listen(port, () => {
   console.log("[unicode-server] unicode MCP SSE server running.");
   console.log(`[unicode-server] Listening on http://localhost:${port}`);
   console.log(`[unicode-server] GET /sse, POST /messages`);
+});
+process.on("SIGINT", () => {
+  process.exit();
+});
+process.on("SIGTERM", () => {
+  process.exit();
+});
+process.on("exit", () => {
+  process.exit();
 });

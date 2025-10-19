@@ -88,7 +88,7 @@ mcp.registerTool(
         data: newArt,
       };
       return {
-        content: [{ type: "text", text: JSON.stringify(output) }],
+        content: [{ type: "text", text: output.data ?? "" }],
         structuredContent: output,
       };
     }
@@ -123,7 +123,9 @@ mcp.registerTool(
     };
   }
 );
-
+app.get("/health", async (req, res) => {
+  return res.status(200).send("ok");
+});
 // endpoint for created th sse connection
 app.get("/sse", async (_req, res) => {
   console.log("[transform-server] connecting /sse");
@@ -169,4 +171,14 @@ app.listen(port, () => {
   console.log("[transform-server] ascii MCP SSE server running.");
   console.log(`[transform-server] Listening on http://localhost:${port}`);
   console.log(`[transform-server] GET /sse, POST /messages`);
+});
+
+process.on("SIGINT", () => {
+  process.exit();
+});
+process.on("SIGTERM", () => {
+  process.exit();
+});
+process.on("exit", () => {
+  process.exit();
 });
