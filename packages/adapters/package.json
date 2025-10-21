@@ -27,12 +27,16 @@
     "./worker": {
       "types": "./dist/worker/index.d.ts",
       "import": "./dist/worker/index.js"
+    },
+    "./stream": {
+      "types": "./dist/stream/index.d.ts",
+      "import": "./dist/stream/index.js"
     }
   },
   "scripts": {
     "build": "tsc --incremental false",
     "typecheck": "tsc --noEmit",
-    "test": "echo test",
+    "test": "vitest",
     "lint": "echo lint"
   },
   "packageManager": "pnpm@10.17.1",
@@ -41,5 +45,8 @@
     "@pipewarp/ports": "workspace:*",
     "@pipewarp/specs": "workspace:*",
     "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }
