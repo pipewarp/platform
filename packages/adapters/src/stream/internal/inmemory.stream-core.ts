@@ -54,7 +54,7 @@ export class InMemoryStreamCore
   #isClosed = false; // fully closed stream; terminated;
   #error: unknown = null;
   #nextSeq = 0;
-  #iter: AsyncIterable<Chunk> | null = null;
+  #iter: AsyncIterableIterator<Chunk> | null = null;
 
   private static readonly DONE = Symbol("done");
 
@@ -105,7 +105,7 @@ export class InMemoryStreamCore
    * Call once, repeated calls return the same object.
    * @returns AsyncIterable object that returns chunks
    */
-  subscribe(): AsyncIterable<Chunk> {
+  subscribe(): AsyncIterableIterator<Chunk> {
     // if already returned a generator, return the same generator
     if (this.#iter) return this.#iter;
     if (this.#status === "idle") this.#status = "open";
