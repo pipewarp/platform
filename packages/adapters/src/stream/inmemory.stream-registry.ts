@@ -21,7 +21,7 @@ export class InMemoryStreamRegistry implements StreamRegistryPort {
   constructor() {}
 
   createStream(streamId: string): StreamHandles {
-    const streamCore = new InMemoryStreamCore(streamId, "idle"); // later move to factory function for DI
+    const streamCore = new InMemoryStreamCore(streamId); // later move to factory function for DI
 
     const consumer = makeConsumerView(streamCore);
     const producer = makeProducerView(streamCore);
@@ -54,6 +54,6 @@ export class InMemoryStreamRegistry implements StreamRegistryPort {
     return c;
   }
   closeStream(streamId: string): Promise<void> {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not impelemented.");
   }
 }

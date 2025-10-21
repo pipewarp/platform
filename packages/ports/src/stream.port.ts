@@ -3,16 +3,15 @@
 
 // types later defined in zod for schema validation depending on speed parsing
 
-export type InputChunk<T = unknown> = {
+export type Chunk<T = unknown> = {
   type: "data" | "meta" | "end" | "error";
   payload?: T;
   meta?: Record<string, unknown>;
-};
-
-export type Chunk<T = unknown> = InputChunk<T> & {
   seq: number;
   ts: number; // epoch ms
 };
+export type InputChunk = Omit<Chunk, "seq" | "ts">;
+
 export type StreamStatus =
   | "idle"
   | "open"
@@ -42,5 +41,5 @@ export interface ConsumerStreamPort extends StreamPort {
 }
 export interface ProducerStreamPort extends StreamPort {
   send(data: InputChunk): Promise<void>;
-  end(): void;
+  end(): Promise<void>;
 }

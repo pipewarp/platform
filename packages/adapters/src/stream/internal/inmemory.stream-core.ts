@@ -15,86 +15,133 @@ import type {
 // Those views are public, thus this class is internal and named "core",
 // it should not be exported to public.
 
-type DeferredResolve<Chunk> = (v: Chunk) => void;
-type DeferedReject = (e: unknown) => void;
-type Deferred<Chunk> = {
-  promise: Promise<Chunk>;
-  resolve: DeferredResolve<Chunk>;
+type DeferredResolve<NextValue> = (v: NextValue) => void;
+type DeferedReject = (e?: unknown) => void;
+type Deferred<NextValue> = {
+  promise: Promise<NextValue>;
+  resolve: DeferredResolve<NextValue>;
   reject: DeferedReject;
 };
+const DONE = Symbol("done"); // producer done + nothing left in queue;
+type NextValue = Chunk | typeof DONE;
+
+// helper not exported, module scoped
+function createDeferred<NextValue>(): Deferred<NextValue> {
+  let resolve!: DeferredResolve<NextValue>;
+  let reject!: DeferedReject;
+  const promise = new Promise<NextValue>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+}
+
+/**
+ * InMemoryStreamCore class implements stream adapters for an
+ * in memory version of the stream core.  Internal use only.
+ * ConsumerStream and ProducerStream exports views with scoped
+ * methods appropriate for each class.
+ */
 export class InMemoryStreamCore
   implements ConsumerStreamPort, ProducerStreamPort
 {
   #buffer: Chunk[] = [];
-  #deferreds: Deferred<Chunk>[] = [];
+  #waiters: Deferred<NextValue>[] = [];
   #status: StreamStatus = "idle";
-  #producerDone: boolean = false;
-  #consumerDone: boolean = false;
-  #nextSeq: number = 0;
-  #asyncGenerator: AsyncGenerator<Chunk> | undefined = undefined;
+  #isProducerDone = false; // producer signaled the end of input
+
+  #isClosed = false; // fully closed stream; terminated;
+  #error: unknown = null;
+  #nextSeq = 0;
+  #iter: AsyncIterable<Chunk> | null = null;
+
+  private static readonly DONE = Symbol("done");
 
   constructor(private readonly streamId: string) {}
-  close(): Promise<void> {
-    this.#status !== "closed" && (this.#status = "closed");
-    throw new Error("Method not implemented.");
-  }
-  end(): void {
-    this.#status !== "ended" && (this.#status = "ended");
-    this.#producerDone = true;
-  }
-  status(): StreamStatus {
-    return this.#status;
-  }
+  /**
+   * Return stream id (string)
+   * @returns stream id (string)
+   */
   id(): string {
     return this.streamId;
   }
+  /**
+   * Overall status of the stream.
+   * @returns StreamStatus type.
+   */
+  status(): StreamStatus {
+    return this.#status;
+  }
+  /**
+   * Producer marks an end to sending streaming data.
+   * @returns void
+   * @description Producer should call this to mark the end of sending data
+   * into the stream.
+   *
+   * Stream stays open until producer calls end() and internal buffer is empty.
+   * @see close() method for hard shutting down a stream.
+   */
+  async end(): Promise<void> {
+    if (this.#isProducerDone || this.#isClosed) return;
+    this.#isProducerDone = true;
+    this.#status = "ended";
+    if (this.#buffer.length === 0) this.#resolveAllWaitersDone();
+  }
+  /**
+   * Hard closes the stream and empties buffer for consumer and producer.
+   * @returns Promise<void>
+   */
+  async close(): Promise<void> {
+    if (this.#isClosed) return;
+    this.#isClosed = true;
+    this.#status = "closed";
+    this.#buffer.length = 0; // empty buffer
+    this.#resolveAllWaitersDone();
+  }
 
-  // repeated calls return the same generator instance
-  subscribe(): AsyncGenerator<Chunk> {
+  /**
+   * Get an async iterable object that returns chunks.
+   * Call once, repeated calls return the same object.
+   * @returns AsyncIterable object that returns chunks
+   */
+  subscribe(): AsyncIterable<Chunk> {
     // if already returned a generator, return the same generator
-    if (this.#asyncGenerator) return this.#asyncGenerator;
+    if (this.#iter) return this.#iter;
+    if (this.#status === "idle") this.#status = "open";
 
-    this.#status !== "open" && (this.#status = "open");
+    const core = this;
 
-    const getNextChunk = async (): Promise<Chunk> => {
-      if (this.#buffer.length > 0) {
-        this.#status !== "active" && (this.#status = "active");
-        return this.#buffer.shift()!;
-      }
-      if (this.#producerDone && this.#buffer.length === 0) {
-        const chunk: Chunk = {
-          seq: this.#nextSeq++,
-          ts: Date.now(),
-          type: "end",
-        };
-        return chunk;
-      }
-      const deferred = this.createDeferred<Chunk>();
-
-      this.#deferreds.push(deferred);
-      return deferred.promise;
-    };
-
-    async function* asyncGenerator(): AsyncGenerator<Chunk> {
+    async function* generator(): AsyncGenerator<Chunk> {
       try {
         while (true) {
-          const chunk = await getNextChunk();
-          yield chunk;
-          if (chunk.type == "end") {
-            break;
-          }
+          const value = await core.#getNextValue();
+          if (value === DONE) break; // return iterator {done: true}
+          yield value;
         }
-      } catch (err) {
-        console.log(err);
+      } finally {
+        // emit observability here
+        // NOTE: later support shutdown if producer is done,
+        // or some way to inform producers that consumer is
+        // no longe listening
       }
     }
 
-    const generator = asyncGenerator();
-    this.#asyncGenerator = generator;
-    return generator;
+    this.#iter = generator();
+    return this.#iter;
   }
+  /**
+   * Producer method to send data to an open stream
+   * @param data
+   * @returns Promise<void>
+   */
   async send(data: InputChunk): Promise<void> {
-    this.#status !== "active" && (this.#status = "active");
+    if (this.#isClosed) throw new Error("stream is closed");
+    if (this.#isProducerDone) throw new Error("producer already ended");
+
+    if (this.#status === "idle" || this.#status === "open") {
+      this.#status = "active";
+    }
 
     const chunk: Chunk = {
       ...data,
@@ -102,23 +149,65 @@ export class InMemoryStreamCore
       seq: this.#nextSeq++,
     };
 
-    // resolve if deferred is not empty
-    if (this.#deferreds.length > 0) {
-      const deferred = this.#deferreds.shift()!;
-      return deferred.resolve(chunk);
+    const waiter = this.#waiters.shift();
+    if (waiter) {
+      // delay promise resolution until later to prevent timing problems
+      queueMicrotask(() => waiter.resolve(chunk));
+      return;
     }
     this.#buffer.push(chunk);
     return;
   }
 
-  private createDeferred<Chunk>(): Deferred<Chunk> {
-    let resolve!: DeferredResolve<Chunk>;
-    let reject!: DeferedReject;
-    const promise = new Promise<Chunk>((res, rej) => {
-      resolve = res;
-      reject = rej;
-    });
+  /**
+   * Gets next value for async iterator.  Either a chunk or DONE
+   * @returns Promise<NextValue>
+   */
+  async #getNextValue(): Promise<NextValue> {
+    if (this.#error) return Promise.reject(this.#error);
+    if (this.#buffer.length > 0) {
+      if (this.#status === "open") this.#status = "active";
+      return this.#buffer.shift()!;
+    }
 
-    return { promise, resolve, reject };
+    // inform consumer if stream is closed or buffer/producer is done
+    if (this.#isClosed) return DONE;
+    if (this.#isProducerDone && this.#buffer.length === 0) return DONE;
+
+    const deferred = createDeferred<NextValue>();
+    this.#waiters.push(deferred);
+    return deferred.promise;
+  }
+
+  /**
+   * Empties waiters and resolves them all with DONE
+   * @returns void
+   */
+  #resolveAllWaitersDone(): void {
+    if (this.#waiters.length === 0) return;
+    const list = this.#waiters.splice(0); // remove + resolve all waiters
+    for (const w of list) queueMicrotask(() => w.resolve(DONE));
+  }
+  /**
+   * Empties waiters and rejects all with error
+   * @param err
+   * @returns void
+   */
+  #rejectAllWaiters(err: unknown): void {
+    if (this.#waiters.length === 0) return;
+    const list = this.#waiters.splice(0); // remove + reject all waiters
+    for (const w of list) queueMicrotask(() => w.reject(err));
+  }
+
+  /**
+   * Not yet utilized, but a failure cleanup method
+   * @param err
+   * @returns void
+   */
+  #fail(err: unknown): void {
+    if (this.#isClosed) return;
+    this.#status = "error";
+    this.#error = err;
+    this.#rejectAllWaiters(err);
   }
 }

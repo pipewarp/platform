@@ -1,6 +1,6 @@
 import { InMemoryStreamCore } from "./inmemory.stream-core.js";
 import type {
-  Chunk,
+  InputChunk,
   ConsumerStreamPort,
   ProducerStreamPort,
 } from "@pipewarp/ports";
@@ -11,11 +11,11 @@ export function makeProducerView(
   core: InMemoryStreamCore
 ): Readonly<ProducerStreamPort> {
   const producer: ProducerStreamPort = {
-    send: async (data: Chunk) => await core.send(data),
+    send: async (data: InputChunk) => await core.send(data),
     close: async () => await core.close(),
     status: () => core.status(),
     id: () => core.id(),
-    end: () => core.end(),
+    end: async () => await core.end(),
   };
 
   return Object.freeze(producer);
