@@ -66,7 +66,7 @@ describe("in-memory stream core", () => {
     const { value } = await pending;
     expect(value).toMatchObject(chunk);
   });
-  it("Resolves iterators as done after close() and throws on future sends()", async () => {
+  it("resolves iterators as done after close() and throws on future sends()", async () => {
     const stream = new InMemoryStreamCore("new-id");
     const chunk: InputChunk = {
       type: "data",

@@ -54,5 +54,6 @@ export class InMemoryStreamRegistry implements StreamRegistryPort {
     }
     const { s } = this.#registry.get(streamId)!;
     await s.close();
+    this.#registry.delete(streamId);
   }
 }

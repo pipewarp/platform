@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it, assert } from "vitest";
 import { InMemoryStreamRegistry } from "../src/stream/inmemory.stream-registry";
+import type { ProducerStreamPort } from "@pipewarp/ports";
 
 describe("in-memory stream registry", () => {
   it("returns a stream with the id supplied", () => {
@@ -39,5 +40,15 @@ describe("in-memory stream registry", () => {
     streamRegistry.closeStream(id);
     expect(producer.status()).toBe("closed");
     expect(consumer.status()).toBe("closed");
+  });
+
+  it("getProducer() and getConsumer() throw after stream is closed", async () => {
+    const streamRegistry = new InMemoryStreamRegistry();
+    const { id, producer, consumer } = streamRegistry.createStream("new-id");
+    expect(id).toBe("new-id");
+    await streamRegistry.closeStream(id);
+
+    expect(() => streamRegistry.getProducer(id)).toThrowError();
+    expect(() => streamRegistry.getConsumer(id)).toThrowError();
   });
 });
