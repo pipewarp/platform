@@ -16,7 +16,7 @@ import type {
 export class InMemoryStreamRegistry implements StreamRegistryPort {
   #registry = new Map<
     string,
-    { p: ProducerStreamPort; c: ConsumerStreamPort }
+    { p: ProducerStreamPort; c: ConsumerStreamPort; s: InMemoryStreamCore }
   >();
   constructor() {}
 
@@ -26,7 +26,7 @@ export class InMemoryStreamRegistry implements StreamRegistryPort {
     const consumer = makeConsumerView(streamCore);
     const producer = makeProducerView(streamCore);
 
-    this.#registry.set(streamId, { p: producer, c: consumer });
+    this.#registry.set(streamId, { p: producer, c: consumer, s: streamCore });
     const { p, c } = this.#registry.get(streamId)!;
 
     return { id: streamId, consumer, producer };
@@ -35,25 +35,24 @@ export class InMemoryStreamRegistry implements StreamRegistryPort {
     if (!this.#registry.has(streamId)) {
       throw new Error(`[stream-registry] no registry for id:${streamId}`);
     }
-    if (this.#registry.get(streamId) === undefined) {
-      const msg = `[stream-registry] registry is undefined for ${streamId}`;
-      throw new Error(msg);
-    }
-    const { p } = this.#registry.get(streamId)!; // just checked undefined
+    const { p } = this.#registry.get(streamId)!;
     return p;
   }
   getConsumer(streamId: string): ConsumerStreamPort {
     if (!this.#registry.has(streamId)) {
       throw new Error(`[stream-registry] no registry for id:${streamId}`);
     }
-    if (this.#registry.get(streamId) === undefined) {
-      const msg = `[stream-registry] registry is undefined for ${streamId}`;
-      throw new Error(msg);
-    }
-    const { c } = this.#registry.get(streamId)!; // just checked undefined
+    const { c } = this.#registry.get(streamId)!;
     return c;
   }
-  closeStream(streamId: string): Promise<void> {
-    throw new Error("Method not impelemented.");
+  async closeStream(streamId: string): Promise<void> {
+    if (!this.#registry.has(streamId)) {
+      console.error(
+        `[inmemory-stream-registry] cannot close stream: ${streamId}`
+      );
+      return;
+    }
+    const { s } = this.#registry.get(streamId)!;
+    await s.close();
   }
 }

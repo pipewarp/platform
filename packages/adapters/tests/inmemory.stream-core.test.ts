@@ -80,7 +80,7 @@ describe("in-memory stream core", () => {
     expect(object.done).toBe(true);
     expect(object.value).toBe(undefined);
 
-    expect(stream.send(chunk)).rejects.toThrowError("stream is closed");
+    await expect(stream.send(chunk)).rejects.toThrowError("stream is closed");
   });
 
   it("drains and stops iterator cleanly after end()", async () => {
