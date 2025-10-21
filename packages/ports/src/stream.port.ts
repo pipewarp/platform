@@ -1,9 +1,17 @@
-export type Chunk<T = unknown> = {
+// using async iterables to provide platform agnostic language support for
+// some built in backpressure.
+
+// types later defined in zod for schema validation depending on speed parsing
+
+export type InputChunk<T = unknown> = {
   type: "data" | "meta" | "end" | "error";
-  payload: T; // utf 8 strings default
+  payload?: T;
+  meta?: Record<string, unknown>;
+};
+
+export type Chunk<T = unknown> = InputChunk<T> & {
   seq: number;
   ts: number; // epoch ms
-  meta?: Record<string, unknown>;
 };
 export type StreamStatus =
   | "idle"
@@ -18,6 +26,8 @@ export interface StreamPort {
   close(): Promise<void>;
   // status of the stream
 
+  // producer signals end to incoming stream
+
   // lifecycle: idle -> open -> active -> ended -> closed|error
   // ended marks producer is done but consumer can still pull
   status(): StreamStatus;
@@ -25,12 +35,12 @@ export interface StreamPort {
   id(): string;
 }
 
+// current design expects one consumer per producer.
 export interface ConsumerStreamPort extends StreamPort {
-  // called multiple times to recieve one chunk from an async iterable
-  pull(): AsyncIterable<Chunk>;
-  // later support subscribe() for producers who braodcast()
+  // called once to receive an AsynIterable object which returns a chunk
+  subscribe(): AsyncIterable<Chunk>;
 }
 export interface ProducerStreamPort extends StreamPort {
-  send(data: Chunk): Promise<void>;
-  // later support braodcast() to send to consumers who subscribe()
+  send(data: InputChunk): Promise<void>;
+  end(): void;
 }
