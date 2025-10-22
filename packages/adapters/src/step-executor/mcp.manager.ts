@@ -1,6 +1,8 @@
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { InputChunk, ProducerStreamPort } from "@pipewarp/ports";
+import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
 
 export type McpDb = {
   client: Client;
@@ -80,6 +82,12 @@ export class McpManager {
     if (!client) return;
     console.log(`[mcp manager] closing client ${mcpId}`);
     await client.client.close();
+  }
+
+  async streamSseTo(mcpId: string, producer: ProducerStreamPort) {
+    if (!this.mcps.has(mcpId)) return;
+    const { client } = this.mcps.get(mcpId)!;
+    client.setNotificationHandler(LoggingMessageNotificationSchema, (d) => {});
   }
 
   // Makes the class directly async iterable

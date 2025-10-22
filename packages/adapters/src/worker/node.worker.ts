@@ -3,16 +3,21 @@ import {
   EventBusPort,
   EventEnvelope,
   StepCompletedEvent,
+  StreamRegistryPort,
+  InputChunk,
 } from "@pipewarp/ports";
 import { McpManager } from "../step-executor/mcp.manager.js";
 import { randomUUID } from "crypto";
+import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
+import { isSetIterator } from "util/types";
 
 export class McpWorker {
   #waiters = new Map<string, boolean>();
   constructor(
     private readonly queues: QueuePort,
     private readonly bus: EventBusPort,
-    private readonly mcps: McpManager
+    private readonly mcps: McpManager,
+    private readonly streamManager: StreamRegistryPort
   ) {}
 
   async handleActionMcp(e: EventEnvelope) {
@@ -26,29 +31,92 @@ export class McpWorker {
       }
       const mcpClient = mcpDb.client;
 
+      if (e.data.pipe?.to) {
+        let newArt = "";
+        const producer = this.streamManager.getProducer(e.data.pipe.to);
+        mcpClient.setNotificationHandler(
+          LoggingMessageNotificationSchema,
+          (d) => {
+            const chunk: InputChunk = {
+              type: "data",
+              payload: {
+                text: d,
+              },
+            };
+            console.log(e.data.stepName);
+            newArt += d.params.message;
+            console.log(newArt);
+            producer.send(chunk);
+          }
+        );
+      }
+
       try {
-        const response = await mcpClient.callTool({
-          name: e.data.op,
-          arguments: e.data.args,
-        });
-        console.log(`[worker] handleActionMcp callTool() response:`, response);
+        if (e.data.pipe?.from) {
+          const consumer = this.streamManager.getConsumer(e.data.pipe.from);
 
-        const stepCompletedEvent: StepCompletedEvent = {
-          correlationId: e.correlationId,
-          id: randomUUID(),
-          time: new Date().toISOString(),
-          kind: "step.completed",
-          runId: e.runId,
-          data: {
-            stepName: e.data.stepName,
-            ok: response.isError ? false : true,
-            result: response.isError
-              ? undefined
-              : (response.content as Array<Record<string, unknown>>),
-          },
-        };
+          const buffer = [];
+          let sentArt = "";
 
-        await this.bus.publish("steps.lifecycle", stepCompletedEvent);
+          for await (const chunk of consumer.subscribe()) {
+            const payload = chunk.payload as {
+              text?: { params?: { message?: string } };
+            };
+            const message = payload?.text?.params?.message ?? "";
+            const response = await mcpClient.callTool({
+              name: e.data.op,
+              arguments: {
+                art: message,
+                isStreaming: true,
+                delayMs: 10,
+              },
+            });
+            // sentArt += message;
+            // console.log(sentArt);
+            buffer.push(response.content as Array<Record<string, unknown>>);
+          }
+          const stepCompletedEvent: StepCompletedEvent = {
+            correlationId: e.correlationId,
+            id: randomUUID(),
+            time: new Date().toISOString(),
+            kind: "step.completed",
+            runId: e.runId,
+            data: {
+              stepName: e.data.stepName,
+              ok: true,
+              result: buffer,
+            },
+          };
+
+          await this.bus.publish("steps.lifecycle", stepCompletedEvent);
+        } else {
+          const response = await mcpClient.callTool({
+            name: e.data.op,
+            arguments: e.data.args,
+          });
+          console.log(
+            `[worker] handleActionMcp callTool() response:`,
+            response
+          );
+
+          const stepCompletedEvent: StepCompletedEvent = {
+            correlationId: e.correlationId,
+            id: randomUUID(),
+            time: new Date().toISOString(),
+            kind: "step.completed",
+            runId: e.runId,
+            data: {
+              stepName: e.data.stepName,
+              ok: response.isError ? false : true,
+              result: response.isError
+                ? undefined
+                : (response.content as Array<Record<string, unknown>>),
+            },
+          };
+
+          await this.bus.publish("steps.lifecycle", stepCompletedEvent);
+        }
+        // not step completed of streaming.
       } catch (err) {
         const error = err as Error;
         console.error(error.message);

@@ -9,6 +9,7 @@ import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
 import { McpWorker } from "@pipewarp/adapters/worker";
+import { InMemoryStreamRegistry } from "@pipewarp/adapters/stream";
 import { Engine } from "@pipewarp/engine";
 import { startDemoServers } from "./demo.js";
 
@@ -79,8 +80,9 @@ export async function cliRunAction(
   const queue = new InMemoryQueue();
   const bus = new InMemoryEventBus();
   const router = new NodeRouter(bus, queue);
+  const streamRegistry = new InMemoryStreamRegistry();
 
-  const mcpWorker = new McpWorker(queue, bus, mcpStore);
+  const mcpWorker = new McpWorker(queue, bus, mcpStore, streamRegistry);
 
   for await (const [mcpId] of mcpStore.mcps) {
     console.log(`starting mcpid: ${mcpId}`);
@@ -89,7 +91,7 @@ export async function cliRunAction(
 
   await router.start();
 
-  const engine = new Engine(flowStore, bus);
+  const engine = new Engine(flowStore, bus, streamRegistry);
 
   const startFlow: EventEnvelope = {
     correlationId: "123-cid",
