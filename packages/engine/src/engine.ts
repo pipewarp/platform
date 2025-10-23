@@ -7,14 +7,11 @@ import type {
   Step,
 } from "@pipewarp/specs";
 import type {
-  ActionQueuedData,
   EventBusPort,
   EventEnvelope,
   StartFlowInput,
-  StartFlowResult,
   StepCompletedEvent,
   StepQueuedEvent,
-  StreamHandles,
   StreamRegistryPort,
 } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
@@ -54,7 +51,7 @@ export class Engine {
     });
   }
 
-  async startFlow(input: StartFlowInput): Promise<StartFlowResult | undefined> {
+  async startFlow(input: StartFlowInput): Promise<void> {
     // get flow definition
     console.log("[engine] startFlow");
     const { flowName, inputs, correlationId } = input;
@@ -65,8 +62,65 @@ export class Engine {
       return;
     }
     // make context
+    let context = this.#buildRunContext(
+      flow.name,
+      correlationId,
+      input.test,
+      input.outfile
+    );
+    context = this.#initStepContext(context, flow.start);
+    console.log("[engine] made RunContext:\n", context);
+
+    await this.queueStreamingSteps(flow, context, flow.start);
+
+    return;
+  }
+
+  /**
+   * Queues steps and any steps that form a pipe with other steps
+   * @param flow Flow definition
+   * @param context RunContext
+   * @param stepName name of first step
+   */
+  async queueStreamingSteps(
+    flow: Flow,
+    context: RunContext,
+    stepName: string
+  ): Promise<void> {
+    while (true) {
+      context = this.#initStepContext(context, stepName);
+      await this.queueStep(flow, context, stepName);
+      const pipeToStep = flow.steps[stepName].pipe?.to;
+      if (context.steps[stepName].pipes.to && pipeToStep) {
+        stepName = pipeToStep;
+      } else {
+        break;
+      }
+    }
+  }
+
+  async queueStep(
+    flow: Flow,
+    context: RunContext,
+    stepName: string
+  ): Promise<void> {
+    const stepType = flow.steps[stepName].type;
+    const handler = this.stepHandlerRegistry[stepType];
+    await handler.queue(flow, context, stepName);
+
+    context.queuedSteps.add(stepName);
+    context.outstandingSteps++;
+    this.#runs.set(context.runId, context);
+  }
+  #buildRunContext(
+    flowName: string,
+    correlationId: string,
+    isTest: boolean | undefined = false,
+    outFile: string | undefined = "./output.json"
+  ): RunContext {
     const context: RunContext = {
-      runId: input.test ? "test-run-id" : randomUUID(),
+      runId: isTest ? "test-run-id" : randomUUID(),
+      correlationId,
       // step state stuff
       runningSteps: new Set(),
       queuedSteps: new Set(),
@@ -75,123 +129,27 @@ export class Engine {
       outstandingSteps: 0,
 
       // test stuff
-      test: input.test ? true : false,
-      outFile: input.outfile ?? "./output.json",
+      test: isTest,
+      outFile,
 
-      flowName: flow.name,
+      flowName,
       status: "running",
       globals: {},
       exports: {},
       inputs: {},
-      steps: {
-        [flow.start]: {
-          attempt: 0,
-          exports: {},
-          pipes: {},
-          result: {},
-          status: "idle",
-        },
-      },
+      steps: {},
     };
-
-    console.log("[engine] made RunContext:\n", context);
-    this.#runs.set(context.runId, context);
-
-    const handler = this.stepHandlerRegistry[flow.steps[flow.start].type];
-    await handler.queue(flow, context, flow.start);
-
-    if (handler) return;
-
-    // get first step data
-    if (flow.steps[flow.start].type === "action") {
-      const handler = this.stepHandlerRegistry.action;
-
-      await handler.queue(flow, context, flow.start);
-
-      if (handler) {
-        console.log("[engine] handler worked we think");
-        this.#runs.set(context.runId, context);
-        return;
-      }
-      const startStep: ActionStep = flow.steps[flow.start] as ActionStep;
-
-      let args;
-
-      if (startStep.args !== undefined) {
-        args = resolveStepArgs(context, startStep.args);
-      }
-
-      console.log(args);
-
-      const data: ActionQueuedData = {
-        stepName: flow.start,
-        stepType: startStep.type,
-        tool: startStep.tool,
-        op: startStep.op,
-        args: args,
-      };
-
-      let streamId;
-      if (startStep.pipe?.to) {
-        const sid = `${flow.start}-stream`;
-        const stream = this.streamRegistry.createStream(sid);
-        data.pipe = { to: stream.id };
-        streamId = stream.id;
-      }
-
-      const event: StepQueuedEvent = {
-        id: randomUUID().slice(0, 8),
-        correlationId: randomUUID().slice(0, 8),
-        kind: "step.queued",
-        time: new Date().toISOString(),
-        runId: context.runId,
-        data,
-      };
-
-      this.bus.publish("steps.lifecycle", event);
-      context.queuedSteps.add(flow.start);
-      context.outstandingSteps++;
-      context.steps[flow.start] = {
-        attempt: 1,
-        exports: {},
-        result: {},
-        status: "queued",
-        pipes: {},
-      };
-
-      this.#runs.set(context.runId, context);
-
-      const newStream = this.streamRegistry.createStream("luigi-art");
-
-      const data2: ActionQueuedData = {
-        stepName: "luigi",
-        stepType: "action",
-        tool: "transform",
-        op: "transform",
-        args: { isStreaming: true, delayMs: 1000 },
-        pipe: { from: streamId, to: newStream.id },
-      };
-      const event2: StepQueuedEvent = {
-        id: randomUUID().slice(0, 8),
-        correlationId: randomUUID().slice(0, 8),
-        kind: "step.queued",
-        time: new Date().toISOString(),
-        runId: context.runId,
-        data: data2,
-      };
-
-      this.bus.publish("steps.lifecycle", event2);
-      context.queuedSteps.add(flow.start);
-      context.outstandingSteps++;
-      context.steps["luigi"] = {
-        attempt: 1,
-        exports: {},
-        result: {},
-        status: "queued",
-        pipes: {},
-      };
-      // this.enqueue(startStep.mcp, event);
-    }
+    return context;
+  }
+  #initStepContext(context: RunContext, stepName: string): RunContext {
+    context.steps[stepName] = {
+      attempt: 0,
+      exports: {},
+      pipes: {},
+      result: {},
+      status: "idle",
+    };
+    return context;
   }
 
   createNextStepEvent(

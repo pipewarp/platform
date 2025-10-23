@@ -45,7 +45,7 @@ export class ActionStepHandler implements StepHandler {
 
     const event: EventEnvelope = {
       id: randomUUID(),
-      correlationId: randomUUID(),
+      correlationId: context.correlationId,
       kind: "step.queued",
       time: new Date().toISOString(),
       runId: context.runId,

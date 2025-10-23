@@ -21,6 +21,7 @@ export const RunStepContextSchema = z.object({
 
 export const RunContextSchema = z.object({
   runId: z.string().min(1),
+  correlationId: z.string(),
 
   // step names that are running, queued, or done (no error yet)
   runningSteps: z.set(z.string()),

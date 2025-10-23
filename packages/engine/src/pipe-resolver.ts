@@ -30,6 +30,7 @@ export class PipeResolver {
       if (id === undefined) {
         throw new Error(`[pipe-resolver] cannot setup stream - no from id;`);
       }
+      console.log(`[pipe-resolver] stepName ${stepName}; id${id}`);
       pipes.from = id;
       context.steps[stepName].pipes = { from: id };
       pipes.from = id;
