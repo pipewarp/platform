@@ -1,25 +1,22 @@
+import fs from "fs";
 import { randomUUID } from "crypto";
-import type {
-  RunContext,
-  Status,
-  ActionStep,
-  Flow,
-  Step,
-} from "@pipewarp/specs";
+import type { RunContext, Flow } from "@pipewarp/specs";
 import type {
   EventBusPort,
   EventEnvelope,
   StartFlowInput,
   StepCompletedEvent,
-  StepQueuedEvent,
   StreamRegistryPort,
 } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
-import { resolveStepArgs } from "./resolve.js";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
 
-import fs from "fs";
-
+/**
+ * Engine class runs flows as the orchestration center.
+ * It handles multiple runs in one instance.
+ * Each run gets its own context.
+ * Uses step handlers to actually emit events.
+ */
 export class Engine {
   #runs = new Map<string, RunContext>();
 
@@ -77,7 +74,8 @@ export class Engine {
   }
 
   /**
-   * Queues steps and any steps that form a pipe with other steps
+   * Queues a step, and steps it pipes data to.
+   * If further steps also pipe, their to targets are queued too.
    * @param flow Flow definition
    * @param context RunContext
    * @param stepName name of first step
@@ -98,7 +96,7 @@ export class Engine {
       }
     }
   }
-
+  // queues a single step vs multiple
   async queueStep(
     flow: Flow,
     context: RunContext,
@@ -152,80 +150,41 @@ export class Engine {
     return context;
   }
 
-  createNextStepEvent(
+  #getNextStepName(
     flow: Flow,
     context: RunContext,
-    currentStep: Step,
-    status: "success" | "failure"
-  ): StepQueuedEvent | undefined {
-    const nextStepName = currentStep.on?.[status];
-    if (!nextStepName) return;
-
-    if (flow.steps[nextStepName].type === "action") {
-      const nextStep: ActionStep = flow.steps[nextStepName] as ActionStep;
-
-      let args;
-      if (nextStep.args !== undefined) {
-        args = resolveStepArgs(context, nextStep.args);
-      }
-      console.log(args);
-      const event: EventEnvelope = {
-        id: randomUUID().slice(0, 8),
-        correlationId: randomUUID().slice(0, 8),
-        kind: "step.queued",
-        time: new Date().toISOString(),
-        runId: context.runId,
-        data: {
-          stepName: nextStepName,
-          stepType: nextStep.type,
-          tool: nextStep.tool,
-          op: nextStep.op,
-          args: args,
-        },
-      };
-      return event;
-    }
+    currentStep: string
+  ): string | undefined {
+    const status = context.steps[currentStep].status as "success" | "failure";
+    const nextStepName = flow.steps[currentStep].on?.[status];
+    return nextStepName;
   }
 
-  async handleWorkerDone(e: StepCompletedEvent): Promise<void> {
+  async handleWorkerDone(event: StepCompletedEvent): Promise<void> {
     // update context based on completed event
-    if (!this.#runs.has(e.runId)) {
-      console.error(`[engine] invalid run id: ${e.runId}`);
+    if (!this.#runs.has(event.runId)) {
+      console.error(`[engine] invalid run id: ${event.runId}`);
       return;
     }
-    const context = this.#runs.get(e.runId)!;
+    const context = this.#runs.get(event.runId)!;
 
-    const result = e.data.result
-      ? (e.data.result as Array<Record<string, unknown>>)
-      : [];
-
-    const stepStatus = e.data.ok ? "success" : "failure";
-
-    if (context?.steps[e.data.stepName] === undefined) {
-      context!.steps[e.data.stepName] = {
-        attempt: 1,
-        exports: {},
-        result: result[0],
-        status: stepStatus,
-        pipes: {},
-      };
-    } else {
-      context.steps[e.data.stepName].result = result[0];
+    const result = event.data.result
+      ? (event.data.result as Array<Record<string, unknown>>)
+      : [{ data: null }];
+    if (event.data.result) {
+      context.steps[event.data.stepName].result = result[0];
     }
+    context.steps[event.data.stepName].status = event.data.ok
+      ? "success"
+      : "failure";
 
-    if (e.data.ok) {
-      context.steps[e.data.stepName].status = "success";
-    } else {
-      context.steps[e.data.stepName].status = "failure";
-      context.steps[e.data.stepName].reason = e.data.error ?? "";
-    }
-    context.queuedSteps.delete(e.data.stepName);
-    context.runningSteps.delete(e.data.stepName);
-    context.doneSteps.add(e.data.stepName);
+    context.queuedSteps.delete(event.data.stepName);
+    context.runningSteps.delete(event.data.stepName);
+    context.doneSteps.add(event.data.stepName);
     context.outstandingSteps--;
 
-    this.#runs.set(e.runId, context);
-    this.writeRunContext(e.runId);
+    this.#runs.set(event.runId, context);
+    this.writeRunContext(event.runId);
 
     // now get next step and start it.
     const flow = this.flowDb.get(context.flowName);
@@ -234,44 +193,14 @@ export class Engine {
       console.log(`[engine] executeStep(): no flow for ${context.flowName}`);
       return;
     }
-    const step = flow.steps[e.data.stepName];
-    const event = this.createNextStepEvent(flow, context, step, stepStatus);
+    const nextStep = this.#getNextStepName(flow, context, event.data.stepName);
 
-    if (context.outstandingSteps === 0 && event === undefined) {
+    if (nextStep) {
+      this.queueStreamingSteps(flow, context, nextStep);
+    } else if (context.outstandingSteps === 0) {
       console.log("[engine] no next step; no outstanding steps; run ended;");
       return;
     }
-
-    if (event !== undefined) {
-      console.log("[engine] next event: ", event);
-      await this.bus.publish("steps.lifecycle", event!);
-      context.outstandingSteps++;
-      context.queuedSteps.add(event.data.stepName);
-    }
-  }
-
-  saveStepStatus(
-    context: RunContext,
-    stepName: string,
-    status: Status,
-    message?: string
-  ): void {
-    if (context.steps[stepName] === undefined) {
-      context.steps[stepName] = {
-        attempt: 1,
-        exports: {},
-        result: {},
-        status,
-        pipes: {},
-      };
-    } else {
-      context.steps[stepName].status = status;
-    }
-
-    if (message !== undefined) {
-      context.steps[stepName]["reason"] = message;
-    }
-    context.status = status;
   }
 
   writeRunContext(runId: string): void {
@@ -282,11 +211,5 @@ export class Engine {
 
     fs.writeFileSync(file, JSON.stringify(context, null, 2));
     return;
-  }
-
-  #anyRunning(runId: string): boolean | null {
-    if (!this.#runs.has(runId)) return null;
-    const context = this.#runs.get(runId)!;
-    return context.runningSteps.size > 0;
   }
 }

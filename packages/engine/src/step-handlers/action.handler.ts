@@ -5,6 +5,7 @@ import type {
   EventBusPort,
   EventEnvelope,
   ActionQueuedData,
+  StepCompletedEvent,
 } from "@pipewarp/ports";
 import type { RunContext, ActionStep, Flow } from "@pipewarp/specs";
 import { PipeResolver } from "../pipe-resolver.js";
@@ -52,12 +53,13 @@ export class ActionStepHandler implements StepHandler {
       data,
     };
     this.bus.publish("steps.lifecycle", event);
+    context.steps[stepName].status = "queued";
   }
 
   onWorkerDone(
     flow: Flow,
     context: RunContext,
-    event: EventEnvelope
+    event: StepCompletedEvent
   ): Promise<void> {
     throw new Error("Method not implemented.");
   }
