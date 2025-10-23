@@ -19,6 +19,7 @@ import type {
 } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { resolveStepArgs } from "./resolve.js";
+import type { StepHandlerRegistry } from "./step-handler.registry.js";
 
 import fs from "fs";
 
@@ -28,7 +29,8 @@ export class Engine {
   constructor(
     private readonly flowDb: FlowStore,
     private readonly bus: EventBusPort,
-    private readonly streamRegistry: StreamRegistryPort
+    private readonly streamRegistry: StreamRegistryPort,
+    private readonly stepHandlerRegistry: StepHandlerRegistry
   ) {
     console.log("[engine] constructor");
     this.bus = bus;
@@ -62,10 +64,7 @@ export class Engine {
       console.error(`[engine] no flow in database for name: ${flowName}`);
       return;
     }
-
     // make context
-
-    // results, response, output, out,
     const context: RunContext = {
       runId: input.test ? "test-run-id" : randomUUID(),
       // step state stuff
@@ -84,20 +83,40 @@ export class Engine {
       globals: {},
       exports: {},
       inputs: {},
-      steps: {},
+      steps: {
+        [flow.start]: {
+          attempt: 0,
+          exports: {},
+          pipes: {},
+          result: {},
+          status: "idle",
+        },
+      },
     };
-    console.log("[engine] made RunContext:\n", context);
 
+    console.log("[engine] made RunContext:\n", context);
     this.#runs.set(context.runId, context);
 
-    // start step runners
-    console.log("[engine] starting step runners");
+    const handler = this.stepHandlerRegistry[flow.steps[flow.start].type];
+    await handler.queue(flow, context, flow.start);
+
+    if (handler) return;
 
     // get first step data
     if (flow.steps[flow.start].type === "action") {
+      const handler = this.stepHandlerRegistry.action;
+
+      await handler.queue(flow, context, flow.start);
+
+      if (handler) {
+        console.log("[engine] handler worked we think");
+        this.#runs.set(context.runId, context);
+        return;
+      }
       const startStep: ActionStep = flow.steps[flow.start] as ActionStep;
 
       let args;
+
       if (startStep.args !== undefined) {
         args = resolveStepArgs(context, startStep.args);
       }
@@ -137,6 +156,7 @@ export class Engine {
         exports: {},
         result: {},
         status: "queued",
+        pipes: {},
       };
 
       this.#runs.set(context.runId, context);
@@ -168,6 +188,7 @@ export class Engine {
         exports: {},
         result: {},
         status: "queued",
+        pipes: {},
       };
       // this.enqueue(startStep.mcp, event);
     }
@@ -228,6 +249,7 @@ export class Engine {
         exports: {},
         result: result[0],
         status: stepStatus,
+        pipes: {},
       };
     } else {
       context.steps[e.data.stepName].result = result[0];
@@ -282,6 +304,7 @@ export class Engine {
         exports: {},
         result: {},
         status,
+        pipes: {},
       };
     } else {
       context.steps[stepName].status = status;

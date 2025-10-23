@@ -8,7 +8,6 @@ export const StatusSchema = z.enum([
   "idle",
   "started",
   "stopped",
-  "aborted",
   "success",
   "failure",
   "error",
@@ -47,6 +46,11 @@ export const RunContextSchema = z.object({
       attempt: z.number(),
       exports: z.record(z.string(), z.unknown()),
       result: z.record(z.string(), z.unknown()),
+      args: z.record(z.string(), z.unknown()).optional(),
+      pipes: z.object({
+        to: z.string().optional(),
+        from: z.string().optional(),
+      }),
       // TODO: implement history, an array of attempts and outputs
     })
   ),

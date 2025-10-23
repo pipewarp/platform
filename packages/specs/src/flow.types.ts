@@ -44,8 +44,8 @@ export const HttpStepSchema = BaseStepSchema.extend({
 });
 
 export const StepSchema = z.discriminatedUnion("type", [
-  ToolStepSchema,
-  HttpStepSchema,
+  // ToolStepSchema,
+  // HttpStepSchema,
   ActionStepSchema,
 ]);
 
