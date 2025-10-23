@@ -30,6 +30,12 @@ export const ActionStepSchema = BaseStepSchema.extend({
       service: z.string().min(1).optional(),
     })
     .optional(),
+  pipe: z
+    .object({
+      to: z.string().optional(),
+      from: z.string().optional(),
+    })
+    .optional(),
 });
 
 export const HttpStepSchema = BaseStepSchema.extend({
@@ -38,8 +44,8 @@ export const HttpStepSchema = BaseStepSchema.extend({
 });
 
 export const StepSchema = z.discriminatedUnion("type", [
-  ToolStepSchema,
-  HttpStepSchema,
+  // ToolStepSchema,
+  // HttpStepSchema,
   ActionStepSchema,
 ]);
 

@@ -149,6 +149,8 @@ export class InMemoryStreamCore
       seq: this.#nextSeq++,
     };
 
+    console.log("[stream-core] data:", data.payload);
+
     const waiter = this.#waiters.shift();
     if (waiter) {
       // delay promise resolution until later to prevent timing problems

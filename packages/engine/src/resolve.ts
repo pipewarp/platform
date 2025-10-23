@@ -1,5 +1,6 @@
 import type { RunContext, StepArgs } from "@pipewarp/specs";
 
+export type ResolveStepArgs = typeof resolveStepArgs;
 export function split(path: string): string[] {
   return path ? path.split(".") : [];
 }
