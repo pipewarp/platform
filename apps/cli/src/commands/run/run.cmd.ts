@@ -4,7 +4,7 @@ import { resolveCliPath } from "../../resolve-path.js";
 
 import { type EventEnvelope } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
-import { McpManager } from "@pipewarp/adapters/step-executor";
+import { McpManager } from "@pipewarp/adapters/mcp-manager";
 import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
