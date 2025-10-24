@@ -7,7 +7,7 @@
       "tool": "unicode",
       "op": "draw",
       "args": {
-        "delayMs": 200,
+        "delayMs": 100,
         "useStream": true
       },
       "pipe": {
@@ -23,13 +23,13 @@
       "op": "transform",
       "args": {
         "art": "$.pipe",
-        "isStreaming": true,
+        "useStream": true,
         "delayMs": 10
       },
       "pipe": {
         "from": {
           "step": "mario",
-          "buffer": 2
+          "buffer": 13
         }
       }
     }

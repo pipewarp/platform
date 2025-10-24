@@ -41,7 +41,7 @@ mcp.registerTool(
     inputSchema: {
       delayMs: z.number(),
       art: z.string(),
-      isStreaming: z.boolean(),
+      useStream: z.boolean(),
     },
     outputSchema: {
       ok: z.boolean(),
@@ -49,7 +49,7 @@ mcp.registerTool(
       message: z.string().optional(),
     },
   },
-  async ({ delayMs, art, isStreaming }, ctx) => {
+  async ({ delayMs, art, useStream }, ctx) => {
     const { sessionId } = ctx;
     console.log("[transform-server] sessionId:", sessionId);
 
@@ -76,7 +76,7 @@ mcp.registerTool(
       };
     }
 
-    if (!isStreaming) {
+    if (!useStream) {
       let newArt = "";
 
       const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
@@ -97,7 +97,7 @@ mcp.registerTool(
 
     // should move this out eventually as own thing, but this is just a demo
     (async () => {
-      if (!isStreaming) return;
+      if (!useStream) return;
       await new Promise((r) => setTimeout(r, delayMs));
       let newArt = "";
 

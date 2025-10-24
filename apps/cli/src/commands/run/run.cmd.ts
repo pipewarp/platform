@@ -26,7 +26,7 @@ export async function cliRunAction(
   console.log("[cli-run] options:", options);
 
   const {
-    out = "./output.json",
+    out = "./output.temp.json",
     test = false,
     server = "./src/mcp-server.ts",
     demo = false,

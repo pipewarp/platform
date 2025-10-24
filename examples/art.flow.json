@@ -20,7 +20,7 @@
       "op": "transform",
       "args": {
         "art": "${steps.mario.result.structuredContent.data}",
-        "isStreaming": false,
+        "useStream": false,
         "delayMs": 10
       }
     }
