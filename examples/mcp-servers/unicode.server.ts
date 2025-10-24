@@ -128,6 +128,15 @@ mcp.registerTool(
           },
         });
       }
+      // send end message
+      await transport.send({
+        jsonrpc: "2.0",
+        method: "notifications/message",
+        params: {
+          level: "info",
+          message: "END",
+        },
+      });
       return;
     })();
 
@@ -191,11 +200,23 @@ app.listen(port, () => {
   console.log(`[unicode-server] GET /sse, POST /messages`);
 });
 process.on("SIGINT", () => {
+  for (const [id, transport] of sessions.entries()) {
+    transport.close();
+  }
+  sessions.clear();
   process.exit();
 });
 process.on("SIGTERM", () => {
+  for (const [id, transport] of sessions.entries()) {
+    transport.close();
+  }
+  sessions.clear();
   process.exit();
 });
 process.on("exit", () => {
+  for (const [id, transport] of sessions.entries()) {
+    transport.close();
+  }
+  sessions.clear();
   process.exit();
 });

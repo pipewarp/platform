@@ -31,6 +31,8 @@ const TransformOutputSchema = z.object({
 });
 type TranformOutput = z.infer<typeof TransformOutputSchema>;
 
+let buffer = "";
+
 mcp.registerTool(
   "transform",
   {
@@ -51,7 +53,7 @@ mcp.registerTool(
     const { sessionId } = ctx;
     console.log("[transform-server] sessionId:", sessionId);
 
-    console.log("client sent art:", art);
+    console.log("[transform-server] client sent:", art);
 
     if (!sessionId) {
       console.log("[transform-server] no session");
@@ -105,8 +107,9 @@ mcp.registerTool(
       for (const char of chars) {
         newArt += characterSwap.get(char) ?? char;
       }
-
-      console.log("transform-server] sending:", art);
+      buffer += newArt;
+      console.log("[transform-server] sending:", newArt);
+      console.log("[transform-server] full SSE Buffer:", buffer);
       await transport.send({
         jsonrpc: "2.0",
         method: "notifications/message",
@@ -174,11 +177,23 @@ app.listen(port, () => {
 });
 
 process.on("SIGINT", () => {
+  for (const [id, transport] of sessions.entries()) {
+    transport.close();
+  }
+  sessions.clear();
   process.exit();
 });
 process.on("SIGTERM", () => {
+  for (const [id, transport] of sessions.entries()) {
+    transport.close();
+  }
+  sessions.clear();
   process.exit();
 });
 process.on("exit", () => {
+  for (const [id, transport] of sessions.entries()) {
+    transport.close();
+  }
+  sessions.clear();
   process.exit();
 });

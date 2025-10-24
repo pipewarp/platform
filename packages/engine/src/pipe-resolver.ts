@@ -3,8 +3,15 @@ import type { ActionStep, Flow, RunContext } from "@pipewarp/specs";
 import { randomUUID } from "crypto";
 
 export type ResolvedPipes = {
-  from?: string;
-  to?: string;
+  from?: {
+    id: string;
+    format: string;
+  };
+  to?: {
+    id: string;
+    payload: string;
+    format: string;
+  };
 };
 
 export class PipeResolver {
@@ -20,20 +27,28 @@ export class PipeResolver {
 
     if (step.pipe?.to) {
       const { id } = this.streamRegistry.createStream(randomUUID());
-      pipes.to = id;
-      context.steps[stepName].pipes = { to: id };
-      pipes.to = id;
+      pipes.to = {
+        id,
+        format: step.pipe.to.format,
+        payload: step.pipe.to.payload,
+      };
+      context.steps[stepName].pipe.to = pipes.to;
     }
     if (step.pipe?.from) {
-      const fromStep = step.pipe.from;
-      const id = context.steps[fromStep].pipes?.to;
+      const fromStep = step.pipe.from.step;
+      const id = context.steps[fromStep].pipe.to?.id;
       if (id === undefined) {
         throw new Error(`[pipe-resolver] cannot setup stream - no from id;`);
       }
       console.log(`[pipe-resolver] stepName ${stepName}; id${id}`);
-      pipes.from = id;
-      context.steps[stepName].pipes = { from: id };
-      pipes.from = id;
+      pipes.from = {
+        id,
+        format: step.pipe.from.format,
+      };
+      context.steps[stepName].pipe.from = pipes.from;
+      console.log(
+        `[pipe-resolver] pipes.from ${JSON.stringify(pipes.from, null, 2)}`
+      );
     }
     return pipes;
   }

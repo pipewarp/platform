@@ -1,18 +1,46 @@
-import {
+import type {
   QueuePort,
   EventBusPort,
   EventEnvelope,
   StepCompletedEvent,
   StreamRegistryPort,
   InputChunk,
+  ProducerStreamPort,
+  ConsumerStreamPort,
+  StepQueuedEvent,
 } from "@pipewarp/ports";
-import { McpManager } from "../step-executor/mcp.manager.js";
+import { McpManager } from "../mcp-manager/mcp.manager.js";
 import { randomUUID } from "crypto";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
-import { isSetIterator } from "util/types";
+import { Client } from "@modelcontextprotocol/sdk/client";
+
+type McpContext = {
+  mcpId: string;
+  runId: string;
+  correlationId: string;
+  pipe: {
+    from: {
+      id?: string;
+      isStreaming: boolean;
+    };
+    to: {
+      id?: string;
+      isStreaming: boolean;
+      payload?: string;
+    };
+  };
+  stepName: string;
+  tool: string;
+  op: string;
+  args: Record<string, unknown> | undefined;
+  status: string;
+  ongoingStreams: number;
+};
 
 export class McpWorker {
   #waiters = new Map<string, boolean>();
+  #workers = new Map<string, McpContext>();
+
   constructor(
     private readonly queues: QueuePort,
     private readonly bus: EventBusPort,
@@ -20,120 +48,207 @@ export class McpWorker {
     private readonly streamManager: StreamRegistryPort
   ) {}
 
+  // get portion of data from the payload; defined by flow like `object.property`
+
+  #pluck(path: string) {
+    const parts = path.split(".");
+    return (payload: unknown) =>
+      parts.reduce((acc: any, key) => acc?.[key], payload as any);
+  }
+  #produceStream(
+    ctx: McpContext,
+    client: Client,
+    paylodPath: string,
+    producer: ProducerStreamPort
+  ): void {
+    const pluck = this.#pluck(paylodPath);
+    let newArt = "";
+
+    console.log("[worker] staring producer stream");
+    client.setNotificationHandler(LoggingMessageNotificationSchema, (d) => {
+      const data = pluck(d);
+      if (data === "END") {
+        ctx = this.#workers.get(ctx.mcpId)!;
+        ctx.ongoingStreams--;
+        if (ctx.ongoingStreams === 0) {
+          this.#sendStepCompletedEvent(ctx, newArt);
+        }
+        client.removeNotificationHandler("notifications/message");
+        producer.end();
+        return;
+      }
+      const chunk: InputChunk = {
+        type: "data",
+        payload: data,
+      };
+      newArt += data;
+      console.log(newArt);
+      producer.send(chunk);
+    });
+  }
+
+  #resolvePipeArgs<T>(ctx: McpContext, m: T): Record<string, unknown> {
+    if (!ctx.pipe.from.id) {
+      throw new Error("[worker] no pipe to resolve args from");
+    }
+    if (!ctx.args || Object.keys(ctx.args).length === 0) {
+      throw new Error("[worker] no args to process");
+    }
+
+    const args: Record<string, unknown> = { ...ctx.args! };
+    for (const [k, v] of Object.entries(ctx.args)) {
+      if (typeof v === "string") {
+        if (v === "$.pipe") {
+          args[k] = m;
+        }
+      }
+    }
+    return args;
+  }
+
+  async #consumeStream(
+    ctx: McpContext,
+    client: Client,
+    consumer: ConsumerStreamPort
+  ): Promise<void> {
+    const buffer = [];
+    let sentArt = "";
+
+    this.#workers.set(ctx.mcpId, ctx);
+    console.log("[worker] starting consumer stream");
+    for await (const chunk of consumer.subscribe()) {
+      const payload = chunk.payload;
+      const message = payload as string;
+
+      const args = this.#resolvePipeArgs<string>(ctx, message);
+      const response = await client.callTool({
+        name: ctx.op,
+        arguments: args,
+      });
+      sentArt += message;
+      console.log(sentArt);
+      buffer.push(response.content as Array<Record<string, unknown>>);
+    }
+    ctx = this.#workers.get(ctx.mcpId)!;
+    ctx.ongoingStreams--;
+    ctx.pipe.from.isStreaming = false;
+    this.#workers.set(ctx.mcpId, ctx);
+
+    if (ctx.ongoingStreams === 0) {
+      console.log("[worker] no streams left", ctx.stepName);
+      this.#sendStepCompletedEvent(ctx, buffer);
+    }
+    console.log("[worker] streams left", ctx.stepName);
+  }
+
+  async #sendStepCompletedEvent<T>(ctx: McpContext, data: T): Promise<void> {
+    const stepCompletedEvent: StepCompletedEvent = {
+      correlationId: "later",
+      id: randomUUID(),
+      time: new Date().toISOString(),
+      kind: "step.completed",
+      runId: ctx.runId,
+      data: {
+        stepName: ctx.stepName,
+        ok: true,
+        result: data,
+      },
+    };
+    await this.bus.publish("steps.lifecycle", stepCompletedEvent);
+  }
+
+  #makeContext(e: StepQueuedEvent): McpContext {
+    if (e.data.stepType !== "action") {
+      throw new Error("[mcp-worker] step type must be 'action'");
+    }
+    const context: McpContext = {
+      mcpId: e.data.tool,
+      correlationId: e.correlationId,
+      runId: e.runId,
+
+      stepName: e.data.stepName,
+      tool: e.data.tool,
+      op: e.data.op,
+      args: e.data.args,
+
+      status: "started",
+      pipe: {
+        from: {
+          id: e.data.pipe.from?.id,
+          isStreaming: false,
+        },
+        to: {
+          id: e.data.pipe.to?.id,
+          isStreaming: false,
+          payload: e.data.pipe.to?.payload,
+        },
+      },
+      ongoingStreams: 0,
+    };
+
+    this.#workers.set(e.data.tool, context);
+    return context;
+  }
+
   async handleActionMcp(e: EventEnvelope) {
     console.log("[worker] handleEvent() event:", e);
     if (e.kind === "step.queued" && e.data.stepType === "action") {
-      const mcpDb = this.mcps.get(e.data.tool);
-      if (!mcpDb) {
-        const log = `[engine] executeStep(): no mcp for ${e.data.tool}`;
-        console.log(log);
-        return;
-      }
-      const mcpClient = mcpDb.client;
+      const context = this.#makeContext(e);
+      this.#workers.set(e.data.tool, context);
 
-      if (e.data.pipe?.to) {
-        let newArt = "";
-        const producer = this.streamManager.getProducer(e.data.pipe.to);
-        mcpClient.setNotificationHandler(
-          LoggingMessageNotificationSchema,
-          (d) => {
-            const chunk: InputChunk = {
-              type: "data",
-              payload: {
-                text: d,
-              },
-            };
-            console.log(e.data.stepName);
-            newArt += d.params.message;
-            console.log(newArt);
-            producer.send(chunk);
-          }
-        );
-      }
+      await this.handleActionStepQueuedEvent(context);
+    } else {
+      return;
+    }
+  }
 
+  async handleActionStepQueuedEvent(ctx: McpContext) {
+    const mcpDb = this.mcps.get(ctx.tool);
+    if (!mcpDb) {
+      const log = `[engine] executeStep(): no mcp for ${ctx.tool}`;
+      console.log(log);
+      return;
+    }
+    const mcpId = ctx.tool;
+    const mcpClient = mcpDb.client;
+
+    if (ctx.pipe.to.id !== undefined) {
+      const producer = this.streamManager.getProducer(ctx.pipe.to.id);
+      const payloadPath = ctx.pipe.to.payload ?? "";
+      this.#produceStream(ctx, mcpClient, payloadPath, producer);
+      ctx.pipe.to.isStreaming = true;
+      ctx.ongoingStreams++;
+      this.#workers.set(mcpId, ctx);
+    }
+    if (ctx.pipe.from.id !== undefined) {
+      const consumer = this.streamManager.getConsumer(ctx.pipe.from.id);
+      this.#consumeStream(ctx, mcpClient, consumer);
+      ctx.pipe.from.isStreaming = true;
+      ctx.ongoingStreams++;
+      this.#workers.set(mcpId, ctx);
+    }
+
+    // if mcp has to and not from, call it to start streaming it
+    // if mcps has from, dont call it, even if it has too.
+    // too comes from the invoking of from in this context for mcp servers
+    if (!ctx.pipe.from.isStreaming) {
       try {
-        if (e.data.pipe?.from) {
-          const consumer = this.streamManager.getConsumer(e.data.pipe.from);
+        const response = await mcpClient.callTool({
+          name: ctx.op,
+          arguments: ctx.args,
+        });
+        console.log(`[worker] handleActionMcp callTool() response:`, response);
 
-          const buffer = [];
-          let sentArt = "";
-
-          for await (const chunk of consumer.subscribe()) {
-            const payload = chunk.payload as {
-              text?: { params?: { message?: string } };
-            };
-            const message = payload?.text?.params?.message ?? "";
-            const response = await mcpClient.callTool({
-              name: e.data.op,
-              arguments: {
-                art: message,
-                isStreaming: true,
-                delayMs: 10,
-              },
-            });
-            // sentArt += message;
-            // console.log(sentArt);
-            buffer.push(response.content as Array<Record<string, unknown>>);
-          }
-          const stepCompletedEvent: StepCompletedEvent = {
-            correlationId: e.correlationId,
-            id: randomUUID(),
-            time: new Date().toISOString(),
-            kind: "step.completed",
-            runId: e.runId,
-            data: {
-              stepName: e.data.stepName,
-              ok: true,
-              result: buffer,
-            },
-          };
-
-          await this.bus.publish("steps.lifecycle", stepCompletedEvent);
-        } else {
-          const response = await mcpClient.callTool({
-            name: e.data.op,
-            arguments: e.data.args,
-          });
-          console.log(
-            `[worker] handleActionMcp callTool() response:`,
-            response
-          );
-
-          const stepCompletedEvent: StepCompletedEvent = {
-            correlationId: e.correlationId,
-            id: randomUUID(),
-            time: new Date().toISOString(),
-            kind: "step.completed",
-            runId: e.runId,
-            data: {
-              stepName: e.data.stepName,
-              ok: response.isError ? false : true,
-              result: response.isError
-                ? undefined
-                : (response.content as Array<Record<string, unknown>>),
-            },
-          };
-
-          await this.bus.publish("steps.lifecycle", stepCompletedEvent);
+        if (ctx.ongoingStreams === 0) {
+          await this.#sendStepCompletedEvent(ctx, response);
         }
-        // not step completed of streaming.
       } catch (err) {
         const error = err as Error;
         console.error(error.message);
-        const stepCompletedEvent: StepCompletedEvent = {
-          correlationId: e.correlationId,
-          id: randomUUID(),
-          time: new Date().toISOString(),
-          kind: "step.completed",
-          runId: e.runId,
-          data: {
-            stepName: e.data.stepName,
-            ok: false,
-            result: undefined,
-            error: error.message,
-          },
-        };
-        await this.bus.publish("steps.lifecycle", stepCompletedEvent);
+
+        if (ctx.ongoingStreams === 0) {
+          await this.#sendStepCompletedEvent(ctx, error);
+        }
       }
     }
   }

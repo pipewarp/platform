@@ -84,11 +84,11 @@ export class McpManager {
     await client.client.close();
   }
 
-  async streamSseTo(mcpId: string, producer: ProducerStreamPort) {
-    if (!this.mcps.has(mcpId)) return;
-    const { client } = this.mcps.get(mcpId)!;
-    client.setNotificationHandler(LoggingMessageNotificationSchema, (d) => {});
-  }
+  // async streamSseTo(mcpId: string, callback: (data: unknown) => void) {
+  //   if (!this.mcps.has(mcpId)) return;
+  //   const { client } = this.mcps.get(mcpId)!;
+  //   client.setNotificationHandler(LoggingMessageNotificationSchema, (d) => {});
+  // }
 
   // Makes the class directly async iterable
   async *[Symbol.asyncIterator](): AsyncGenerator<

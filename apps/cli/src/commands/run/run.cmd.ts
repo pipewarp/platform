@@ -22,8 +22,8 @@ export async function cliRunAction(
   flowPath: string,
   options: { out?: string; test?: boolean; server?: string; demo?: boolean }
 ): Promise<void> {
-  console.log("running run");
-  console.log("options", options);
+  console.log("[cli-run] running run");
+  console.log("[cli-run] options:", options);
 
   const {
     out = "./output.json",
@@ -40,7 +40,7 @@ export async function cliRunAction(
   const flowStore = new FlowStore();
   const { result, flow } = flowStore.validate(json);
   if (!result) {
-    console.error(`Invaid flow at ${flowPath}`);
+    console.error(`[cli-run] Invaid flow at ${flowPath}`);
     return;
   }
   if (flow === undefined) {
@@ -51,11 +51,11 @@ export async function cliRunAction(
   const mcpStore = new McpManager();
 
   if (demo) {
-    console.log("starting demo servers");
+    console.log("[cli-run] starting demo servers");
     const managedProcesses = await startDemoServers();
 
     if (!managedProcesses) {
-      console.error("error starting servers for demo");
+      console.error("[cli-run] error starting servers for demo");
     }
     await mcpStore.addSseClient(
       "http://localhost:3004/sse",
@@ -95,7 +95,7 @@ export async function cliRunAction(
   const mcpWorker = new McpWorker(queue, bus, mcpStore, streamRegistry);
 
   for await (const [mcpId] of mcpStore.mcps) {
-    console.log(`starting mcpid: ${mcpId}`);
+    console.log(`[cli-run] starting worker (mcpid: ${mcpId})`);
     await mcpWorker.startMcp(mcpId);
   }
 

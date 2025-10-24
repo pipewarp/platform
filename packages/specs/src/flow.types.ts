@@ -32,8 +32,19 @@ export const ActionStepSchema = BaseStepSchema.extend({
     .optional(),
   pipe: z
     .object({
-      to: z.string().optional(),
-      from: z.string().optional(),
+      to: z
+        .object({
+          step: z.string(),
+          format: z.string(),
+          payload: z.string(),
+        })
+        .optional(),
+      from: z
+        .object({
+          step: z.string(),
+          format: z.string(),
+        })
+        .optional(),
     })
     .optional(),
 });

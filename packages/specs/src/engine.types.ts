@@ -48,9 +48,20 @@ export const RunContextSchema = z.object({
       exports: z.record(z.string(), z.unknown()),
       result: z.record(z.string(), z.unknown()),
       args: z.record(z.string(), z.unknown()).optional(),
-      pipes: z.object({
-        to: z.string().optional(),
-        from: z.string().optional(),
+      pipe: z.object({
+        to: z
+          .object({
+            id: z.string(),
+            format: z.string(),
+            payload: z.string(),
+          })
+          .optional(),
+        from: z
+          .object({
+            id: z.string(),
+            format: z.string(),
+          })
+          .optional(),
       }),
       // TODO: implement history, an array of attempts and outputs
     })

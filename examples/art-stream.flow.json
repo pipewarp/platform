@@ -11,7 +11,11 @@
         "useStream": true
       },
       "pipe": {
-        "to": "luigi"
+        "to": {
+          "step": "luigi",
+          "format": "text",
+          "payload": "params.message"
+        }
       }
     },
     "luigi": {
@@ -19,13 +23,15 @@
       "tool": "transform",
       "op": "transform",
       "args": {
-        "art": "${steps.mario.text}",
+        "art": "$.pipe",
         "isStreaming": true,
         "delayMs": 10
       },
       "pipe": {
-        "from": "mario",
-        "to": "print"
+        "from": {
+          "step": "mario",
+          "format": "text"
+        }
       }
     }
   }
