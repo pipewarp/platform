@@ -1,0 +1,37 @@
+{
+  "name": "art-stream",
+  "start": "mario",
+  "steps": {
+    "mario": {
+      "type": "action",
+      "tool": "unicode",
+      "op": "draw",
+      "args": {
+        "delayMs": 100,
+        "useStream": true
+      },
+      "pipe": {
+        "to": {
+          "step": "luigi",
+          "payload": "params.message"
+        }
+      }
+    },
+    "luigi": {
+      "type": "action",
+      "tool": "transform",
+      "op": "transform",
+      "args": {
+        "art": "$.pipe",
+        "useStream": true,
+        "delayMs": 10
+      },
+      "pipe": {
+        "from": {
+          "step": "mario",
+          "buffer": 13
+        }
+      }
+    }
+  }
+}

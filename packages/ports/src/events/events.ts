@@ -14,6 +14,20 @@ export const ActionQueuedSchema = z.object({
   op: z.string().min(1),
   profile: z.string().min(1).optional(),
   args: z.record(z.string(), z.unknown()).optional(),
+  pipe: z.object({
+    to: z
+      .object({
+        id: z.string(),
+        payload: z.string(),
+      })
+      .optional(),
+    from: z
+      .object({
+        id: z.string(),
+        buffer: z.number().optional(),
+      })
+      .optional(),
+  }),
 });
 
 export const WaitQueuedSchema = z.object({

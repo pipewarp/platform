@@ -10,14 +10,18 @@ const server = new McpServer({
 
 console.log("Registering Mock Tool");
 server.registerTool(
-  "transcribe",
+  "echo",
   {
     title: "Mock Stt Tool Transcribe",
     description: "Transcribes speech to text",
     inputSchema: { text: z.string() },
+    outputSchema: {
+      text: z.string(),
+    },
   },
   async ({ text }) => ({
     content: [{ type: "text", text: String(text) }],
+    structuredContent: { text: text },
   })
 );
 

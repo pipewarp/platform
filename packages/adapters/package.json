@@ -1,6 +1,6 @@
 {
   "name": "@pipewarp/adapters",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "private": "true",
   "type": "module",
   "exports": {
@@ -12,9 +12,9 @@
       "types": "./dist/flow-store/index.d.ts",
       "import": "./dist/flow-store/index.js"
     },
-    "./step-executor": {
-      "types": "./dist/step-executor/index.d.ts",
-      "import": "./dist/step-executor/index.js"
+    "./mcp-manager": {
+      "types": "./dist/mcp-manager/index.d.ts",
+      "import": "./dist/mcp-manager/index.js"
     },
     "./router": {
       "types": "./dist/router/index.d.ts",
@@ -27,12 +27,16 @@
     "./worker": {
       "types": "./dist/worker/index.d.ts",
       "import": "./dist/worker/index.js"
+    },
+    "./stream": {
+      "types": "./dist/stream/index.d.ts",
+      "import": "./dist/stream/index.js"
     }
   },
   "scripts": {
     "build": "tsc --incremental false",
     "typecheck": "tsc --noEmit",
-    "test": "echo test",
+    "test": "vitest",
     "lint": "echo lint"
   },
   "packageManager": "pnpm@10.17.1",
@@ -41,5 +45,8 @@
     "@pipewarp/ports": "workspace:*",
     "@pipewarp/specs": "workspace:*",
     "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }

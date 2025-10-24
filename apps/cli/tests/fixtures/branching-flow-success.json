@@ -5,7 +5,7 @@
     "first": {
       "type": "action",
       "tool": "stt-client",
-      "op": "transcribe",
+      "op": "echo",
       "args": {
         "text": "first text"
       },
@@ -17,15 +17,15 @@
     "second": {
       "type": "action",
       "tool": "stt-client",
-      "op": "transcribe",
+      "op": "echo",
       "args": {
-        "text": "${steps.first.text}"
+        "text": "${steps.first.result.structuredContent.text}"
       }
     },
     "third": {
       "type": "action",
       "tool": "stt-client",
-      "op": "transcribe",
+      "op": "echo",
       "args": {
         "text": "it failed"
       }

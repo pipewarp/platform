@@ -4,23 +4,29 @@ import { resolveCliPath } from "../../resolve-path.js";
 
 import { type EventEnvelope } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
-import { McpManager } from "@pipewarp/adapters/step-executor";
+import { McpManager } from "@pipewarp/adapters/mcp-manager";
 import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
 import { McpWorker } from "@pipewarp/adapters/worker";
-import { Engine } from "@pipewarp/engine";
+import { InMemoryStreamRegistry } from "@pipewarp/adapters/stream";
+import {
+  Engine,
+  wireStepHandlers,
+  resolveStepArgs,
+  PipeResolver,
+} from "@pipewarp/engine";
 import { startDemoServers } from "./demo.js";
 
 export async function cliRunAction(
   flowPath: string,
   options: { out?: string; test?: boolean; server?: string; demo?: boolean }
 ): Promise<void> {
-  console.log("running run");
-  console.log("options", options);
+  console.log("[cli-run] running run");
+  console.log("[cli-run] options:", options);
 
   const {
-    out = "./output.json",
+    out = "./output.temp.json",
     test = false,
     server = "./src/mcp-server.ts",
     demo = false,
@@ -34,7 +40,7 @@ export async function cliRunAction(
   const flowStore = new FlowStore();
   const { result, flow } = flowStore.validate(json);
   if (!result) {
-    console.error(`Invaid flow at ${flowPath}`);
+    console.error(`[cli-run] Invaid flow at ${flowPath}`);
     return;
   }
   if (flow === undefined) {
@@ -45,11 +51,11 @@ export async function cliRunAction(
   const mcpStore = new McpManager();
 
   if (demo) {
-    console.log("starting demo servers");
+    console.log("[cli-run] starting demo servers");
     const managedProcesses = await startDemoServers();
 
     if (!managedProcesses) {
-      console.error("error starting servers for demo");
+      console.error("[cli-run] error starting servers for demo");
     }
     await mcpStore.addSseClient(
       "http://localhost:3004/sse",
@@ -79,17 +85,28 @@ export async function cliRunAction(
   const queue = new InMemoryQueue();
   const bus = new InMemoryEventBus();
   const router = new NodeRouter(bus, queue);
-
-  const mcpWorker = new McpWorker(queue, bus, mcpStore);
+  const streamRegistry = new InMemoryStreamRegistry();
+  const pipeResolver = new PipeResolver(streamRegistry);
+  const stepHandlerRegistry = wireStepHandlers(
+    bus,
+    resolveStepArgs,
+    pipeResolver
+  );
+  const mcpWorker = new McpWorker(queue, bus, mcpStore, streamRegistry);
 
   for await (const [mcpId] of mcpStore.mcps) {
-    console.log(`starting mcpid: ${mcpId}`);
+    console.log(`[cli-run] starting worker (mcpid: ${mcpId})`);
     await mcpWorker.startMcp(mcpId);
   }
 
   await router.start();
 
-  const engine = new Engine(flowStore, bus);
+  const engine = new Engine(
+    flowStore,
+    bus,
+    streamRegistry,
+    stepHandlerRegistry
+  );
 
   const startFlow: EventEnvelope = {
     correlationId: "123-cid",

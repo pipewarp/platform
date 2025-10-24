@@ -11,7 +11,7 @@ const sessions = new Map<string, SSEServerTransport>();
 const port = 3005;
 const mcp = new McpServer({
   name: "transform-server",
-  version: "0.1.0-alpha.1",
+  version: "0.1.0-alpha.3",
   capabilities: { logging: {} },
 });
 
@@ -31,6 +31,8 @@ const TransformOutputSchema = z.object({
 });
 type TranformOutput = z.infer<typeof TransformOutputSchema>;
 
+let buffer = "";
+
 mcp.registerTool(
   "transform",
   {
@@ -39,7 +41,7 @@ mcp.registerTool(
     inputSchema: {
       delayMs: z.number(),
       art: z.string(),
-      isStreaming: z.boolean(),
+      useStream: z.boolean(),
     },
     outputSchema: {
       ok: z.boolean(),
@@ -47,11 +49,11 @@ mcp.registerTool(
       message: z.string().optional(),
     },
   },
-  async ({ delayMs, art, isStreaming }, ctx) => {
+  async ({ delayMs, art, useStream }, ctx) => {
     const { sessionId } = ctx;
     console.log("[transform-server] sessionId:", sessionId);
 
-    console.log("client sent art:", art);
+    console.log("[transform-server] client sent:", art);
 
     if (!sessionId) {
       console.log("[transform-server] no session");
@@ -74,7 +76,7 @@ mcp.registerTool(
       };
     }
 
-    if (!isStreaming) {
+    if (!useStream) {
       let newArt = "";
 
       const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
@@ -95,7 +97,7 @@ mcp.registerTool(
 
     // should move this out eventually as own thing, but this is just a demo
     (async () => {
-      if (!isStreaming) return;
+      if (!useStream) return;
       await new Promise((r) => setTimeout(r, delayMs));
       let newArt = "";
 
@@ -105,8 +107,9 @@ mcp.registerTool(
       for (const char of chars) {
         newArt += characterSwap.get(char) ?? char;
       }
-
-      console.log("transform-server] sending:", art);
+      buffer += newArt;
+      console.log("[transform-server] sending:", newArt);
+      console.log(`[transform-server] full SSE Buffer:\n${buffer}`);
       await transport.send({
         jsonrpc: "2.0",
         method: "notifications/message",
@@ -174,11 +177,23 @@ app.listen(port, () => {
 });
 
 process.on("SIGINT", () => {
+  for (const [id, transport] of sessions.entries()) {
+    transport.close();
+  }
+  sessions.clear();
   process.exit();
 });
 process.on("SIGTERM", () => {
+  for (const [id, transport] of sessions.entries()) {
+    transport.close();
+  }
+  sessions.clear();
   process.exit();
 });
 process.on("exit", () => {
+  for (const [id, transport] of sessions.entries()) {
+    transport.close();
+  }
+  sessions.clear();
   process.exit();
 });
