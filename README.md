@@ -6,7 +6,7 @@ This software provides minimal functionality. Interfaces and behavior will evolv
 
 ## Overview
 
-Pipewarp is a local first workflow engine designed for flexibly in orchestrating resources utilized AI workflows, such as MCP servers, LLMs, RAG, etc. It focuses on realtime streaming, acomposable components for flexible installs, and great developer experience. Flows should "do what you want", and offer a strong set of features for a variety of applications. Built in observability, historical analysis, and a focus on eval workflows are longterm goals.
+Pipewarp is a local first workflow engine designed for flexibly in orchestrating resources utilized AI workflows, such as MCP servers, LLMs, RAG, etc. It focuses on realtime streaming, acomposable components for flexible installs, and great developer experience. Flows should offer a strong set of features for a variety of applications. Built in observability, historical analysis, and a focus on eval workflows are longterm goals.
 
 ## Quickstart
 
@@ -77,7 +77,7 @@ The streaming flow definition:
       },
       "pipe": {
         "from": {
-          "step": "mario", // pipe SEE from mario into lugio step
+          "step": "mario", // pipe SSE from mario into lugio step
           "buffer": 13 // how many characters to buffer before calling transform tool
         }
       }
