@@ -37,7 +37,7 @@ Run a demo flow [examples/art.flow.json](examples/art.flow.json) with two demo M
 
 Example:
 
-![output.gif](output.gif)
+![output.gif](art-streaming-demo.gif)
 
 Must run from repo root:
 
