@@ -1,8 +1,8 @@
 import { cliRunAction } from "../../src/commands/run/run.cmd.js";
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import fs from "fs";
 import { cwd } from "process";
-import { resolve } from "path";
+import { resolve, join, extname } from "path";
 
 describe("cli run command e2e test", () => {
   const waitForFile = async (
@@ -21,6 +21,36 @@ describe("cli run command e2e test", () => {
 
     return fileExists;
   };
+
+  beforeAll(() => {
+    const resolvedTestPath = resolve(cwd(), "./tests/temp");
+    const files = fs.readdirSync(resolvedTestPath, { encoding: "utf-8" });
+
+    for (const file of files) {
+      const filePath = join(resolvedTestPath, file);
+      const stat = fs.statSync(filePath);
+
+      if (stat.isFile() && extname(file) === ".json") {
+        fs.unlinkSync(filePath);
+        console.log("[cli teste2e] deleted:", filePath);
+      }
+    }
+  });
+
+  afterAll(() => {
+    const resolvedTestPath = resolve(cwd(), "./tests/temp");
+    const files = fs.readdirSync(resolvedTestPath, { encoding: "utf-8" });
+
+    for (const file of files) {
+      const filePath = join(resolvedTestPath, file);
+      const stat = fs.statSync(filePath);
+
+      if (stat.isFile() && extname(file) === ".json") {
+        fs.unlinkSync(filePath);
+        console.log("[cli teste2e] deleted:", filePath);
+      }
+    }
+  });
 
   it("should output a proper json file", async () => {
     const outPath = "./tests/temp/test-run.json";

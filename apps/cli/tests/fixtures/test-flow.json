@@ -5,7 +5,7 @@
     "transcribe": {
       "type": "action",
       "tool": "stt-client",
-      "op": "transcribe",
+      "op": "echo",
       "args": {
         "text": "alligator"
       },
@@ -17,9 +17,9 @@
     "second": {
       "type": "action",
       "tool": "stt-client",
-      "op": "transcribe",
+      "op": "echo",
       "args": {
-        "text": "${steps.transcribe.text}"
+        "text": "${steps.transcribe.result.structuredContent.text}"
       }
     }
   }

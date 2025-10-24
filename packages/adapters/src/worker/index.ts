@@ -1,1 +1,1 @@
-export * from "./node.worker.js";
+export * from "./mcp.worker.js";

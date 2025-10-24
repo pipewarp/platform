@@ -32,11 +32,14 @@ export class ActionStepHandler implements StepHandler {
       tool: step.tool,
       op: step.op,
       ...(args !== undefined ? { args } : {}),
+      pipe: {},
     };
 
     try {
       const pipes = this.pipeResolver.resolve(flow, context, stepName);
-      if (pipes.to !== undefined || pipes.from !== undefined) data.pipe = pipes;
+      if (pipes.to?.id !== undefined) data.pipe.to = pipes.to;
+      if (pipes.from?.id !== undefined) data.pipe.from = pipes.from;
+      console.log("DATA:", JSON.stringify(data, null, 2));
     } catch (err) {
       console.error(
         `[action-step-handler] error resolving pipes for step ${stepName} in flow ${flow.name}`

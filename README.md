@@ -35,6 +35,10 @@ pnpm build
 
 Run a demo flow [examples/art.flow.json](examples/art.flow.json) with two demo MCP servers.
 
+Example:
+
+![output.gif](output.gif)
+
 Must run from repo root:
 
 ```bash

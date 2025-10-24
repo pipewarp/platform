@@ -19,8 +19,8 @@
       "tool": "transform",
       "op": "transform",
       "args": {
-        "art": "${steps.mario.text}",
-        "isStreaming": false,
+        "art": "${steps.mario.result.structuredContent.data}",
+        "useStream": false,
         "delayMs": 10
       }
     }

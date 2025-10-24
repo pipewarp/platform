@@ -7,11 +7,14 @@
       "tool": "unicode",
       "op": "draw",
       "args": {
-        "delayMs": 200,
+        "delayMs": 100,
         "useStream": true
       },
       "pipe": {
-        "to": "luigi"
+        "to": {
+          "step": "luigi",
+          "payload": "params.message"
+        }
       }
     },
     "luigi": {
@@ -19,13 +22,15 @@
       "tool": "transform",
       "op": "transform",
       "args": {
-        "art": "${steps.mario.text}",
-        "isStreaming": true,
+        "art": "$.pipe",
+        "useStream": true,
         "delayMs": 10
       },
       "pipe": {
-        "from": "mario",
-        "to": "print"
+        "from": {
+          "step": "mario",
+          "buffer": 13
+        }
       }
     }
   }

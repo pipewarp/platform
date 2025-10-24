@@ -69,7 +69,6 @@ export class Engine {
     console.log("[engine] made RunContext:\n", context);
 
     await this.queueStreamingSteps(flow, context, flow.start);
-
     return;
   }
 
@@ -88,8 +87,8 @@ export class Engine {
     while (true) {
       context = this.#initStepContext(context, stepName);
       await this.queueStep(flow, context, stepName);
-      const pipeToStep = flow.steps[stepName].pipe?.to;
-      if (context.steps[stepName].pipes.to && pipeToStep) {
+      const pipeToStep = flow.steps[stepName].pipe?.to?.step;
+      if (context.steps[stepName].pipe.to && pipeToStep) {
         stepName = pipeToStep;
       } else {
         break;
@@ -143,7 +142,7 @@ export class Engine {
     context.steps[stepName] = {
       attempt: 0,
       exports: {},
-      pipes: {},
+      pipe: {},
       result: {},
       status: "idle",
     };
@@ -172,7 +171,7 @@ export class Engine {
       ? (event.data.result as Array<Record<string, unknown>>)
       : [{ data: null }];
     if (event.data.result) {
-      context.steps[event.data.stepName].result = result[0];
+      context.steps[event.data.stepName].result = { result };
     }
     context.steps[event.data.stepName].status = event.data.ok
       ? "success"
