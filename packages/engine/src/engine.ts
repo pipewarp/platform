@@ -171,7 +171,7 @@ export class Engine {
       ? (event.data.result as Array<Record<string, unknown>>)
       : [{ data: null }];
     if (event.data.result) {
-      context.steps[event.data.stepName].result = result[0];
+      context.steps[event.data.stepName].result = { result };
     }
     context.steps[event.data.stepName].status = event.data.ok
       ? "success"

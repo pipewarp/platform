@@ -109,7 +109,7 @@ mcp.registerTool(
       }
       buffer += newArt;
       console.log("[transform-server] sending:", newArt);
-      console.log("[transform-server] full SSE Buffer:", buffer);
+      console.log(`[transform-server] full SSE Buffer:\n${buffer}`);
       await transport.send({
         jsonrpc: "2.0",
         method: "notifications/message",

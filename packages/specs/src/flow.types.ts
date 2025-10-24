@@ -35,14 +35,13 @@ export const ActionStepSchema = BaseStepSchema.extend({
       to: z
         .object({
           step: z.string(),
-          format: z.string(),
           payload: z.string(),
         })
         .optional(),
       from: z
         .object({
           step: z.string(),
-          format: z.string(),
+          buffer: z.number().optional(),
         })
         .optional(),
     })

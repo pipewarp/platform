@@ -5,12 +5,11 @@ import { randomUUID } from "crypto";
 export type ResolvedPipes = {
   from?: {
     id: string;
-    format: string;
+    buffer?: number;
   };
   to?: {
     id: string;
     payload: string;
-    format: string;
   };
 };
 
@@ -29,7 +28,6 @@ export class PipeResolver {
       const { id } = this.streamRegistry.createStream(randomUUID());
       pipes.to = {
         id,
-        format: step.pipe.to.format,
         payload: step.pipe.to.payload,
       };
       context.steps[stepName].pipe.to = pipes.to;
@@ -43,7 +41,7 @@ export class PipeResolver {
       console.log(`[pipe-resolver] stepName ${stepName}; id${id}`);
       pipes.from = {
         id,
-        format: step.pipe.from.format,
+        buffer: step.pipe.from.buffer,
       };
       context.steps[stepName].pipe.from = pipes.from;
       console.log(

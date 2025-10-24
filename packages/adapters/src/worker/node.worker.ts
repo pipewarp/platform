@@ -22,6 +22,7 @@ type McpContext = {
     from: {
       id?: string;
       isStreaming: boolean;
+      buffer?: number;
     };
     to: {
       id?: string;
@@ -111,14 +112,29 @@ export class McpWorker {
     client: Client,
     consumer: ConsumerStreamPort
   ): Promise<void> {
-    const buffer = [];
+    const outBuffer = [];
+    let inputBuffer = "";
     let sentArt = "";
 
     this.#workers.set(ctx.mcpId, ctx);
     console.log("[worker] starting consumer stream");
+    let inputsBuffered = 0;
     for await (const chunk of consumer.subscribe()) {
       const payload = chunk.payload;
-      const message = payload as string;
+      let message = payload as string;
+
+      if (ctx.pipe.from.buffer) {
+        inputBuffer += payload;
+        inputsBuffered++;
+
+        if (inputsBuffered >= ctx.pipe.from.buffer) {
+          message = inputBuffer;
+          inputsBuffered = 0;
+          inputBuffer = "";
+        } else {
+          continue;
+        }
+      }
 
       const args = this.#resolvePipeArgs<string>(ctx, message);
       const response = await client.callTool({
@@ -127,8 +143,25 @@ export class McpWorker {
       });
       sentArt += message;
       console.log(sentArt);
-      buffer.push(response.content as Array<Record<string, unknown>>);
+      outBuffer.push(response.content as Array<Record<string, unknown>>);
+
+      if (ctx.pipe.from.buffer) {
+        inputBuffer = "";
+        inputsBuffered = 0;
+      }
     }
+
+    if (inputBuffer.length > 0) {
+      const args = this.#resolvePipeArgs<string>(ctx, inputBuffer);
+      const response = await client.callTool({
+        name: ctx.op,
+        arguments: args,
+      });
+      sentArt += inputBuffer;
+      console.log(sentArt);
+      outBuffer.push(response.content as Array<Record<string, unknown>>);
+    }
+
     ctx = this.#workers.get(ctx.mcpId)!;
     ctx.ongoingStreams--;
     ctx.pipe.from.isStreaming = false;
@@ -136,7 +169,7 @@ export class McpWorker {
 
     if (ctx.ongoingStreams === 0) {
       console.log("[worker] no streams left", ctx.stepName);
-      this.#sendStepCompletedEvent(ctx, buffer);
+      this.#sendStepCompletedEvent(ctx, outBuffer);
     }
     console.log("[worker] streams left", ctx.stepName);
   }
@@ -176,6 +209,7 @@ export class McpWorker {
         from: {
           id: e.data.pipe.from?.id,
           isStreaming: false,
+          buffer: e.data.pipe.from?.buffer,
         },
         to: {
           id: e.data.pipe.to?.id,

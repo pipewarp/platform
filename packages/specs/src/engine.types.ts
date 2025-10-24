@@ -52,14 +52,13 @@ export const RunContextSchema = z.object({
         to: z
           .object({
             id: z.string(),
-            format: z.string(),
             payload: z.string(),
           })
           .optional(),
         from: z
           .object({
             id: z.string(),
-            format: z.string(),
+            buffer: z.number().optional(),
           })
           .optional(),
       }),

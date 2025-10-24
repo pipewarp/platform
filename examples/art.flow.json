@@ -19,7 +19,7 @@
       "tool": "transform",
       "op": "transform",
       "args": {
-        "art": "${steps.mario.text}",
+        "art": "${steps.mario.result.structuredContent.data}",
         "isStreaming": false,
         "delayMs": 10
       }

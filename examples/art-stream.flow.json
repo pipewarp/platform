@@ -13,7 +13,6 @@
       "pipe": {
         "to": {
           "step": "luigi",
-          "format": "text",
           "payload": "params.message"
         }
       }
@@ -30,7 +29,7 @@
       "pipe": {
         "from": {
           "step": "mario",
-          "format": "text"
+          "buffer": 2
         }
       }
     }
