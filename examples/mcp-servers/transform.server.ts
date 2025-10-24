@@ -11,7 +11,7 @@ const sessions = new Map<string, SSEServerTransport>();
 const port = 3005;
 const mcp = new McpServer({
   name: "transform-server",
-  version: "0.1.0-alpha.1",
+  version: "0.1.0-alpha.3",
   capabilities: { logging: {} },
 });
 
