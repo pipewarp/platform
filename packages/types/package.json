@@ -1,0 +1,19 @@
+{
+  "name": "@pipewarp/types",
+  "version": "0.1.0-alpha.3",
+  "private": "true",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc --incremental false",
+    "typecheck": "tsc --noEmit",
+    "test": "echo test",
+    "lint": "echo lint"
+  },
+  "packageManager": "pnpm@10.17.1",
+  "devDependencies": {}
+}
