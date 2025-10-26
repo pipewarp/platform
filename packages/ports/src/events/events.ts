@@ -66,16 +66,6 @@ export const StepCompletedSchema = EventEnvelopeBaseSchema.extend({
   }),
 });
 
-export const Step = EventEnvelopeBaseSchema.extend({
-  kind: z.literal("flow.queued"),
-  data: z.object({
-    flowName: z.string().min(1),
-    inputs: z.record(z.string(), z.unknown()),
-    test: z.boolean().default(false),
-    outfile: z.string(),
-  }),
-});
-
 export const EventEnvelopeSchema = z.discriminatedUnion("kind", [
   StepQueuedEventSchema,
   StepCompletedSchema,
