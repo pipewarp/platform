@@ -1,4 +1,4 @@
-import { EventEnvelope } from "./events/events.js";
+import { EventEnvelope } from "@pipewarp/types";
 
 export interface EventBusPort {
   publish(topic: string, event: EventEnvelope): Promise<void>;

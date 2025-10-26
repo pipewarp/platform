@@ -1,9 +1,5 @@
-import type {
-  RouterPort,
-  EventEnvelope,
-  QueuePort,
-  EventBusPort,
-} from "@pipewarp/ports";
+import type { RouterPort, QueuePort, EventBusPort } from "@pipewarp/ports";
+import type { EventEnvelope } from "@pipewarp/types";
 
 export class NodeRouter implements RouterPort {
   constructor(

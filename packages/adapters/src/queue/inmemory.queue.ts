@@ -1,4 +1,5 @@
-import { EventEnvelope, QueuePort } from "@pipewarp/ports";
+import { QueuePort } from "@pipewarp/ports";
+import type { EventEnvelope } from "@pipewarp/types";
 
 /**
  * First implementation:

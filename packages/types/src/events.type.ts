@@ -4,8 +4,8 @@ export type ActionQueuedEventData = {
   tool: string;
   op: string;
   profile?: string;
-  args: Record<string, unknown>;
-  pipe?: {
+  args?: Record<string, unknown>;
+  pipe: {
     to?: {
       id: string;
       payload: string;
@@ -25,7 +25,7 @@ export type WaitQueuedEventData = {
 
 export type StepQueuedEventData = ActionQueuedEventData | WaitQueuedEventData;
 
-export type StepQueueEvent = {
+export type StepQueuedEvent = {
   kind: "step.queued";
   runId: string;
   data: StepQueuedEventData;
@@ -38,11 +38,13 @@ export type StepCompletedEvent = {
     stepName: string;
     ok: boolean;
     result?: unknown;
-    error: string;
+    error?: string;
   };
 };
 
-export type StepEvent = StepCompletedEvent | StepQueueEvent;
+export type StepEvent = StepCompletedEvent | StepQueuedEvent;
+export type StepQueuedEventEnvelope = StepQueuedEvent & EventEnvelopeBase;
+export type StepCompletedEventEnvelope = StepCompletedEvent & EventEnvelopeBase;
 
 export type FlowQueuedEvent = {
   kind: "flow.queued";
@@ -54,6 +56,7 @@ export type FlowQueuedEvent = {
   };
 };
 export type FlowEvent = FlowQueuedEvent;
+export type FlowQueuedEventEnvelope = FlowQueuedEvent & EventEnvelopeBase;
 
 export interface EventEnvelopeBase {
   id: string;
