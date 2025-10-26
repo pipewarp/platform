@@ -43,6 +43,7 @@ export type StepCompletedEvent = {
 };
 
 export type StepEvent = StepCompletedEvent | StepQueuedEvent;
+export type StepEventKinds = StepEvent["kind"];
 export type StepQueuedEventEnvelope = StepQueuedEvent & EventEnvelopeBase;
 export type StepCompletedEventEnvelope = StepCompletedEvent & EventEnvelopeBase;
 
@@ -51,7 +52,7 @@ export type FlowQueuedEvent = {
   data: {
     flowName: string;
     inputs: Record<string, unknown>;
-    test: boolean;
+    test?: boolean;
     outfile: string;
   };
 };
@@ -69,3 +70,5 @@ export type StepEventEnvelope = StepEvent & EventEnvelopeBase;
 export type FlowEventEnvelope = FlowEvent & EventEnvelopeBase;
 
 export type EventEnvelope = StepEventEnvelope | FlowEventEnvelope;
+
+export type EventKind = EventEnvelope["kind"];
