@@ -126,6 +126,9 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../ports
       '@pipewarp/types':
         specifier: workspace:*
         version: link:../types
