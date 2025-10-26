@@ -3,11 +3,11 @@ import { randomUUID } from "crypto";
 import type { RunContext, Flow } from "@pipewarp/specs";
 import type {
   EventBusPort,
-  EventEnvelope,
   StartFlowInput,
   StepCompletedEvent,
   StreamRegistryPort,
 } from "@pipewarp/ports";
+import type { EventEnvelope } from "@pipewarp/types";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
 

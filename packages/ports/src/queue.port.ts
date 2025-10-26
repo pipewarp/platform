@@ -1,4 +1,4 @@
-import { EventEnvelope } from "./events/events.js";
+import { EventEnvelope } from "@pipewarp/types";
 
 /**
  * QueuePort defines the interface for a message queue system.

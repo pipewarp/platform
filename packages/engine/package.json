@@ -19,6 +19,7 @@
   "dependencies": {
     "@pipewarp/adapters": "workspace:*",
     "@pipewarp/ports": "workspace:*",
-    "@pipewarp/specs": "workspace:*"
+    "@pipewarp/specs": "workspace:*",
+    "@pipewarp/types": "workspace:*"
   }
 }

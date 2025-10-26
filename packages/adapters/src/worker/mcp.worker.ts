@@ -1,14 +1,16 @@
 import type {
   QueuePort,
   EventBusPort,
-  EventEnvelope,
-  StepCompletedEvent,
   StreamRegistryPort,
   InputChunk,
   ProducerStreamPort,
   ConsumerStreamPort,
-  StepQueuedEvent,
 } from "@pipewarp/ports";
+import type {
+  EventEnvelope,
+  StepEventEnvelope,
+  StepQueuedEventEnvelope,
+} from "@pipewarp/types";
 import { McpManager } from "../mcp-manager/mcp.manager.js";
 import { randomUUID } from "crypto";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -180,7 +182,7 @@ export class McpWorker {
     isSuccess: boolean = true,
     errorMessage?: string
   ): Promise<void> {
-    const stepCompletedEvent: StepCompletedEvent = {
+    const stepCompletedEvent: StepEventEnvelope = {
       correlationId: "later",
       id: randomUUID(),
       time: new Date().toISOString(),
@@ -188,6 +190,7 @@ export class McpWorker {
       runId: ctx.runId,
       data: {
         stepName: ctx.stepName,
+
         ok: isSuccess,
         result: data,
         ...(isSuccess ? {} : { error: errorMessage }),
@@ -196,7 +199,7 @@ export class McpWorker {
     await this.bus.publish("steps.lifecycle", stepCompletedEvent);
   }
 
-  #makeContext(e: StepQueuedEvent): McpContext {
+  #makeContext(e: StepQueuedEventEnvelope): McpContext {
     if (e.data.stepType !== "action") {
       throw new Error("[mcp-worker] step type must be 'action'");
     }
@@ -213,14 +216,14 @@ export class McpWorker {
       status: "started",
       pipe: {
         from: {
-          id: e.data.pipe.from?.id,
+          id: e.data.pipe?.from?.id,
           isStreaming: false,
-          buffer: e.data.pipe.from?.buffer,
+          buffer: e.data.pipe?.from?.buffer,
         },
         to: {
-          id: e.data.pipe.to?.id,
+          id: e.data.pipe?.to?.id,
           isStreaming: false,
-          payload: e.data.pipe.to?.payload,
+          payload: e.data.pipe?.to?.payload,
         },
       },
       ongoingStreams: 0,

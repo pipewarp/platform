@@ -94,6 +94,9 @@ importers:
       '@pipewarp/specs':
         specifier: workspace:*
         version: link:../specs
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
       zod:
         specifier: 3.25.76
         version: 3.25.76
@@ -113,6 +116,9 @@ importers:
       '@pipewarp/specs':
         specifier: workspace:*
         version: link:../specs
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/events:
     dependencies:
@@ -126,6 +132,9 @@ importers:
 
   packages/ports:
     dependencies:
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
       zod:
         specifier: 3.25.76
         version: 3.25.76

@@ -1,12 +1,8 @@
 import { randomUUID } from "crypto";
 import type { StepHandler } from "./step-handler.js";
 import type { ResolveStepArgs } from "../resolve.js";
-import type {
-  EventBusPort,
-  EventEnvelope,
-  ActionQueuedData,
-  StepCompletedEvent,
-} from "@pipewarp/ports";
+import type { EventBusPort, StepCompletedEvent } from "@pipewarp/ports";
+import type { EventEnvelope, ActionQueuedEventData } from "@pipewarp/types";
 import type { RunContext, ActionStep, Flow } from "@pipewarp/specs";
 import { PipeResolver } from "../pipe-resolver.js";
 
@@ -26,7 +22,7 @@ export class ActionStepHandler implements StepHandler {
 
     const args = step.args ? this.resolveArgs(context, step.args) : undefined;
 
-    const data: ActionQueuedData = {
+    const data: ActionQueuedEventData = {
       stepName,
       stepType: step.type,
       tool: step.tool,
