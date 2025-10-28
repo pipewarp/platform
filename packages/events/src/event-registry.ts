@@ -1,35 +1,41 @@
-import type { ZodTypeAny } from "zod";
-import type { EventKind } from "@pipewarp/types";
+import type { ZodSchema, ZodTypeAny } from "zod";
+import type { EventType } from "@pipewarp/types";
 import {
-  StepQueuedEventSchema,
-  FlowQueuedEventSchema,
-  StepCompletedEventSchema,
+  FlowQueuedSchema,
+  FlowQueuedDataSchema,
+  StepActionCompletedSchema,
+  StepActionCompletedDataSchema,
+  StepActionQueuedSchema,
+  StepActionQueuedDataSchema,
 } from "./events.schema.js";
 
-export class EventRegistry {
-  #registry = new Map<EventKind, ZodTypeAny>();
-  register(type: EventKind, schema: ZodTypeAny): void {
-    this.#registry.set(type, schema);
-  }
-  get(type: EventKind): ZodTypeAny | undefined {
-    if (!this.#registry.has(type)) return;
-    return this.#registry.get(type);
-  }
-}
+export type EventTopic = "steps.lifecycle" | "flows.lifecycle";
 
-type EventTopic = "steps.lifecycle" | "flows.lifecycle";
-
+// simple hardcoded registry mapping event types to schemas, as well as
+// topics to publish the event to
 export const registry = {
-  "step.queued": {
-    topic: "steps.lifecycle",
-    schema: StepQueuedEventSchema,
-  },
-  "step.completed": {
-    topic: "steps.lifecycle",
-    schema: StepCompletedEventSchema,
-  },
   "flow.queued": {
     topic: "flows.lifecycle",
-    schema: FlowQueuedEventSchema,
+    schema: {
+      event: FlowQueuedSchema,
+      data: FlowQueuedDataSchema,
+    },
   },
-} satisfies Record<EventKind, { topic: EventTopic; schema: ZodTypeAny }>;
+  "step.action.completed": {
+    topic: "steps.lifecycle",
+    schema: {
+      event: StepActionCompletedSchema,
+      data: StepActionCompletedDataSchema,
+    },
+  },
+  "step.action.queued": {
+    topic: "steps.lifecycle",
+    schema: {
+      event: StepActionQueuedSchema,
+      data: StepActionQueuedDataSchema,
+    },
+  },
+} satisfies Record<
+  EventType,
+  { topic: EventTopic; schema: { event: ZodSchema; data: ZodSchema } }
+>;

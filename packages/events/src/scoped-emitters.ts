@@ -1,55 +1,75 @@
 import type { EventBusPort } from "@pipewarp/ports";
 import { registry } from "./event-registry.js";
-import { EventEnvelopeFor, EventKindDataMap, EventKind } from "@pipewarp/types";
+import {
+  StepEvent,
+  StepType,
+  EventData,
+  StepEventType,
+  StepTypeFor,
+} from "@pipewarp/types";
 
-type EnvelopeScope<E extends EventKind> = Omit<
-  EventEnvelopeFor<E>,
-  "id" | "time" | "kind" | "data"
->;
-
-type Emitter<E extends EventKind> = (data: EventKindDataMap[E]) => void;
+// fields necesarry to create a step event using the step emitter
+export type StepScope = {
+  source: string;
+  correlationId: string;
+  flowId: string;
+  runId: string;
+  stepId: string;
+  stepType: StepType;
+};
 
 /**
- * Creates an emitter helped function, scoped to a specific
- * event type(kind), with the necessary header envelope fields
- * for that type.
- *
+ * A step emitter class for publishing step events to a bus.  
+ * Use this to create emitters, then pass them of to other pieces who just want
+ * to publish event data easily.
+ * 
+ * @param type StepEventType
+ * @param bus EventBusPort
+ * @param scope StepScope
  * @example
- * ```
- * // step scoped or higher emitters
- * const scoped = new ScopedEmitter(eventBus, {flowId, runId, stepId});
+ * ```typescript
+ * const stepEmitter = new StepEmitter("step.event.name", bus, StepScope);
  *
- * const emitStepQueued = scoped.create("step.queued");
- *
- * // event is formed and published to default topic
- * emitStepQueued(data: StepQueuedEventData);
+ * // publish data on a bus to a premapped topic, data typed to event type
+ * await stepEmitter.emit(data: {})
+ * 
+ * // scope object looks like this:
+ * type StepScope = {
+     source: string;
+     correlationId: string;
+     flowId: string;
+     runId: string;
+     stepId: string;
+     stepType: StepType;
+   }
  * ```
+ * 
  */
-export class ScopedEmitter {
+export class StepEmitter<T extends StepEventType> {
   constructor(
+    private readonly type: T,
     private readonly bus: EventBusPort,
-    private readonly scope: EnvelopeScope<EventKind>
+    private readonly scope: StepScope
   ) {}
+  async emit(data: EventData<T>) {
+    const entry = registry[this.type];
+    const stepType = this.scope.stepType as StepTypeFor<T>;
+    const event: StepEvent<T> = {
+      id: String(crypto.randomUUID()),
+      specversion: "1.0",
+      time: new Date().toISOString(),
+      type: this.type,
+      data,
+      ...this.scope,
+      stepType,
+    } satisfies StepEvent<T>;
 
-  create<E extends EventKind>(kind: E): Emitter<E> {
-    const entry = registry[kind];
-    return (data) => {
-      const envelope = {
-        id: crypto.randomUUID(),
-        time: new Date().toISOString(),
-        kind,
-        ...this.scope,
-        data,
-      } as EventEnvelopeFor<E>;
-
-      const validation = entry.schema.safeParse(envelope);
-      if (!validation.success) {
-        throw new Error(
-          `[scoped-emitter] invalid payload for ${kind}: ${validation.error.toString()}`
-        );
-      }
-
-      this.bus.publish(entry.topic, envelope);
-    };
+    const result = entry.schema.event.safeParse(data);
+    if (result.error) {
+      throw new Error(
+        `[step-emitter] error parsing event; ${this.type}; ${result.error}`
+      );
+    }
+    await this.bus.publish(entry.topic, event);
   }
 }
