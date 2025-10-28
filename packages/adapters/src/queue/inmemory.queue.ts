@@ -1,5 +1,5 @@
 import { QueuePort } from "@pipewarp/ports";
-import type { EventEnvelope } from "@pipewarp/types";
+import type { AnyEvent } from "@pipewarp/types";
 
 /**
  * First implementation:
@@ -11,10 +11,10 @@ import type { EventEnvelope } from "@pipewarp/types";
  * No persistance.
  */
 export class InMemoryQueue implements QueuePort {
-  #queues = new Map<string, EventEnvelope[]>();
-  #waiters = new Map<string, Array<(e: EventEnvelope) => void>>();
+  #queues = new Map<string, AnyEvent[]>();
+  #waiters = new Map<string, Array<(e: AnyEvent) => void>>();
 
-  async enqueue(queue: string, event: EventEnvelope): Promise<void> {
+  async enqueue(queue: string, event: AnyEvent): Promise<void> {
     console.log("[inmemory-queue] enqueue() called;");
     const q = this.#queues.get(queue) ?? []; // allow queues to be made on the fly
     const w = this.#waiters.get(queue) ?? [];
@@ -34,7 +34,7 @@ export class InMemoryQueue implements QueuePort {
     queue: string,
     workerId: string,
     holdMs?: number
-  ): Promise<EventEnvelope> {
+  ): Promise<AnyEvent> {
     console.log("[inmemory-queue] reserve() called;");
     const q = this.#queues.get(queue) ?? [];
 
@@ -42,10 +42,10 @@ export class InMemoryQueue implements QueuePort {
     if (q.length > 0) return q.shift()!;
     console.log("[inmemory-queue] returning promise not yet resolved");
     // nothing in queue, return a promise we resolve later in this.enqueue()
-    return new Promise<EventEnvelope>((resolve, reject) => {
+    return new Promise<AnyEvent>((resolve, reject) => {
       const waiterResolvers = this.#waiters.get(queue) ?? [];
 
-      waiterResolvers.push((e: EventEnvelope) => {
+      waiterResolvers.push((e: AnyEvent) => {
         resolve(e);
       });
       this.#waiters.set(queue, waiterResolvers);
@@ -57,7 +57,7 @@ export class InMemoryQueue implements QueuePort {
   nack(queue: string, eventId: string, reason: string): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  async peek(queue: string, number: number): Promise<EventEnvelope[]> {
+  async peek(queue: string, number: number): Promise<AnyEvent[]> {
     const q = this.#queues.get(queue) ?? [];
     return q.slice(0, number);
   }

@@ -1,4 +1,4 @@
-import { EventEnvelope } from "@pipewarp/types";
+import { AnyEvent } from "@pipewarp/types";
 
 /**
  * QueuePort defines the interface for a message queue system.
@@ -36,13 +36,13 @@ import { EventEnvelope } from "@pipewarp/types";
  * }
  */
 export interface QueuePort {
-  enqueue(queue: string, event: EventEnvelope): Promise<void>;
+  enqueue(queue: string, event: AnyEvent): Promise<void>;
   reserve(
     queue: string,
     workerId: string,
     holdMs?: number
-  ): Promise<EventEnvelope | null>;
+  ): Promise<AnyEvent | null>;
   ack(queue: string, eventId: string): Promise<void>;
   nack(queue: string, eventId: string, reason: string): Promise<void>;
-  peek(queue: string, number: number): Promise<EventEnvelope[]>;
+  peek(queue: string, number: number): Promise<AnyEvent[]>;
 }

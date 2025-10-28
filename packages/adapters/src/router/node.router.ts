@@ -1,14 +1,14 @@
 import type { RouterPort, QueuePort, EventBusPort } from "@pipewarp/ports";
-import type { EventEnvelope } from "@pipewarp/types";
+import type { AnyEvent } from "@pipewarp/types";
 
 export class NodeRouter implements RouterPort {
   constructor(
     private readonly bus: EventBusPort,
     private readonly queue: QueuePort
   ) {}
-  async route(event: EventEnvelope): Promise<void> {
+  async route(event: AnyEvent): Promise<void> {
     console.log("[router] route() called;");
-    if (event === undefined || event.kind === undefined) {
+    if (event === undefined || event.type === undefined) {
       console.error(
         "[router] cannot route; event is undefined or kind is undefined; event:",
         event
@@ -16,8 +16,9 @@ export class NodeRouter implements RouterPort {
       return;
     }
 
-    if (event.kind === "step.queued" && event.data.stepType === "action") {
-      this.queue.enqueue(event.data.tool, event);
+    if (event.type === "step.action.queued") {
+      const e = event as AnyEvent<"step.action.queued">;
+      this.queue.enqueue(e.data.tool, event);
     }
   }
 

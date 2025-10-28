@@ -1,13 +1,12 @@
 import fs from "fs";
-import { randomUUID } from "crypto";
 import type { RunContext, Flow } from "@pipewarp/specs";
 import type {
   EventBusPort,
   StartFlowInput,
-  StepCompletedEvent,
   StreamRegistryPort,
 } from "@pipewarp/ports";
-import type { EventEnvelope } from "@pipewarp/types";
+import type { AnyEvent, StepEventType } from "@pipewarp/types";
+import { StepEmitter } from "@pipewarp/events";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
 
@@ -28,9 +27,10 @@ export class Engine {
   ) {
     console.log("[engine] constructor");
     this.bus = bus;
-    this.bus.subscribe("flows.lifecycle", async (e: EventEnvelope) => {
+    this.bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
       console.log("[engine bus] flows.lifecycle event:", e);
-      if (e.kind === "flow.queued") {
+      if (e.type === "flow.queued") {
+        e = e as AnyEvent<"flow.queued">;
         await this.startFlow({
           correlationId: e.correlationId,
           flowName: e.data.flowName,
@@ -40,9 +40,10 @@ export class Engine {
       }
     });
 
-    this.bus.subscribe("steps.lifecycle", async (e: EventEnvelope) => {
+    this.bus.subscribe("steps.lifecycle", async (e: AnyEvent) => {
       console.log("[engine bus] steps.lifecycle event:", e);
-      if (e.kind === "step.completed") {
+      if (e.type === "step.action.completed") {
+        e = e as AnyEvent<"step.action.completed">;
         await this.handleWorkerDone(e);
       }
     });
@@ -103,7 +104,19 @@ export class Engine {
   ): Promise<void> {
     const stepType = flow.steps[stepName].type;
     const handler = this.stepHandlerRegistry[stepType];
-    await handler.queue(flow, context, stepName);
+
+    // in future this should be bundled as DI not instantiated in class
+    // class should change to an emitter factory instead of specific emitters
+    const emitter = new StepEmitter("step.action.queued", this.bus, {
+      correlationId: context.correlationId,
+      flowId: context.flowName,
+      runId: context.runId,
+      source: "/engine/stepHandler",
+      stepId: stepName,
+      stepType: "action",
+    });
+
+    await handler.queue(flow, context, stepName, emitter);
 
     context.queuedSteps.add(stepName);
     context.outstandingSteps++;
@@ -116,7 +129,7 @@ export class Engine {
     outFile: string | undefined = "./output.json"
   ): RunContext {
     const context: RunContext = {
-      runId: isTest ? "test-run-id" : randomUUID(),
+      runId: isTest ? "test-run-id" : String(crypto.randomUUID()),
       correlationId,
       // step state stuff
       runningSteps: new Set(),
@@ -159,31 +172,30 @@ export class Engine {
     return nextStepName;
   }
 
-  async handleWorkerDone(event: StepCompletedEvent): Promise<void> {
+  async handleWorkerDone(event: AnyEvent): Promise<void> {
+    const e = event as AnyEvent<"step.action.completed">;
     // update context based on completed event
-    if (!this.#runs.has(event.runId)) {
-      console.error(`[engine] invalid run id: ${event.runId}`);
+    if (!this.#runs.has(e.runId)) {
+      console.error(`[engine] invalid run id: ${e.runId}`);
       return;
     }
-    const context = this.#runs.get(event.runId)!;
+    const context = this.#runs.get(e.runId)!;
 
-    const result = event.data.result
-      ? (event.data.result as Array<Record<string, unknown>>)
+    const result = e.data.result
+      ? (e.data.result as Array<Record<string, unknown>>)
       : [{ data: null }];
-    if (event.data.result) {
-      context.steps[event.data.stepName].result = { result };
+    if (e.data.result) {
+      context.steps[e.stepId].result = { result };
     }
-    context.steps[event.data.stepName].status = event.data.ok
-      ? "success"
-      : "failure";
+    context.steps[e.stepId].status = e.data.ok ? "success" : "failure";
 
-    context.queuedSteps.delete(event.data.stepName);
-    context.runningSteps.delete(event.data.stepName);
-    context.doneSteps.add(event.data.stepName);
+    context.queuedSteps.delete(e.stepId);
+    context.runningSteps.delete(e.stepId);
+    context.doneSteps.add(e.stepId);
     context.outstandingSteps--;
 
-    this.#runs.set(event.runId, context);
-    this.writeRunContext(event.runId);
+    this.#runs.set(e.runId, context);
+    this.writeRunContext(e.runId);
 
     // now get next step and start it.
     const flow = this.flowDb.get(context.flowName);
@@ -192,7 +204,7 @@ export class Engine {
       console.log(`[engine] executeStep(): no flow for ${context.flowName}`);
       return;
     }
-    const nextStep = this.#getNextStepName(flow, context, event.data.stepName);
+    const nextStep = this.#getNextStepName(flow, context, e.stepId);
 
     if (nextStep) {
       this.queueStreamingSteps(flow, context, nextStep);
