@@ -10,6 +10,7 @@ import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
 import { McpWorker } from "@pipewarp/adapters/worker";
 import { InMemoryStreamRegistry } from "@pipewarp/adapters/stream";
+import type { AnyEvent } from "@pipewarp/types";
 import {
   Engine,
   wireStepHandlers,
@@ -108,11 +109,14 @@ export async function cliRunAction(
     stepHandlerRegistry
   );
 
-  const startFlow: EventEnvelope = {
-    correlationId: "123-cid",
-    id: "123-eid",
+  const startFlow: AnyEvent<"flow.queued"> = {
+    correlationId: String(crypto.randomUUID()),
+    id: String(crypto.randomUUID()),
     time: new Date().toISOString(),
-    kind: "flow.queued",
+    type: "flow.queued",
+    flowId: flow.name,
+    source: "/cli/cmd/run",
+    specversion: "1.0",
     data: {
       flowName: flow.name,
       inputs: { text: "text" },

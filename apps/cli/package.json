@@ -22,6 +22,7 @@
     "@pipewarp/specs": "workspace:*",
     "@pipewarp/engine": "workspace:*",
     "@pipewarp/ports": "workspace:*",
+    "@pipewarp/types": "workspace:*",
     "commander": "^14.0.1",
     "zod": "3.25.76"
   },

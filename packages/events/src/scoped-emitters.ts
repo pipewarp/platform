@@ -64,7 +64,9 @@ export class StepEmitter<T extends StepEventType> {
       stepType,
     } satisfies StepEvent<T>;
 
-    const result = entry.schema.event.safeParse(data);
+    console.log("event", JSON.stringify(event, null, 2));
+
+    const result = entry.schema.event.safeParse(event);
     if (result.error) {
       throw new Error(
         `[step-emitter] error parsing event; ${this.type}; ${result.error}`

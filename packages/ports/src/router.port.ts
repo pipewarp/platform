@@ -1,5 +1,5 @@
-import { EventEnvelope } from "@pipewarp/types";
+import { AnyEvent } from "@pipewarp/types";
 
 export interface RouterPort {
-  route(event: EventEnvelope): Promise<void>;
+  route(event: AnyEvent): Promise<void>;
 }

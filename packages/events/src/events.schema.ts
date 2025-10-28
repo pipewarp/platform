@@ -66,8 +66,6 @@ export const StepContextSchema = z
 
 export const StepActionQueuedDataSchema = z
   .object({
-    stepType: z.literal("action"),
-    stepName: z.string(),
     tool: z.string().min(1),
     op: z.string().min(1),
     profile: z.string().min(1).optional(),

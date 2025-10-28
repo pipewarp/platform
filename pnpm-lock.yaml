@@ -38,6 +38,9 @@ importers:
       '@pipewarp/specs':
         specifier: workspace:*
         version: link:../../packages/specs
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       commander:
         specifier: ^14.0.1
         version: 14.0.1
@@ -110,6 +113,9 @@ importers:
       '@pipewarp/adapters':
         specifier: workspace:*
         version: link:../adapters
+      '@pipewarp/events':
+        specifier: workspace:*
+        version: link:../events
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../ports

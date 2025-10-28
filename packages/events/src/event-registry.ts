@@ -1,4 +1,4 @@
-import type { ZodSchema, ZodTypeAny } from "zod";
+import type { ZodSchema } from "zod";
 import type { EventType } from "@pipewarp/types";
 import {
   FlowQueuedSchema,
