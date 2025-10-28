@@ -5,7 +5,8 @@ import type {
   StartFlowInput,
   StreamRegistryPort,
 } from "@pipewarp/ports";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent, StepEventType } from "@pipewarp/types";
+import { StepEmitter } from "@pipewarp/events";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
 
@@ -103,7 +104,19 @@ export class Engine {
   ): Promise<void> {
     const stepType = flow.steps[stepName].type;
     const handler = this.stepHandlerRegistry[stepType];
-    await handler.queue(flow, context, stepName);
+
+    // in future this should be bundled as DI not instantiated in class
+    // class should change to an emitter factory instead of specific emitters
+    const emitter = new StepEmitter("step.action.queued", this.bus, {
+      correlationId: context.correlationId,
+      flowId: context.flowName,
+      runId: context.runId,
+      source: "/engine/stepHandler",
+      stepId: stepName,
+      stepType: "action",
+    });
+
+    await handler.queue(flow, context, stepName, emitter);
 
     context.queuedSteps.add(stepName);
     context.outstandingSteps++;
