@@ -15,13 +15,11 @@ export class InMemoryQueue implements QueuePort {
   #waiters = new Map<string, Array<(e: AnyEvent) => void>>();
 
   async enqueue(queue: string, event: AnyEvent): Promise<void> {
-    console.log("[inmemory-queue] enqueue() called;");
     const q = this.#queues.get(queue) ?? []; // allow queues to be made on the fly
     const w = this.#waiters.get(queue) ?? [];
 
     // if waiters are waiting on this queue, just send it to that directly now
     if (w.length > 0) {
-      console.log("[inmemory-queue] shifting to waiting callback in enqueue()");
       const cb = w.shift();
       if (cb !== undefined) cb(event); // call resolve method on this waiter
     } else {
@@ -32,15 +30,13 @@ export class InMemoryQueue implements QueuePort {
 
   async reserve(
     queue: string,
-    workerId: string,
+    workerId?: string,
     holdMs?: number
   ): Promise<AnyEvent> {
-    console.log("[inmemory-queue] reserve() called;");
     const q = this.#queues.get(queue) ?? [];
 
     // quick fullfilled promise if queue is not empty
     if (q.length > 0) return q.shift()!;
-    console.log("[inmemory-queue] returning promise not yet resolved");
     // nothing in queue, return a promise we resolve later in this.enqueue()
     return new Promise<AnyEvent>((resolve, reject) => {
       const waiterResolvers = this.#waiters.get(queue) ?? [];
@@ -70,6 +66,6 @@ export class InMemoryQueue implements QueuePort {
       }
     }
     this.#waiters.clear();
-    console.log("[inmemory-queue] all waiters aborted and resolved null");
+    console.log("[inmemory-queue] all waiters resolved null and removed.");
   }
 }
