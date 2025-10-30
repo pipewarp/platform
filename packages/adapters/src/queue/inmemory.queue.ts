@@ -1,6 +1,13 @@
 import { QueuePort } from "@pipewarp/ports";
 import type { AnyEvent } from "@pipewarp/types";
 
+type QueueId = string;
+type WorkerId = string;
+type Waiter = {
+  workerId: WorkerId;
+  resolver: (e: AnyEvent) => void;
+};
+
 /**
  * First implementation:
  * No rety; ack and nack are noop
@@ -11,8 +18,8 @@ import type { AnyEvent } from "@pipewarp/types";
  * No persistance.
  */
 export class InMemoryQueue implements QueuePort {
-  #queues = new Map<string, AnyEvent[]>();
-  #waiters = new Map<string, Array<(e: AnyEvent) => void>>();
+  #queues = new Map<QueueId, AnyEvent[]>();
+  #waiters = new Map<QueueId, Array<Waiter>>();
 
   async enqueue(queue: string, event: AnyEvent): Promise<void> {
     const q = this.#queues.get(queue) ?? []; // allow queues to be made on the fly
@@ -20,8 +27,8 @@ export class InMemoryQueue implements QueuePort {
 
     // if waiters are waiting on this queue, just send it to that directly now
     if (w.length > 0) {
-      const cb = w.shift();
-      if (cb !== undefined) cb(event); // call resolve method on this waiter
+      const { resolver } = w.shift()!;
+      if (resolver !== undefined) resolver(event); // call resolve method on this waiter
     } else {
       q.push(event);
     }
@@ -30,7 +37,7 @@ export class InMemoryQueue implements QueuePort {
 
   async reserve(
     queue: string,
-    workerId?: string,
+    workerId: string,
     holdMs?: number
   ): Promise<AnyEvent> {
     const q = this.#queues.get(queue) ?? [];
@@ -41,8 +48,11 @@ export class InMemoryQueue implements QueuePort {
     return new Promise<AnyEvent>((resolve, reject) => {
       const waiterResolvers = this.#waiters.get(queue) ?? [];
 
-      waiterResolvers.push((e: AnyEvent) => {
-        resolve(e);
+      waiterResolvers.push({
+        workerId,
+        resolver: (e: AnyEvent) => {
+          resolve(e);
+        },
       });
       this.#waiters.set(queue, waiterResolvers);
     });
@@ -58,10 +68,23 @@ export class InMemoryQueue implements QueuePort {
     return q.slice(0, number);
   }
 
+  abortAllForWorker(id: string) {
+    for (const [queue, waiters] of this.#waiters.entries()) {
+      for (let i = waiters.length - 1; i >= 0; i--) {
+        const { workerId, resolver } = waiters[i];
+        if (workerId === id) {
+          resolver(null as any);
+          waiters.splice(i, 1);
+        }
+      }
+      if (waiters.length === 0) this.#waiters.delete(queue);
+    }
+  }
+
   // gracefully shut down and resolve any promises for clean process exit
   abortAll(): void {
-    for (const [queue, resolvers] of this.#waiters.entries()) {
-      for (const resolver of resolvers) {
+    for (const [queue, waiters] of this.#waiters.entries()) {
+      for (const { resolver } of waiters) {
         resolver(null as any);
       }
     }

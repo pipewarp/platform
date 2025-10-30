@@ -14,12 +14,11 @@ export type ContextFor<T extends EventType> = T extends StepEventType
   ? PipewarpFlowContext<T>
   : PipewarpContext<T>;
 
-// export type AnyEvent<T extends EventType = EventType> = CloudEvent<
-//   T,
-//   EventMap[T]
-// > &
-//   PipewarpContext;
-
+/**
+ * Access any event by event type.
+ * @example
+ * const event: AnyEvent<"step.action.queued"> = {}
+ */
 export type AnyEvent<T extends EventType = EventType> = CloudEvent<T> &
   ContextFor<T>;
 

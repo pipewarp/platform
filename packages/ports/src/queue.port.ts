@@ -40,11 +40,12 @@ export interface QueuePort {
   enqueue(queue: string, event: AnyEvent): Promise<void>;
   reserve(
     queue: string,
-    workerId?: string,
+    workerId: string,
     holdMs?: number
   ): Promise<AnyEvent | null>;
   ack(queue: string, eventId: string): Promise<void>;
   nack(queue: string, eventId: string, reason: string): Promise<void>;
-  peek?(queue: string, number: string): Promise<AnyEvent[]>;
+  peek?(queue: string, number: number): Promise<AnyEvent[]>;
+  abortAllForWorker(workerId: string): void;
   abortAll(): void;
 }

@@ -7,9 +7,10 @@ describe("InMemoryQueue", () => {
     const q = new InMemoryQueue();
 
     const qName = "test-name";
+    const workerId = "test-worker";
     const event = { foo: "bar" } as unknown as AnyEvent;
 
-    const promise = q.reserve(qName);
+    const promise = q.reserve(qName, workerId);
 
     expect(await q.peek(qName, 1)).toHaveLength(0);
     await q.enqueue(qName, event);
@@ -21,6 +22,7 @@ describe("InMemoryQueue", () => {
     const q = new InMemoryQueue();
 
     const qName = "test-name";
+    const workerId = "test-worker";
     const event1 = { foo: "bar" } as unknown as AnyEvent;
     const event2 = { hello: "world" } as unknown as AnyEvent;
     const event3 = { test: "best" } as unknown as AnyEvent;
@@ -29,9 +31,9 @@ describe("InMemoryQueue", () => {
     await q.enqueue(qName, event1);
     await q.enqueue(qName, event2);
     await q.enqueue(qName, event3);
-    const promise1 = q.reserve(qName);
-    const promise2 = q.reserve(qName);
-    const promise3 = q.reserve(qName);
+    const promise1 = q.reserve(qName, workerId);
+    const promise2 = q.reserve(qName, workerId);
+    const promise3 = q.reserve(qName, workerId);
     await expect(promise1).resolves.toBe(event1);
     await expect(promise2).resolves.toBe(event2);
     await expect(promise3).resolves.toBe(event3);
@@ -42,6 +44,7 @@ describe("InMemoryQueue", () => {
     const q = new InMemoryQueue();
 
     const qName = "test-name";
+    const workerId = "test-worker";
     const event1 = { foo: "bar" } as unknown as AnyEvent;
     const event2 = { hello: "world" } as unknown as AnyEvent;
     const event3 = { test: "best" } as unknown as AnyEvent;
@@ -58,12 +61,30 @@ describe("InMemoryQueue", () => {
     const q = new InMemoryQueue();
 
     const qName = "test-name";
-    const promise1 = q.reserve(qName);
-    const promise2 = q.reserve(qName);
+    const workerId = "test-worker";
+    const promise1 = q.reserve(qName, workerId);
+    const promise2 = q.reserve(qName, workerId);
 
     q.abortAll();
 
     await expect(promise1).resolves.toBe(null);
     await expect(promise2).resolves.toBe(null);
+  });
+
+  it("abortAllForWorker resolves null and removes by workerId", async () => {
+    const q = new InMemoryQueue();
+
+    const qName = "test-name";
+    const workerId1 = "test-worker1";
+    const workerId2 = "test-worker2";
+    const event1 = { foo: "bar" } as unknown as AnyEvent;
+    const promise1 = q.reserve(qName, workerId1);
+    const promise2 = q.reserve(qName, workerId2);
+
+    q.abortAllForWorker(workerId1);
+    await expect(promise1).resolves.toBe(null);
+
+    await q.enqueue(qName, event1);
+    await expect(promise2).resolves.toBe(event1);
   });
 });
