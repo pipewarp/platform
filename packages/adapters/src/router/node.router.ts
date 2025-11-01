@@ -1,6 +1,14 @@
 import type { RouterPort, QueuePort, EventBusPort } from "@pipewarp/ports";
 import type { AnyEvent } from "@pipewarp/types";
 
+export type RouterContext = {
+  [capability: string]: {
+    active: number;
+    limit: number;
+    readyQueue: string;
+    waitingQueue: string;
+  };
+};
 export class NodeRouter implements RouterPort {
   constructor(
     private readonly bus: EventBusPort,

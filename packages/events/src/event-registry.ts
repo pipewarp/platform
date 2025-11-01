@@ -9,7 +9,10 @@ import {
   StepActionQueuedDataSchema,
 } from "./events.schema.js";
 
-export type EventTopic = "steps.lifecycle" | "flows.lifecycle";
+export type EventTopic =
+  | "steps.lifecycle"
+  | "flows.lifecycle"
+  | "workers.lifecycle";
 
 // simple hardcoded registry mapping event types to schemas, as well as
 // topics to publish the event to
@@ -33,6 +36,20 @@ export const registry = {
     schema: {
       event: StepActionQueuedSchema,
       data: StepActionQueuedDataSchema,
+    },
+  },
+  "worker.registered": {
+    topic: "workers.lifecycle",
+    schema: {
+      event: {} as ZodSchema,
+      data: {} as ZodSchema,
+    },
+  },
+  "worker.registration.requested": {
+    topic: "workers.lifecycle",
+    schema: {
+      event: {} as ZodSchema,
+      data: {} as ZodSchema,
     },
   },
 } satisfies Record<

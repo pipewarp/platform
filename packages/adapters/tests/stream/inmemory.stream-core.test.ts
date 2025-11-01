@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InMemoryStreamCore } from "../src/stream/internal/inmemory.stream-core";
+import { InMemoryStreamCore } from "../../src/stream/internal/inmemory.stream-core";
 import type { InputChunk } from "@pipewarp/ports";
 
 describe("in-memory stream core", () => {

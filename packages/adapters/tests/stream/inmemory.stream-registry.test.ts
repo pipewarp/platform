@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it, assert } from "vitest";
-import { InMemoryStreamRegistry } from "../src/stream/inmemory.stream-registry";
+import { InMemoryStreamRegistry } from "../../src/stream/inmemory.stream-registry";
 import type { ProducerStreamPort } from "@pipewarp/ports";
 
 describe("in-memory stream registry", () => {

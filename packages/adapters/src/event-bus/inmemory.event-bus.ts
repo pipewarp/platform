@@ -1,6 +1,5 @@
 import { EventEmitter } from "events";
 import type { EventBusPort } from "@pipewarp/ports";
-import { parseEvent } from "./parseEvent.js";
 import type { AnyEvent } from "@pipewarp/types";
 
 export class InMemoryEventBus implements EventBusPort {
