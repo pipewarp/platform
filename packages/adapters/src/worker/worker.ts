@@ -1,5 +1,5 @@
 import { EventBusPort, QueuePort } from "@pipewarp/ports";
-import { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent, Capability, WorkerMetadata } from "@pipewarp/types";
 
 // created for each dequeued job; lives until job completes or fails
 export type JobContext = {
@@ -11,12 +11,7 @@ export type JobContext = {
   resolved: {}; // resolved dependencies (input files, tokens, session handles)
 };
 
-export type Capability = {
-  queueId: string; //"stt";
-  activeJobCount: number; // 0;
-  maxJobCount: number; // 1;
-  resource: string; // "stt-resource";
-  tool: string; // "local-gpu-stt";
+export type WorkerCapability = Capability & {
   newJobWaitersAreAllowed: boolean; // true;
   jobWaiters: Set<Promise<void>>;
 };
@@ -26,8 +21,9 @@ export type WorkerContext = {
   maxConcurrency: number;
   capabilities: {
     // capabilities
-    [id: string]: Capability;
+    [id: string]: WorkerCapability;
   };
+  isRegistered: boolean;
   jobs: Map<string, JobContext>;
 };
 
@@ -41,42 +37,107 @@ type Deferred<T> = {
 
 export class Worker {
   #context: WorkerContext = {
-    workerId: "default-worker",
+    workerId: "generic-worker",
     totalActiveJobCount: 0,
     capabilities: {},
     jobs: new Map(),
     maxConcurrency: 0,
+    isRegistered: false,
   };
   #capabilityJobWaiters = new Map<string, Promise<void>>();
 
   constructor(
+    workerId: string,
     private readonly bus: EventBusPort,
     private readonly queue: QueuePort // emitter facotry - possibly with a bus already buildt in?
-  ) {}
-
-  async handleNewJob(event: AnyEvent): Promise<void> {}
-
-  addCapability(id: string, profile: Capability) {
-    this.#context.capabilities[id] = profile;
+  ) {
+    this.#context.workerId = workerId;
+    // this.#subscribeToBus();
   }
-  async start(): Promise<void> {
+
+  #subscribeToBus(): void {
+    this.bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
+      console.log("[worker] workers.lifecycle event:", e);
+      if (e.type === "worker.registered") {
+        e = e as AnyEvent<"worker.registered">;
+        if (
+          e.data.workerId === this.#context.workerId &&
+          e.data.status === "accepted"
+        ) {
+          this.#context.isRegistered = true;
+          console.log("[worker] received registration accepted");
+        }
+      }
+    });
+  }
+
+  async handleNewJob(event: AnyEvent): Promise<void> {
+    // invoke some sort of tool from a tool registry
+    const registry = {};
+  }
+
+  addCapability(profile: Capability) {
+    this.#context.capabilities[profile.name] = {
+      ...profile,
+      jobWaiters: new Set<Promise<void>>(),
+      newJobWaitersAreAllowed: true,
+    };
+  }
+  setCapabilityWaiterPolicy(capabilityId: string, allowNew: boolean) {
+    this.#context.capabilities[capabilityId].newJobWaitersAreAllowed = allowNew;
+  }
+  getWaiterSize(capabilityId: string) {
+    return this.#context.capabilities[capabilityId].jobWaiters.size;
+  }
+  getActiveJobCount(capabilitiesId: string) {}
+  getMetadata(): WorkerMetadata {
+    const capabilities: Capability[] = [];
+    const caps = this.#context.capabilities;
+
+    for (const name in caps) {
+      const cap: Capability = {
+        name,
+        queueId: name,
+        activeJobCount: 0,
+        maxJobCount: 1,
+        tool: {
+          ...caps[name].tool,
+        },
+      };
+
+      capabilities.push(cap);
+    }
+    const meta: WorkerMetadata = {
+      id: this.#context.workerId,
+      name: this.#context.workerId,
+      type: "inprocess",
+      capabilities,
+    };
+    return meta;
+  }
+
+  async requestRegistration(): Promise<void> {
+    const meta = this.getMetadata();
+    const event: AnyEvent<"worker.registration.requested"> = {
+      id: String(crypto.randomUUID()),
+      correlationId: String(crypto.randomUUID()),
+      source: "worker://" + this.#context.workerId,
+      time: new Date().toISOString(),
+      specversion: "1.0",
+      datacontenttype: "application/json",
+      type: "worker.registration.requested",
+      data: meta,
+    };
+    await this.bus.publish("workers.lifecycle", event);
+  }
+
+  start(): void {
     for (const id in this.#context.capabilities) {
       const p = this.startCapabilityJobWaiters(id);
       this.#capabilityJobWaiters.set(id, p);
     }
   }
   stop(): void {}
-
-  #makeDeferred<T>(): Deferred<T> {
-    let resolve: PromiseResolve<T>;
-    let reject: PromiseReject;
-    const promise = new Promise<T>((res, rej) => {
-      resolve = res;
-      reject = rej;
-    });
-
-    return { promise, resolve: resolve!, reject: reject! };
-  }
 
   /**
    * Start job waiters (deferred promises) on a queue.
@@ -139,5 +200,16 @@ export class Worker {
       caps[id].newJobWaitersAreAllowed = false;
     }
     this.queue.abortAllForWorker(this.#context.workerId);
+  }
+
+  #makeDeferred<T>(): Deferred<T> {
+    let resolve: PromiseResolve<T>;
+    let reject: PromiseReject;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+
+    return { promise, resolve: resolve!, reject: reject! };
   }
 }

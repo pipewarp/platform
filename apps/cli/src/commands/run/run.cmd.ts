@@ -2,13 +2,12 @@ import { Command } from "commander";
 import fs from "fs";
 import { resolveCliPath } from "../../resolve-path.js";
 
-import { type EventEnvelope } from "@pipewarp/ports";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import { McpManager } from "@pipewarp/adapters/mcp-manager";
 import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
-import { McpWorker } from "@pipewarp/adapters/worker";
+import { McpWorker, Worker } from "@pipewarp/adapters/worker";
 import { InMemoryStreamRegistry } from "@pipewarp/adapters/stream";
 import type { AnyEvent } from "@pipewarp/types";
 import {
@@ -16,6 +15,7 @@ import {
   wireStepHandlers,
   resolveStepArgs,
   PipeResolver,
+  ResourceRegistry,
 } from "@pipewarp/engine";
 import { startDemoServers } from "./demo.js";
 
@@ -100,13 +100,38 @@ export async function cliRunAction(
     await mcpWorker.startMcp(mcpId);
   }
 
+  const workerId = "cli-worker";
+  const worker = new Worker(workerId, bus, queue);
+
+  worker.addCapability({
+    name: "unicode",
+    queueId: "unicode",
+    activeJobCount: 0,
+    maxJobCount: 1,
+    tool: {
+      id: "mcp",
+      type: "inprocess",
+    },
+  });
+  worker.addCapability({
+    name: "transform",
+    queueId: "transform",
+    activeJobCount: 0,
+    maxJobCount: 1,
+    tool: {
+      id: "mcp",
+      type: "inprocess",
+    },
+  });
+
   await router.start();
 
   const engine = new Engine(
     flowStore,
     bus,
     streamRegistry,
-    stepHandlerRegistry
+    stepHandlerRegistry,
+    new ResourceRegistry()
   );
 
   const startFlow: AnyEvent<"flow.queued"> = {
@@ -124,6 +149,19 @@ export async function cliRunAction(
       outfile: resolvedOutPath,
     },
   };
+
+  bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
+    console.log("[cli] workers.lifecycle event:", e);
+    if (e.type === "worker.registered") {
+      e = e as AnyEvent<"worker.registered">;
+      if (e.data.workerId === workerId && e.data.status === "accepted") {
+        console.log(
+          "[cli] received registration accepted, publishing flow event"
+        );
+        await bus.publish("flows.lifecycle", startFlow);
+      }
+    }
+  });
 
   process.on("SIGINT", async () => {
     if (demo) {
@@ -153,7 +191,8 @@ export async function cliRunAction(
     queue.abortAll();
   });
 
-  await bus.publish("flows.lifecycle", startFlow);
+  await engine.start();
+  await worker.requestRegistration();
 }
 
 export function registerRunCmd(program: Command): Command {

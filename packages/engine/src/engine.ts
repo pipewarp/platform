@@ -5,10 +5,11 @@ import type {
   StartFlowInput,
   StreamRegistryPort,
 } from "@pipewarp/ports";
-import type { AnyEvent, StepEventType } from "@pipewarp/types";
+import type { AnyEvent, StepEventType, WorkerMetadata } from "@pipewarp/types";
 import { StepEmitter } from "@pipewarp/events";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
+import { ResourceRegistry } from "./resource-registry.js";
 
 /**
  * Engine class runs flows as the orchestration center.
@@ -23,11 +24,12 @@ export class Engine {
     private readonly flowDb: FlowStore,
     private readonly bus: EventBusPort,
     private readonly streamRegistry: StreamRegistryPort,
-    private readonly stepHandlerRegistry: StepHandlerRegistry
-  ) {
-    console.log("[engine] constructor");
-    this.bus = bus;
-    this.bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
+    private readonly stepHandlerRegistry: StepHandlerRegistry,
+    private readonly resourceRegistry: ResourceRegistry
+  ) {}
+
+  async subscribeToTopics(): Promise<void> {
+    await this.bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
       console.log("[engine bus] flows.lifecycle event:", e);
       if (e.type === "flow.queued") {
         e = e as AnyEvent<"flow.queued">;
@@ -40,13 +42,38 @@ export class Engine {
       }
     });
 
-    this.bus.subscribe("steps.lifecycle", async (e: AnyEvent) => {
+    await this.bus.subscribe("steps.lifecycle", async (e: AnyEvent) => {
       console.log("[engine bus] steps.lifecycle event:", e);
       if (e.type === "step.action.completed") {
         e = e as AnyEvent<"step.action.completed">;
         await this.handleWorkerDone(e);
       }
     });
+
+    await this.bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
+      console.log("[engine] workers.lifecycle event:", e);
+      if (e.type === "worker.registration.requested") {
+        e = e as AnyEvent<"worker.registration.requested">;
+        this.resourceRegistry.registerWorker(e.data);
+        this.bus.publish("workers.lifecycle", {
+          id: String(crypto.randomUUID()),
+          source: "resource-registry://default",
+          specversion: "1.0",
+          correlationId: String(crypto.randomUUID()),
+          time: new Date().toISOString(),
+          type: "worker.registered",
+          data: {
+            workerId: e.data.id,
+            status: "accepted",
+            registeredAt: new Date().toISOString(),
+          },
+        } satisfies AnyEvent<"worker.registered">);
+      }
+    });
+  }
+
+  async start() {
+    await this.subscribeToTopics();
   }
 
   async startFlow(input: StartFlowInput): Promise<void> {
@@ -103,6 +130,16 @@ export class Engine {
     stepName: string
   ): Promise<void> {
     const stepType = flow.steps[stepName].type;
+
+    if (stepType === "action") {
+      const capName = flow.steps[stepName].tool;
+      const caps = this.resourceRegistry.getCapability(capName);
+      if (caps === undefined) {
+        throw new Error(
+          `[engine] no capability in local resourece registry for ${capName}`
+        );
+      }
+    }
     const handler = this.stepHandlerRegistry[stepType];
 
     // in future this should be bundled as DI not instantiated in class
@@ -194,7 +231,6 @@ export class Engine {
     context.doneSteps.add(e.stepId);
     context.outstandingSteps--;
 
-    this.#runs.set(e.runId, context);
     this.writeRunContext(e.runId);
 
     // now get next step and start it.

@@ -4,10 +4,9 @@ import type { PipewarpContext } from "./pipewarp-context.js";
 import type { StepContext } from "./step-event.js";
 import { PipewarpFlowContext } from "./flow-event.js";
 
-// export type ContextFor<T extends EventType> = T extends `step.${string}`
-//   ? Omit<PipewarpContext, keyof StepContext<string>> & StepContext<string>
-//   : PipewarpContext;
-
+/**
+ * The varying base fields that are required for each event type.
+ */
 export type ContextFor<T extends EventType> = T extends StepEventType
   ? StepContext<T>
   : T extends FlowEventType
@@ -22,10 +21,9 @@ export type ContextFor<T extends EventType> = T extends StepEventType
 export type AnyEvent<T extends EventType = EventType> = CloudEvent<T> &
   ContextFor<T>;
 
-// export type AnyEventUnion = {
-//   [T in EventType]: CloudEvent<T, EventMap[T]> & PipewarpContext;
-// }[EventType];
-
+/**
+ * union lookup of event by type, currently unused in the system
+ */
 export type AnyEventUnion = {
   [T in EventType]: CloudEvent<T> & ContextFor<T>;
 }[EventType];
