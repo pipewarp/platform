@@ -144,9 +144,6 @@ importers:
       '@pipewarp/types':
         specifier: workspace:*
         version: link:../types
-      zod:
-        specifier: 3.25.76
-        version: 3.25.76
 
   packages/specs:
     dependencies:

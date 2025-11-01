@@ -11,8 +11,7 @@ export type ContextFor<T extends EventType> = T extends StepEventType
   ? StepContext<T>
   : T extends FlowEventType
   ? PipewarpFlowContext<T>
-  : PipewarpContext<T>;
-
+  : PipewarpContext;
 /**
  * Access any event by event type.
  * @example
@@ -20,6 +19,22 @@ export type ContextFor<T extends EventType> = T extends StepEventType
  */
 export type AnyEvent<T extends EventType = EventType> = CloudEvent<T> &
   ContextFor<T>;
+
+const am: ContextFor<"worker.registration.requested"> = {};
+
+const a: ContextFor<"step.action.queued"> = {
+  flowId: "",
+  runId: "",
+  stepId: "",
+  stepType: "action",
+};
+
+const b: ContextFor<"step.mcp.queued"> = {
+  flowId: "",
+  runId: "",
+  stepId: "",
+  stepType: "mcp",
+};
 
 /**
  * union lookup of event by type, currently unused in the system

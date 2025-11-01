@@ -1,9 +1,4 @@
-import { StreamState } from "http2";
-import {
-  ConsumerStreamPort,
-  ProducerStreamPort,
-  StreamStatus,
-} from "./stream.port.js";
+import { ConsumerStreamPort, ProducerStreamPort } from "./stream.port.js";
 
 export interface StreamHandles {
   id: string;
