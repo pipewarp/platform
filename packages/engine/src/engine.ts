@@ -32,12 +32,12 @@ export class Engine {
     await this.bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
       console.log("[engine bus] flows.lifecycle event:", e);
       if (e.type === "flow.queued") {
-        e = e as AnyEvent<"flow.queued">;
+        const event = e as AnyEvent<"flow.queued">;
         await this.startFlow({
-          correlationId: e.correlationId,
-          flowName: e.data.flowName,
-          outfile: e.data.outfile,
-          test: e.data.test,
+          correlationId: event.correlationId,
+          flowName: event.data.flowName,
+          outfile: event.data.outfile,
+          test: event.data.test,
           inputs: {},
         });
       }
@@ -54,8 +54,8 @@ export class Engine {
     await this.bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
       console.log("[engine] workers.lifecycle event:", e);
       if (e.type === "worker.registration.requested") {
-        e = e as AnyEvent<"worker.registration.requested">;
-        this.resourceRegistry.registerWorker(e.data);
+        const event = e as AnyEvent<"worker.registration.requested">;
+        this.resourceRegistry.registerWorker(event.data);
         this.bus.publish("workers.lifecycle", {
           id: String(crypto.randomUUID()),
           source: "resource-registry://default",
@@ -64,7 +64,7 @@ export class Engine {
           time: new Date().toISOString(),
           type: "worker.registered",
           data: {
-            workerId: e.data.id,
+            workerId: event.data.id,
             status: "accepted",
             registeredAt: new Date().toISOString(),
           },

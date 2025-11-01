@@ -1,5 +1,6 @@
 import { EventBusPort, QueuePort } from "@pipewarp/ports";
 import type { AnyEvent, Capability, WorkerMetadata } from "@pipewarp/types";
+import { McpTool } from "../tools/mcp.tool.js";
 
 // created for each dequeued job; lives until job completes or fails
 export type JobContext = {
@@ -59,10 +60,10 @@ export class Worker {
     this.bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
       console.log("[worker] workers.lifecycle event:", e);
       if (e.type === "worker.registered") {
-        e = e as AnyEvent<"worker.registered">;
+        const event = e as AnyEvent<"worker.registered">;
         if (
-          e.data.workerId === this.#context.workerId &&
-          e.data.status === "accepted"
+          event.data.workerId === this.#context.workerId &&
+          event.data.status === "accepted"
         ) {
           this.#context.isRegistered = true;
           console.log("[worker] received registration accepted");
@@ -73,6 +74,19 @@ export class Worker {
 
   async handleNewJob(event: AnyEvent): Promise<void> {
     // invoke some sort of tool from a tool registry
+
+    if (event.type === "step.action.queued") {
+      const e = event as AnyEvent<"step.action.queued">;
+      const mcp = new McpTool(); // get this from a registry mapping event type to tool?
+      mcp.invoke(e.data, {
+        flowId: e.flowId,
+        runId: e.runId,
+        stepId: e.stepId,
+        capability: e.data.tool,
+        workerId: this.#context.workerId,
+      });
+    }
+
     const registry = {};
   }
 

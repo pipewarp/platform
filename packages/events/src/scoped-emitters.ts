@@ -2,20 +2,19 @@ import type { EventBusPort } from "@pipewarp/ports";
 import { registry } from "./event-registry.js";
 import {
   StepEvent,
-  StepType,
   EventData,
   StepEventType,
   StepTypeFor,
 } from "@pipewarp/types";
 
 // fields necesarry to create a step event using the step emitter
-export type StepScope = {
+export type StepScope<T extends StepEventType> = {
   source: string;
   correlationId: string;
   flowId: string;
   runId: string;
   stepId: string;
-  stepType: StepType;
+  stepType: StepTypeFor<T>;
 };
 
 /**
@@ -45,24 +44,22 @@ export type StepScope = {
  * ```
  * 
  */
-export class StepEmitter<T extends StepEventType> {
+export class StepEmitter {
   constructor(
-    private readonly type: T,
+    private readonly type: StepEventType,
     private readonly bus: EventBusPort,
-    private readonly scope: StepScope
+    private readonly scope: StepScope<StepEventType>
   ) {}
-  async emit(data: EventData<T>) {
+  async emit(data: EventData<StepEventType>) {
     const entry = registry[this.type];
-    const stepType = this.scope.stepType as StepTypeFor<T>;
-    const event: StepEvent<T> = {
+    const event = {
       id: String(crypto.randomUUID()),
       specversion: "1.0",
       time: new Date().toISOString(),
       type: this.type,
       data,
       ...this.scope,
-      stepType,
-    } satisfies StepEvent<T>;
+    } satisfies StepEvent<StepEventType>;
 
     console.log("event", JSON.stringify(event, null, 2));
 

@@ -153,8 +153,11 @@ export async function cliRunAction(
   bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
     console.log("[cli] workers.lifecycle event:", e);
     if (e.type === "worker.registered") {
-      e = e as AnyEvent<"worker.registered">;
-      if (e.data.workerId === workerId && e.data.status === "accepted") {
+      const event = e as AnyEvent<"worker.registered">;
+      if (
+        event.data.workerId === workerId &&
+        event.data.status === "accepted"
+      ) {
         console.log(
           "[cli] received registration accepted, publishing flow event"
         );
