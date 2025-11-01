@@ -1,7 +1,7 @@
 import type { StepHandler } from "./step-handler.js";
 import type { ResolveStepArgs } from "../resolve.js";
-import type { EventBusPort, StepCompletedEvent } from "@pipewarp/ports";
-import type { StepActionQueuedData } from "@pipewarp/types";
+import type { EventBusPort } from "@pipewarp/ports";
+import type { AnyEvent, StepActionQueuedData } from "@pipewarp/types";
 import type { RunContext, ActionStep, Flow } from "@pipewarp/specs";
 import { StepEmitter } from "@pipewarp/events";
 import { PipeResolver } from "../pipe-resolver.js";
@@ -45,14 +45,12 @@ export class ActionStepHandler implements StepHandler {
       );
       console.error(err);
     }
-
-    // this.bus.publish("steps.lifecycle", event);
   }
 
   onWorkerDone(
     flow: Flow,
     context: RunContext,
-    event: StepCompletedEvent
+    event: AnyEvent
   ): Promise<void> {
     throw new Error("Method not implemented.");
   }

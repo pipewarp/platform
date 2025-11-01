@@ -5,7 +5,7 @@ import type {
   StartFlowInput,
   StreamRegistryPort,
 } from "@pipewarp/ports";
-import type { AnyEvent, StepEventType, WorkerMetadata } from "@pipewarp/types";
+import type { AnyEvent } from "@pipewarp/types";
 import { StepEmitter } from "@pipewarp/events";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
@@ -38,6 +38,7 @@ export class Engine {
           flowName: e.data.flowName,
           outfile: e.data.outfile,
           test: e.data.test,
+          inputs: {},
         });
       }
     });

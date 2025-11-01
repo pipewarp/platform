@@ -1,5 +1,5 @@
 import type { Flow, RunContext } from "@pipewarp/specs";
-import type { EventEnvelope } from "@pipewarp/ports";
+import type { AnyEvent } from "@pipewarp/types";
 import { StepEmitter } from "@pipewarp/events";
 
 export interface StepHandler {
@@ -10,9 +10,5 @@ export interface StepHandler {
     emitter: StepEmitter<"step.action.queued">
   ): Promise<void>;
 
-  onWorkerDone(
-    flow: Flow,
-    context: RunContext,
-    event: EventEnvelope
-  ): Promise<void>;
+  onWorkerDone(flow: Flow, context: RunContext, event: AnyEvent): Promise<void>;
 }
