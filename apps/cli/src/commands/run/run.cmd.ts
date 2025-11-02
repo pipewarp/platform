@@ -8,6 +8,7 @@ import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
 import { McpWorker, Worker } from "@pipewarp/adapters/worker";
+import { McpTool, ToolFactories, ToolRegistry } from "@pipewarp/adapters/tools";
 import { InMemoryStreamRegistry } from "@pipewarp/adapters/stream";
 import type { AnyEvent } from "@pipewarp/types";
 import {
@@ -100,12 +101,17 @@ export async function cliRunAction(
     await mcpWorker.startMcp(mcpId);
   }
 
+  // setup new generic worker with tools
   const workerId = "cli-worker";
-  const worker = new Worker(workerId, bus, queue);
+  const toolFactories: ToolFactories = {
+    mcp: () => new McpTool(),
+  };
+  const toolRegistry = new ToolRegistry(toolFactories);
+  const worker = new Worker(workerId, bus, queue, toolRegistry);
 
   worker.addCapability({
-    name: "unicode",
-    queueId: "unicode",
+    name: "mcp",
+    queueId: "mcp",
     activeJobCount: 0,
     maxJobCount: 1,
     tool: {
@@ -161,6 +167,7 @@ export async function cliRunAction(
         console.log(
           "[cli] received registration accepted, publishing flow event"
         );
+        worker.start();
         await bus.publish("flows.lifecycle", startFlow);
       }
     }
@@ -172,6 +179,7 @@ export async function cliRunAction(
       await mcpWorker.stopMcp("transform");
     } else {
       await mcpWorker.stopMcp("stt-client");
+      await worker.stopAllJobWaiters();
     }
     queue.abortAll();
   });
@@ -181,6 +189,7 @@ export async function cliRunAction(
       await mcpWorker.stopMcp("transform");
     } else {
       await mcpWorker.stopMcp("stt-client");
+      await worker.stopAllJobWaiters();
     }
     mcpStore.close("unicode");
   });
@@ -190,6 +199,7 @@ export async function cliRunAction(
       await mcpWorker.stopMcp("transform");
     } else {
       await mcpWorker.stopMcp("stt-client");
+      await worker.stopAllJobWaiters();
     }
     queue.abortAll();
   });

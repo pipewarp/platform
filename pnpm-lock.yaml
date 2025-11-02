@@ -32,6 +32,9 @@ importers:
       '@pipewarp/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@pipewarp/events':
+        specifier: workspace:*
+        version: link:../../packages/events
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../../packages/ports
@@ -91,6 +94,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.19.1
         version: 1.19.1
+      '@pipewarp/events':
+        specifier: workspace:*
+        version: link:../events
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../ports

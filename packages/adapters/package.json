@@ -31,6 +31,10 @@
     "./stream": {
       "types": "./dist/stream/index.d.ts",
       "import": "./dist/stream/index.js"
+    },
+    "./tools": {
+      "types": "./dist/tools/index.d.ts",
+      "import": "./dist/tools/index.js"
     }
   },
   "scripts": {
@@ -45,6 +49,7 @@
     "@pipewarp/ports": "workspace:*",
     "@pipewarp/specs": "workspace:*",
     "@pipewarp/types": "workspace:*",
+    "@pipewarp/events": "workspace:*",
     "zod": "3.25.76"
   },
   "devDependencies": {

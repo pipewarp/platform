@@ -140,21 +140,39 @@ export class Engine {
           `[engine] no capability in local resourece registry for ${capName}`
         );
       }
+
+      // in future this should be bundled as DI not instantiated in class
+      // class should change to an emitter factory instead of specific emitters
+      const emitter = new StepEmitter("step.action.queued", this.bus, {
+        correlationId: context.correlationId,
+        flowId: context.flowName,
+        runId: context.runId,
+        source: "/engine/stepHandler",
+        stepId: stepName,
+        stepType: "action",
+      });
+      const handler = this.stepHandlerRegistry[stepType];
+      await handler.queue(flow, context, stepName, emitter);
     }
-    const handler = this.stepHandlerRegistry[stepType];
 
-    // in future this should be bundled as DI not instantiated in class
-    // class should change to an emitter factory instead of specific emitters
-    const emitter = new StepEmitter("step.action.queued", this.bus, {
-      correlationId: context.correlationId,
-      flowId: context.flowName,
-      runId: context.runId,
-      source: "/engine/stepHandler",
-      stepId: stepName,
-      stepType: "action",
-    });
-
-    await handler.queue(flow, context, stepName, emitter);
+    if (stepType === "mcp") {
+      const cap = this.resourceRegistry.getCapability(stepType);
+      if (cap === undefined) {
+        throw new Error(
+          `[engine] no capability in local resourece registry for ${stepType}`
+        );
+      }
+      const emitter = new StepEmitter("step.mcp.queued", this.bus, {
+        correlationId: context.correlationId,
+        flowId: context.flowName,
+        runId: context.runId,
+        source: "engine://queue-step-mcp",
+        stepId: stepName,
+        stepType,
+      });
+      const handler = this.stepHandlerRegistry[stepType];
+      await handler.queue(flow, context, stepName, emitter);
+    }
 
     context.queuedSteps.add(stepName);
     context.outstandingSteps++;

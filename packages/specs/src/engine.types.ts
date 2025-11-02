@@ -68,14 +68,3 @@ export const RunContextSchema = z.object({
 });
 
 export type RunContext = z.infer<typeof RunContextSchema>;
-
-// engine lifecycle
-
-// run lifecycle
-
-// step lifecycle
-
-/**
- * started - engine starts working the step
- * queued - engine queues the step
- */

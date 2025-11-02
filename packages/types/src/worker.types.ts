@@ -8,7 +8,7 @@ export type Capability = {
 
   // tool binding information
   tool: {
-    id: string;
+    id: "mcp"; //TODO: move this to external tool types aligned with tools adapter
     // type category to map routing ("process", "remote", "sdk"),
     type: "inprocess" | "remote" | "dynamic";
 

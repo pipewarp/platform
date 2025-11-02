@@ -1,6 +1,20 @@
-import { EventBusPort, QueuePort } from "@pipewarp/ports";
-import type { AnyEvent, Capability, WorkerMetadata } from "@pipewarp/types";
-import { McpTool } from "../tools/mcp.tool.js";
+import type { EventBusPort, QueuePort, ToolPort } from "@pipewarp/ports";
+import { StepEmitter } from "@pipewarp/events";
+import type {
+  AnyEvent,
+  Capability,
+  StepActionCompletedData,
+  StepEvent,
+  StepEventType,
+  WorkerMetadata,
+} from "@pipewarp/types";
+import type { McpTool } from "../tools/mcp.tool.js";
+import type {
+  ToolClass,
+  ToolFactories,
+  ToolId,
+} from "../tools/tool-factory.js";
+import { ToolRegistry } from "../tools/tool-registry.js";
 
 // created for each dequeued job; lives until job completes or fails
 export type JobContext = {
@@ -46,11 +60,13 @@ export class Worker {
     isRegistered: false,
   };
   #capabilityJobWaiters = new Map<string, Promise<void>>();
+  #tools = new Map<string, ToolPort>();
 
   constructor(
     workerId: string,
     private readonly bus: EventBusPort,
-    private readonly queue: QueuePort // emitter facotry - possibly with a bus already buildt in?
+    private readonly queue: QueuePort, // emitter facotry - possibly with a bus already buildt in?
+    private readonly toolRegistry: ToolRegistry // funcions to make tools
   ) {
     this.#context.workerId = workerId;
     // this.#subscribeToBus();
@@ -72,22 +88,47 @@ export class Worker {
     });
   }
 
+  // may resolve with other factors in the future for multiple tools
+  resolveTool(capabiliy: Capability): ToolClass {
+    return this.toolRegistry.resolve(capabiliy.tool.id);
+  }
+
   async handleNewJob(event: AnyEvent): Promise<void> {
+    console.log(`[worker-new] handleNewJob() event: ${event}`);
     // invoke some sort of tool from a tool registry
 
-    if (event.type === "step.action.queued") {
-      const e = event as AnyEvent<"step.action.queued">;
-      const mcp = new McpTool(); // get this from a registry mapping event type to tool?
-      mcp.invoke(e.data, {
+    if (event.type.startsWith("step.")) {
+      console.log("[worker-new] step event found");
+      const eventType = event.type as StepEventType;
+      const e = event as StepEvent<typeof eventType>;
+
+      const tool = this.resolveTool(this.#context.capabilities[e.stepType]);
+
+      const results = await tool.invoke(e.data, {
         flowId: e.flowId,
         runId: e.runId,
         stepId: e.stepId,
-        capability: e.data.tool,
+        capability: e.stepType,
         workerId: this.#context.workerId,
       });
-    }
+      console.log(`[worker-new] results ${JSON.stringify(results, null, 2)}`);
 
-    const registry = {};
+      // const emitter = new StepEmitter("step.action.completed", this.bus, {
+      //   correlationId: e.correlationId,
+      //   flowId: e.flowId,
+      //   runId: e.runId,
+      //   source: "worker://step-action-completed",
+      //   stepId: e.stepId,
+      //   stepType: e.stepType,
+      // });
+
+      // const data: StepActionCompletedData = {
+      //   ok: true,
+      //   message: "step completed",
+      //   result: results,
+      // };
+      // await emitter.emit(data);
+    }
   }
 
   addCapability(profile: Capability) {
