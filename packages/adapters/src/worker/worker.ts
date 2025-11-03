@@ -121,11 +121,21 @@ export class Worker {
 
       const stepEmitter = this.emitterFactory.newStepEmitter();
 
-      const data: StepActionCompletedData = {
-        ok: true,
-        message: "step completed",
-        result: results,
-      };
+      let data: StepActionCompletedData;
+      if (results === undefined) {
+        data = {
+          ok: false,
+          message: "error",
+          result: results,
+          error: "tool returned undefined",
+        };
+      } else {
+        data = {
+          ok: true,
+          message: "tool returned results",
+          result: results,
+        };
+      }
       await stepEmitter.emit("step.action.completed", "action", data);
     }
   }

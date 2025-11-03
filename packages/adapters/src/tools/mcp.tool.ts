@@ -18,12 +18,25 @@ export class McpTool implements ToolPort {
       name: data.feature.name,
       ...(data.args ? { arguments: data.args } : {}),
     });
+
+    // for now return undefined if error. later bubble up error reason to worker
+    if (result.isError) {
+      console.log(
+        `[tool-mcp] result has error:${JSON.stringify(result, null, 2)}`
+      );
+      return;
+    }
     console.log(`[tool-mcp] result:${JSON.stringify(result, null, 2)}`);
+    await this.disconnect();
     return result;
   }
 
   async connect(url: string) {
     const transport = new SSEClientTransport(new URL(url));
     await this.#client.connect(transport);
+  }
+
+  async disconnect() {
+    await this.#client.close();
   }
 }
