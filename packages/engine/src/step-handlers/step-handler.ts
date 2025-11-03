@@ -1,5 +1,5 @@
 import type { Flow, RunContext } from "@pipewarp/specs";
-import type { AnyEvent, StepEventType } from "@pipewarp/types";
+import type { AnyEvent } from "@pipewarp/types";
 import { StepEmitter } from "@pipewarp/events";
 
 export interface StepHandler {

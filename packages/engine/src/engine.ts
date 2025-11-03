@@ -6,7 +6,7 @@ import type {
   StreamRegistryPort,
 } from "@pipewarp/ports";
 import type { AnyEvent } from "@pipewarp/types";
-import { StepEmitter } from "@pipewarp/events";
+import { EmitterFactory } from "@pipewarp/events";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
 import { ResourceRegistry } from "./resource-registry.js";
@@ -15,7 +15,7 @@ import { ResourceRegistry } from "./resource-registry.js";
  * Engine class runs flows as the orchestration center.
  * It handles multiple runs in one instance.
  * Each run gets its own context.
- * Uses step handlers to actually emit events.
+ * Passes scoped emitters to handlers for emitting events.
  */
 export class Engine {
   #runs = new Map<string, RunContext>();
@@ -25,7 +25,8 @@ export class Engine {
     private readonly bus: EventBusPort,
     private readonly streamRegistry: StreamRegistryPort,
     private readonly stepHandlerRegistry: StepHandlerRegistry,
-    private readonly resourceRegistry: ResourceRegistry
+    private readonly resourceRegistry: ResourceRegistry,
+    private readonly emitterFactory: EmitterFactory
   ) {}
 
   async subscribeToTopics(): Promise<void> {
@@ -132,6 +133,16 @@ export class Engine {
   ): Promise<void> {
     const stepType = flow.steps[stepName].type;
 
+    this.emitterFactory.setScope({
+      correlationId: context.correlationId,
+      flowId: context.flowName,
+      runId: context.runId,
+      source: "/engine/stepHandler",
+      stepId: stepName,
+    });
+
+    const stepEmitter = this.emitterFactory.newStepEmitter();
+
     if (stepType === "action") {
       const capName = flow.steps[stepName].tool;
       const caps = this.resourceRegistry.getCapability(capName);
@@ -141,18 +152,8 @@ export class Engine {
         );
       }
 
-      // in future this should be bundled as DI not instantiated in class
-      // class should change to an emitter factory instead of specific emitters
-      const emitter = new StepEmitter("step.action.queued", this.bus, {
-        correlationId: context.correlationId,
-        flowId: context.flowName,
-        runId: context.runId,
-        source: "/engine/stepHandler",
-        stepId: stepName,
-        stepType: "action",
-      });
       const handler = this.stepHandlerRegistry[stepType];
-      await handler.queue(flow, context, stepName, emitter);
+      await handler.queue(flow, context, stepName, stepEmitter);
     }
 
     if (stepType === "mcp") {
@@ -162,16 +163,9 @@ export class Engine {
           `[engine] no capability in local resourece registry for ${stepType}`
         );
       }
-      const emitter = new StepEmitter("step.mcp.queued", this.bus, {
-        correlationId: context.correlationId,
-        flowId: context.flowName,
-        runId: context.runId,
-        source: "engine://queue-step-mcp",
-        stepId: stepName,
-        stepType,
-      });
+
       const handler = this.stepHandlerRegistry[stepType];
-      await handler.queue(flow, context, stepName, emitter);
+      await handler.queue(flow, context, stepName, stepEmitter);
     }
 
     context.queuedSteps.add(stepName);

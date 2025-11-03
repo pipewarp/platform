@@ -1,4 +1,4 @@
-import { z, ZodSchema } from "zod";
+import { z } from "zod";
 import type {
   AnyEvent,
   StepActionQueuedData,
@@ -26,6 +26,7 @@ export const eventTypes = [
 type MissingEventTypes = Exclude<EventType, (typeof eventTypes)[number]>;
 // utility type not used, just checks provides compile time error if type is missing
 type _CheckNoneMissing = MissingEventTypes extends never ? true : never;
+const _checkEventTypes: _CheckNoneMissing = true;
 
 export const stepTypes = [
   "action",
@@ -36,6 +37,7 @@ export const stepTypes = [
 type MissingStepTypes = Exclude<StepType, (typeof stepTypes)[number]>;
 // utility type not used, just checks provides compile time error if type is missing
 type _CheckNoStepMissing = MissingStepTypes extends never ? true : never;
+const _checkStepTypes: _CheckNoStepMissing = true;
 
 export type CloudEventContext<T extends EventType> = Omit<
   CloudEvent<T>,
@@ -96,10 +98,10 @@ export const StepActionQueuedDataSchema = z
 
 export const StepActionCompletedDataSchema = z
   .object({
-    stepType: z.literal("action"),
     ok: z.boolean(),
     message: z.string(),
     result: z.unknown().optional(),
+    error: z.string().optional(),
   })
   .strict() satisfies z.ZodType<StepActionCompletedData>;
 

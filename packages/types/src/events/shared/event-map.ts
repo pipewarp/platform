@@ -21,11 +21,11 @@ export type StepEventType = Extract<EventType, `step.${string}`>;
 export type FlowEventType = Extract<EventType, `flow.${string}`>;
 export type WorkerEventType = Extract<EventType, `worker.${string}`>;
 
+export type StepEventData<T extends StepEventType> = EventMap[T];
+
 export type StepType = StepEventType extends `step.${infer T}.${string}`
   ? T
   : never;
 
 export type StepTypeFor<T extends StepEventType> =
   T extends `step.${infer T}.${string}` ? T : never;
-
-const a: StepTypeFor<"step.action.completed"> = "action";

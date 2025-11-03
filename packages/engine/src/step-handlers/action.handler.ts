@@ -1,14 +1,12 @@
 import type { StepHandler } from "./step-handler.js";
 import type { ResolveStepArgs } from "../resolve.js";
-import type { EventBusPort } from "@pipewarp/ports";
-import type { AnyEvent, StepActionQueuedData } from "@pipewarp/types";
+import type { AnyEvent } from "@pipewarp/types";
 import type { RunContext, ActionStep, Flow } from "@pipewarp/specs";
 import { StepEmitter } from "@pipewarp/events";
 import { PipeResolver } from "../pipe-resolver.js";
 
 export class ActionStepHandler implements StepHandler {
   constructor(
-    private readonly bus: EventBusPort,
     private readonly resolveArgs: ResolveStepArgs,
     private readonly pipeResolver: PipeResolver
   ) {}
@@ -25,14 +23,12 @@ export class ActionStepHandler implements StepHandler {
 
     const pipes = this.pipeResolver.resolve(flow, context, stepName);
     try {
-      const data: StepActionQueuedData = {
+      await emitter.emit("step.action.queued", "action", {
         tool: step.tool,
         op: step.op,
         args,
         pipe: pipes,
-      };
-      console.log("data", JSON.stringify(data, null, 2));
-      await emitter.emit(data);
+      });
       context.steps[stepName].status = "queued";
     } catch (err) {
       console.error(

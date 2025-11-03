@@ -19,6 +19,7 @@ import {
   ResourceRegistry,
 } from "@pipewarp/engine";
 import { startDemoServers } from "./demo.js";
+import { EmitterFactory } from "@pipewarp/events";
 
 export async function cliRunAction(
   flowPath: string,
@@ -89,11 +90,7 @@ export async function cliRunAction(
   const router = new NodeRouter(bus, queue);
   const streamRegistry = new InMemoryStreamRegistry();
   const pipeResolver = new PipeResolver(streamRegistry);
-  const stepHandlerRegistry = wireStepHandlers(
-    bus,
-    resolveStepArgs,
-    pipeResolver
-  );
+  const stepHandlerRegistry = wireStepHandlers(resolveStepArgs, pipeResolver);
   const mcpWorker = new McpWorker(queue, bus, mcpStore, streamRegistry);
 
   for await (const [mcpId] of mcpStore.mcps) {
@@ -107,21 +104,17 @@ export async function cliRunAction(
     mcp: () => new McpTool(),
   };
   const toolRegistry = new ToolRegistry(toolFactories);
-  const worker = new Worker(workerId, bus, queue, toolRegistry);
+  const worker = new Worker(
+    workerId,
+    bus,
+    queue,
+    toolRegistry,
+    new EmitterFactory(bus)
+  );
 
   worker.addCapability({
     name: "mcp",
     queueId: "mcp",
-    activeJobCount: 0,
-    maxJobCount: 1,
-    tool: {
-      id: "mcp",
-      type: "inprocess",
-    },
-  });
-  worker.addCapability({
-    name: "transform",
-    queueId: "transform",
     activeJobCount: 0,
     maxJobCount: 1,
     tool: {
@@ -137,7 +130,8 @@ export async function cliRunAction(
     bus,
     streamRegistry,
     stepHandlerRegistry,
-    new ResourceRegistry()
+    new ResourceRegistry(),
+    new EmitterFactory(bus)
   );
 
   const startFlow: AnyEvent<"flow.queued"> = {

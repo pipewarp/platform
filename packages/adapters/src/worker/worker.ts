@@ -1,19 +1,13 @@
 import type { EventBusPort, QueuePort, ToolPort } from "@pipewarp/ports";
-import { StepEmitter } from "@pipewarp/events";
+import { EmitterFactory } from "@pipewarp/events";
 import type {
   AnyEvent,
   Capability,
   StepActionCompletedData,
-  StepEvent,
   StepEventType,
   WorkerMetadata,
 } from "@pipewarp/types";
-import type { McpTool } from "../tools/mcp.tool.js";
-import type {
-  ToolClass,
-  ToolFactories,
-  ToolId,
-} from "../tools/tool-factory.js";
+import type { ToolClass } from "../tools/tool-factory.js";
 import { ToolRegistry } from "../tools/tool-registry.js";
 
 // created for each dequeued job; lives until job completes or fails
@@ -66,7 +60,8 @@ export class Worker {
     workerId: string,
     private readonly bus: EventBusPort,
     private readonly queue: QueuePort, // emitter facotry - possibly with a bus already buildt in?
-    private readonly toolRegistry: ToolRegistry // funcions to make tools
+    private readonly toolRegistry: ToolRegistry, // funcions to make tools
+    private readonly emitterFactory: EmitterFactory
   ) {
     this.#context.workerId = workerId;
     // this.#subscribeToBus();
@@ -89,20 +84,23 @@ export class Worker {
   }
 
   // may resolve with other factors in the future for multiple tools
-  resolveTool(capabiliy: Capability): ToolClass {
-    return this.toolRegistry.resolve(capabiliy.tool.id);
+  resolveTool(capabiliy: Capability, key?: string): ToolClass {
+    return this.toolRegistry.resolve(capabiliy.tool.id, key);
   }
 
   async handleNewJob(event: AnyEvent): Promise<void> {
     console.log(`[worker-new] handleNewJob() event: ${event}`);
     // invoke some sort of tool from a tool registry
 
-    if (event.type.startsWith("step.")) {
+    if (event.type === "step.mcp.queued") {
       console.log("[worker-new] step event found");
       const eventType = event.type as StepEventType;
-      const e = event as StepEvent<typeof eventType>;
+      const e = event as AnyEvent<"step.mcp.queued">;
 
-      const tool = this.resolveTool(this.#context.capabilities[e.stepType]);
+      const tool = this.resolveTool(
+        this.#context.capabilities[e.stepType],
+        e.data.url
+      );
 
       const results = await tool.invoke(e.data, {
         flowId: e.flowId,
@@ -113,21 +111,22 @@ export class Worker {
       });
       console.log(`[worker-new] results ${JSON.stringify(results, null, 2)}`);
 
-      // const emitter = new StepEmitter("step.action.completed", this.bus, {
-      //   correlationId: e.correlationId,
-      //   flowId: e.flowId,
-      //   runId: e.runId,
-      //   source: "worker://step-action-completed",
-      //   stepId: e.stepId,
-      //   stepType: e.stepType,
-      // });
+      this.emitterFactory.setScope({
+        source: "worker://step-action-completed",
+        correlationId: e.correlationId,
+        flowId: e.flowId,
+        runId: e.runId,
+        stepId: e.stepId,
+      });
 
-      // const data: StepActionCompletedData = {
-      //   ok: true,
-      //   message: "step completed",
-      //   result: results,
-      // };
-      // await emitter.emit(data);
+      const stepEmitter = this.emitterFactory.newStepEmitter();
+
+      const data: StepActionCompletedData = {
+        ok: true,
+        message: "step completed",
+        result: results,
+      };
+      await stepEmitter.emit("step.action.completed", "action", data);
     }
   }
 
