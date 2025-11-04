@@ -1,5 +1,5 @@
 {
-  "name": "new.flow.json",
+  "name": "demo.streaming.flow.json",
   "start": "mario",
   "steps": {
     "mario": {
@@ -7,7 +7,7 @@
       "url": "http://localhost:3004/sse",
       "transport": "sse",
       "args": {
-        "delayMs": 25,
+        "delayMs": 100,
         "useStream": true
       },
       "feature": {

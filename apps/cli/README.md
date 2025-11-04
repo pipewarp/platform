@@ -4,7 +4,7 @@ Command line interface for running and validating pipewarp flows.
 
 May expand later to a general application layer to manage pipewarp processes as an alternative to a future gui.
 
-## Usage
+## Examples
 
 ### run a flow
 
@@ -43,26 +43,26 @@ pwp validate <flow.json>
 
 ```bash
 # from project root
-pnpm -F @pipewarp/cli start run examples/art-stream.flow.json -d
+pnpm -F @pipewarp/cli start run examples/demo.streaming.flow.json -d
 ```
 
 ## Commands
 
-### run
+## run
 
 `run <flowPath>`
 
-#### options
+### options
 
 - `-t, --test` run engine in test mode
 - `-o, --out <outPath>` output json path, default is `output.temp.json`
 - `-s, --server <serverPath>` path to stdio mcp server, default is `./src/mcp-server.ts`
 - `-d, --demo` run in specific demo mode with supplied localhost MCP servers spawned as child processes.
 
-### validate
+## validate
 
 `validate <flowPath>` validates a flow definition file.
 
-### help
+## help
 
 `--help` prints help message
