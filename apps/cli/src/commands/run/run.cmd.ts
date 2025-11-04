@@ -104,19 +104,18 @@ export async function cliRunAction(
     mcp: () => new McpTool(),
   };
   const toolRegistry = new ToolRegistry(toolFactories);
-  const worker = new Worker(
-    workerId,
+  const worker = new Worker(workerId, {
     bus,
     queue,
     toolRegistry,
-    new EmitterFactory(bus)
-  );
+    emitterFactory: new EmitterFactory(bus),
+    streamRegistry,
+  });
 
   worker.addCapability({
     name: "mcp",
     queueId: "mcp",
-    activeJobCount: 0,
-    maxJobCount: 1,
+    maxJobCount: 2,
     tool: {
       id: "mcp",
       type: "inprocess",
@@ -185,7 +184,7 @@ export async function cliRunAction(
       await mcpWorker.stopMcp("stt-client");
       await worker.stopAllJobWaiters();
     }
-    mcpStore.close("unicode");
+    queue.abortAll();
   });
   process.on("exit", async () => {
     if (demo) {

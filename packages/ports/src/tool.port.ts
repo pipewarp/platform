@@ -1,4 +1,4 @@
-// not yet implemented
+import { ConsumerStreamPort, ProducerStreamPort } from "./stream.port.js";
 
 export type ToolContext = {
   flowId: string;
@@ -6,6 +6,10 @@ export type ToolContext = {
   stepId: string;
   capability: string;
   workerId: string;
+  consumer?: ConsumerStreamPort;
+  producer?: ProducerStreamPort;
+  emitter?: never; // not yet implemented tool event emitter
+
   auth?: Record<string, string>;
   config?: Record<string, string>;
 };

@@ -76,25 +76,6 @@ mcp.registerTool(
       };
     }
 
-    if (!useStream) {
-      let newArt = "";
-
-      const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
-      const chars = [...segmenter.segment(art)].map((seg) => seg.segment);
-
-      for (const char of chars) {
-        newArt += characterSwap.get(char) ?? char;
-      }
-      const output: TranformOutput = {
-        ok: true,
-        data: newArt,
-      };
-      return {
-        content: [{ type: "text", text: output.data ?? "" }],
-        structuredContent: output,
-      };
-    }
-
     // should move this out eventually as own thing, but this is just a demo
     (async () => {
       if (!useStream) return;
@@ -119,6 +100,23 @@ mcp.registerTool(
         },
       });
     })();
+
+    let newArt = "";
+
+    const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+    const chars = [...segmenter.segment(art)].map((seg) => seg.segment);
+
+    for (const char of chars) {
+      newArt += characterSwap.get(char) ?? char;
+    }
+    const output: TranformOutput = {
+      ok: true,
+      data: newArt,
+    };
+    return {
+      content: [{ type: "text", text: output.data ?? "" }],
+      structuredContent: output,
+    };
 
     return {
       content: [{ type: "text", text: art }],
