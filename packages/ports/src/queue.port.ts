@@ -1,4 +1,4 @@
-import { EventEnvelope } from "./events/events.js";
+import { AnyEvent } from "@pipewarp/types";
 
 /**
  * QueuePort defines the interface for a message queue system.
@@ -9,6 +9,7 @@ import { EventEnvelope } from "./events/events.js";
  * - ack: Acknowledge successful processing of a message.
  * - nack: Negatively acknowledge a message, indicating processing failure.
  * - peek: View messages in a queue without removing them.
+ * - abortAll: Shutdown and resolve any pending waiter promises as null.
  *
  * All methods are asynchronous and return Promises.
  * @see EventEnvelope for the message structure.
@@ -30,19 +31,21 @@ import { EventEnvelope } from "./events/events.js";
  *     // Implementation here
  *   }
  *
- *   async peek(queue: string, limit: number): Promise<EventEnvelope[]> {
+ *   async peek?(queue: string, number: number): Promise<EventEnvelope[]> {
  *     // Implementation here
  *   }
  * }
  */
 export interface QueuePort {
-  enqueue(queue: string, event: EventEnvelope): Promise<void>;
+  enqueue(queue: string, event: AnyEvent): Promise<void>;
   reserve(
     queue: string,
     workerId: string,
     holdMs?: number
-  ): Promise<EventEnvelope | null>;
+  ): Promise<AnyEvent | null>;
   ack(queue: string, eventId: string): Promise<void>;
   nack(queue: string, eventId: string, reason: string): Promise<void>;
-  peek(queue: string, number: number): Promise<EventEnvelope[]>;
+  peek?(queue: string, number: number): Promise<AnyEvent[]>;
+  abortAllForWorker(workerId: string): void;
+  abortAll(): void;
 }

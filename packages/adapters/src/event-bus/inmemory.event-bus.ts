@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
-import type { EventEnvelope, EventBusPort } from "@pipewarp/ports";
-import { parseEvent } from "./parseEvent.js";
+import type { EventBusPort } from "@pipewarp/ports";
+import type { AnyEvent } from "@pipewarp/types";
 
 export class InMemoryEventBus implements EventBusPort {
   #ee = new EventEmitter().setMaxListeners(0);
@@ -17,22 +17,16 @@ export class InMemoryEventBus implements EventBusPort {
    *
    * Uses EventEmitter under the hood.
    */
-  async publish(topic: string, event: EventEnvelope): Promise<void> {
+  async publish(topic: string, event: AnyEvent): Promise<void> {
     console.log("[inmemory-bus] publish() called; topic, event:", topic, event);
-    if (event == undefined || event.kind == undefined) {
+    if (event == undefined || event.type == undefined) {
       console.error(
         "[inmemory-bus] cannot publish event. event or event.kind is undefined"
       );
       return;
     }
 
-    const parsedEvent = parseEvent(event.kind, event);
-    if (parsedEvent === undefined) {
-      console.error("[inmemory-bus] could not parse event");
-      return;
-    }
-
-    const payload = Object.freeze(parsedEvent);
+    const payload = Object.freeze(event);
 
     queueMicrotask(() => {
       try {
@@ -43,12 +37,13 @@ export class InMemoryEventBus implements EventBusPort {
       }
     });
   }
+
   subscribe(
     topic: string,
-    handler: (e: EventEnvelope, t?: string) => Promise<void>
+    handler: (e: AnyEvent, t?: string) => Promise<void>
   ): () => unknown {
     console.log("[inmemory-bus] subscribe() called;");
-    const safeHandler = (e: EventEnvelope, t: string) => {
+    const safeHandler = (e: AnyEvent, t: string) => {
       try {
         handler(e, t ?? topic);
       } catch (err) {

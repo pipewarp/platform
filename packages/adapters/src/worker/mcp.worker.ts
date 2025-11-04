@@ -1,16 +1,13 @@
 import type {
   QueuePort,
   EventBusPort,
-  EventEnvelope,
-  StepCompletedEvent,
   StreamRegistryPort,
   InputChunk,
   ProducerStreamPort,
   ConsumerStreamPort,
-  StepQueuedEvent,
 } from "@pipewarp/ports";
+import type { AnyEvent, StepActionCompleted } from "@pipewarp/types";
 import { McpManager } from "../mcp-manager/mcp.manager.js";
-import { randomUUID } from "crypto";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
 import { Client } from "@modelcontextprotocol/sdk/client";
 
@@ -180,32 +177,41 @@ export class McpWorker {
     isSuccess: boolean = true,
     errorMessage?: string
   ): Promise<void> {
-    const stepCompletedEvent: StepCompletedEvent = {
+    const stepCompletedEvent: StepActionCompleted = {
+      source: "worker/send-comlpeted",
+      specversion: "1.0",
       correlationId: "later",
-      id: randomUUID(),
+      id: String(crypto.randomUUID()),
       time: new Date().toISOString(),
-      kind: "step.completed",
+      type: "step.action.completed",
       runId: ctx.runId,
+      flowId: "unknown",
+      stepId: ctx.stepName,
+      stepType: "action",
       data: {
-        stepName: ctx.stepName,
         ok: isSuccess,
         result: data,
+        message: "a message",
         ...(isSuccess ? {} : { error: errorMessage }),
       },
     };
     await this.bus.publish("steps.lifecycle", stepCompletedEvent);
   }
 
-  #makeContext(e: StepQueuedEvent): McpContext {
-    if (e.data.stepType !== "action") {
+  #makeContext(event: AnyEvent): McpContext {
+    if (event.type !== "step.action.queued") {
       throw new Error("[mcp-worker] step type must be 'action'");
     }
+    if (!event.data) throw new Error("[mcp-worker]  no data provided");
+
+    const e = event as AnyEvent<"step.action.queued">;
+
     const context: McpContext = {
       mcpId: e.data.tool,
       correlationId: e.correlationId,
       runId: e.runId,
 
-      stepName: e.data.stepName,
+      stepName: e.stepId,
       tool: e.data.tool,
       op: e.data.op,
       args: e.data.args,
@@ -213,14 +219,14 @@ export class McpWorker {
       status: "started",
       pipe: {
         from: {
-          id: e.data.pipe.from?.id,
+          id: e.data.pipe?.from?.id,
           isStreaming: false,
-          buffer: e.data.pipe.from?.buffer,
+          buffer: e.data.pipe?.from?.buffer,
         },
         to: {
-          id: e.data.pipe.to?.id,
+          id: e.data.pipe?.to?.id,
           isStreaming: false,
-          payload: e.data.pipe.to?.payload,
+          payload: e.data.pipe?.to?.payload,
         },
       },
       ongoingStreams: 0,
@@ -230,11 +236,13 @@ export class McpWorker {
     return context;
   }
 
-  async handleActionMcp(e: EventEnvelope) {
+  async handleActionMcp(e: AnyEvent) {
     console.log("[worker] handleEvent() event:", e);
-    if (e.kind === "step.queued" && e.data.stepType === "action") {
+    if (e.type === "step.action.queued") {
+      if (!e.data) throw new Error("[worker] no data on event");
+      const event = e as AnyEvent<"step.action.queued">;
       const context = this.#makeContext(e);
-      this.#workers.set(e.data.tool, context);
+      this.#workers.set(event.data.tool, context);
 
       await this.handleActionStepQueuedEvent(context);
     } else {
@@ -323,7 +331,7 @@ export class McpWorker {
     console.log("[worker] starting waiter for mcpId:", mcpId);
     while (this.#waiters.get(mcpId)) {
       const event = await this.queues.reserve(mcpId, mcpId);
-      if (event === null || event.kind === undefined) continue;
+      if (event === null || event.type === undefined) continue;
       // check undefined or whatever
       await this.handleActionMcp(event);
     }

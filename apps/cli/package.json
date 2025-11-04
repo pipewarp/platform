@@ -1,6 +1,6 @@
 {
   "name": "@pipewarp/cli",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "private": "true",
   "type": "module",
   "bin": {
@@ -22,6 +22,8 @@
     "@pipewarp/specs": "workspace:*",
     "@pipewarp/engine": "workspace:*",
     "@pipewarp/ports": "workspace:*",
+    "@pipewarp/types": "workspace:*",
+    "@pipewarp/events": "workspace:*",
     "commander": "^14.0.1",
     "zod": "3.25.76"
   },

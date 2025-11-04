@@ -32,12 +32,18 @@ importers:
       '@pipewarp/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@pipewarp/events':
+        specifier: workspace:*
+        version: link:../../packages/events
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../../packages/ports
       '@pipewarp/specs':
         specifier: workspace:*
         version: link:../../packages/specs
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       commander:
         specifier: ^14.0.1
         version: 14.0.1
@@ -88,12 +94,18 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.19.1
         version: 1.19.1
+      '@pipewarp/events':
+        specifier: workspace:*
+        version: link:../events
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../ports
       '@pipewarp/specs':
         specifier: workspace:*
         version: link:../specs
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
       zod:
         specifier: 3.25.76
         version: 3.25.76
@@ -107,24 +119,45 @@ importers:
       '@pipewarp/adapters':
         specifier: workspace:*
         version: link:../adapters
+      '@pipewarp/events':
+        specifier: workspace:*
+        version: link:../events
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../ports
       '@pipewarp/specs':
         specifier: workspace:*
         version: link:../specs
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
 
-  packages/ports:
+  packages/events:
     dependencies:
       zod:
         specifier: 3.25.76
         version: 3.25.76
+    devDependencies:
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
+
+  packages/ports:
+    dependencies:
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/specs:
     dependencies:
       zod:
         specifier: 3.25.76
         version: 3.25.76
+
+  packages/types: {}
 
 packages:
 

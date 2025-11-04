@@ -1,0 +1,36 @@
+{
+  "name": "new.flow.json",
+  "start": "mario",
+  "steps": {
+    "mario": {
+      "type": "mcp",
+      "url": "http://localhost:3004/sse",
+      "transport": "sse",
+      "args": {
+        "delayMs": 25,
+        "useStream": false
+      },
+      "feature": {
+        "primitive": "tool",
+        "name": "draw"
+      },
+      "on": {
+        "success": "luigi"
+      }
+    },
+    "luigi": {
+      "type": "mcp",
+      "url": "http://localhost:3005/sse",
+      "transport": "sse",
+      "args": {
+        "art": "${steps.mario.result.structuredContent.data}",
+        "useStream": false,
+        "delayMs": 10
+      },
+      "feature": {
+        "primitive": "tool",
+        "name": "transform"
+      }
+    }
+  }
+}

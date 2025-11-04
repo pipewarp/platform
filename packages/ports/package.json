@@ -1,6 +1,6 @@
 {
   "name": "@pipewarp/ports",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "private": "true",
   "type": "module",
   "exports": {
@@ -17,6 +17,6 @@
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "zod": "3.25.76"
+    "@pipewarp/types": "workspace:*"
   }
 }

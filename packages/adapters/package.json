@@ -1,6 +1,6 @@
 {
   "name": "@pipewarp/adapters",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "private": "true",
   "type": "module",
   "exports": {
@@ -31,6 +31,10 @@
     "./stream": {
       "types": "./dist/stream/index.d.ts",
       "import": "./dist/stream/index.js"
+    },
+    "./tools": {
+      "types": "./dist/tools/index.d.ts",
+      "import": "./dist/tools/index.js"
     }
   },
   "scripts": {
@@ -44,6 +48,8 @@
     "@modelcontextprotocol/sdk": "^1.19.1",
     "@pipewarp/ports": "workspace:*",
     "@pipewarp/specs": "workspace:*",
+    "@pipewarp/types": "workspace:*",
+    "@pipewarp/events": "workspace:*",
     "zod": "3.25.76"
   },
   "devDependencies": {

@@ -1,0 +1,48 @@
+{
+  "name": "demo.streaming.flow.json",
+  "start": "mario",
+  "steps": {
+    "mario": {
+      "type": "mcp",
+      "url": "http://localhost:3004/sse",
+      "transport": "sse",
+      "args": {
+        "delayMs": 100,
+        "useStream": true
+      },
+      "feature": {
+        "primitive": "tool",
+        "name": "draw"
+      },
+      "on": {
+        "success": "luigi"
+      },
+      "pipe": {
+        "to": {
+          "step": "luigi",
+          "payload": "params.message"
+        }
+      }
+    },
+    "luigi": {
+      "type": "mcp",
+      "url": "http://localhost:3005/sse",
+      "transport": "sse",
+      "args": {
+        "art": "$.pipe",
+        "useStream": true,
+        "delayMs": 100
+      },
+      "feature": {
+        "primitive": "tool",
+        "name": "transform"
+      },
+      "pipe": {
+        "from": {
+          "step": "mario",
+          "buffer": 13
+        }
+      }
+    }
+  }
+}

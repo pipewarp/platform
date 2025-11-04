@@ -1,21 +1,21 @@
 import fs from "fs";
-import { randomUUID } from "crypto";
 import type { RunContext, Flow } from "@pipewarp/specs";
 import type {
   EventBusPort,
-  EventEnvelope,
   StartFlowInput,
-  StepCompletedEvent,
   StreamRegistryPort,
 } from "@pipewarp/ports";
+import type { AnyEvent } from "@pipewarp/types";
+import { EmitterFactory } from "@pipewarp/events";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
+import { ResourceRegistry } from "./resource-registry.js";
 
 /**
  * Engine class runs flows as the orchestration center.
  * It handles multiple runs in one instance.
  * Each run gets its own context.
- * Uses step handlers to actually emit events.
+ * Passes scoped emitters to handlers for emitting events.
  */
 export class Engine {
   #runs = new Map<string, RunContext>();
@@ -24,28 +24,58 @@ export class Engine {
     private readonly flowDb: FlowStore,
     private readonly bus: EventBusPort,
     private readonly streamRegistry: StreamRegistryPort,
-    private readonly stepHandlerRegistry: StepHandlerRegistry
-  ) {
-    console.log("[engine] constructor");
-    this.bus = bus;
-    this.bus.subscribe("flows.lifecycle", async (e: EventEnvelope) => {
+    private readonly stepHandlerRegistry: StepHandlerRegistry,
+    private readonly resourceRegistry: ResourceRegistry,
+    private readonly emitterFactory: EmitterFactory
+  ) {}
+
+  async subscribeToTopics(): Promise<void> {
+    await this.bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
       console.log("[engine bus] flows.lifecycle event:", e);
-      if (e.kind === "flow.queued") {
+      if (e.type === "flow.queued") {
+        const event = e as AnyEvent<"flow.queued">;
         await this.startFlow({
-          correlationId: e.correlationId,
-          flowName: e.data.flowName,
-          outfile: e.data.outfile,
-          test: e.data.test,
+          correlationId: event.correlationId,
+          flowName: event.data.flowName,
+          outfile: event.data.outfile,
+          test: event.data.test,
+          inputs: {},
         });
       }
     });
 
-    this.bus.subscribe("steps.lifecycle", async (e: EventEnvelope) => {
+    await this.bus.subscribe("steps.lifecycle", async (e: AnyEvent) => {
       console.log("[engine bus] steps.lifecycle event:", e);
-      if (e.kind === "step.completed") {
+      if (e.type === "step.action.completed") {
+        e = e as AnyEvent<"step.action.completed">;
         await this.handleWorkerDone(e);
       }
     });
+
+    await this.bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
+      console.log("[engine] workers.lifecycle event:", e);
+      if (e.type === "worker.registration.requested") {
+        const event = e as AnyEvent<"worker.registration.requested">;
+        this.resourceRegistry.registerWorker(event.data);
+        this.bus.publish("workers.lifecycle", {
+          id: String(crypto.randomUUID()),
+          source: "resource-registry://default",
+          specversion: "1.0",
+          correlationId: String(crypto.randomUUID()),
+          time: new Date().toISOString(),
+          type: "worker.registered",
+          data: {
+            workerId: event.data.id,
+            status: "accepted",
+            registeredAt: new Date().toISOString(),
+          },
+        } satisfies AnyEvent<"worker.registered">);
+      }
+    });
+  }
+
+  async start() {
+    await this.subscribeToTopics();
   }
 
   async startFlow(input: StartFlowInput): Promise<void> {
@@ -102,8 +132,41 @@ export class Engine {
     stepName: string
   ): Promise<void> {
     const stepType = flow.steps[stepName].type;
-    const handler = this.stepHandlerRegistry[stepType];
-    await handler.queue(flow, context, stepName);
+
+    this.emitterFactory.setScope({
+      correlationId: context.correlationId,
+      flowId: context.flowName,
+      runId: context.runId,
+      source: "/engine/stepHandler",
+      stepId: stepName,
+    });
+
+    const stepEmitter = this.emitterFactory.newStepEmitter();
+
+    if (stepType === "action") {
+      const capName = flow.steps[stepName].tool;
+      const caps = this.resourceRegistry.getCapability(capName);
+      if (caps === undefined) {
+        throw new Error(
+          `[engine] no capability in local resourece registry for ${capName}`
+        );
+      }
+
+      const handler = this.stepHandlerRegistry[stepType];
+      await handler.queue(flow, context, stepName, stepEmitter);
+    }
+
+    if (stepType === "mcp") {
+      const cap = this.resourceRegistry.getCapability(stepType);
+      if (cap === undefined) {
+        throw new Error(
+          `[engine] no capability in local resourece registry for ${stepType}`
+        );
+      }
+
+      const handler = this.stepHandlerRegistry[stepType];
+      await handler.queue(flow, context, stepName, stepEmitter);
+    }
 
     context.queuedSteps.add(stepName);
     context.outstandingSteps++;
@@ -116,7 +179,7 @@ export class Engine {
     outFile: string | undefined = "./output.json"
   ): RunContext {
     const context: RunContext = {
-      runId: isTest ? "test-run-id" : randomUUID(),
+      runId: isTest ? "test-run-id" : String(crypto.randomUUID()),
       correlationId,
       // step state stuff
       runningSteps: new Set(),
@@ -159,31 +222,29 @@ export class Engine {
     return nextStepName;
   }
 
-  async handleWorkerDone(event: StepCompletedEvent): Promise<void> {
+  async handleWorkerDone(event: AnyEvent): Promise<void> {
+    const e = event as AnyEvent<"step.action.completed">;
     // update context based on completed event
-    if (!this.#runs.has(event.runId)) {
-      console.error(`[engine] invalid run id: ${event.runId}`);
+    if (!this.#runs.has(e.runId)) {
+      console.error(`[engine] invalid run id: ${e.runId}`);
       return;
     }
-    const context = this.#runs.get(event.runId)!;
+    const context = this.#runs.get(e.runId)!;
 
-    const result = event.data.result
-      ? (event.data.result as Array<Record<string, unknown>>)
+    const result = e.data.result
+      ? (e.data.result as Array<Record<string, unknown>>)
       : [{ data: null }];
-    if (event.data.result) {
-      context.steps[event.data.stepName].result = { result };
+    if (e.data.result) {
+      context.steps[e.stepId].result = { result };
     }
-    context.steps[event.data.stepName].status = event.data.ok
-      ? "success"
-      : "failure";
+    context.steps[e.stepId].status = e.data.ok ? "success" : "failure";
 
-    context.queuedSteps.delete(event.data.stepName);
-    context.runningSteps.delete(event.data.stepName);
-    context.doneSteps.add(event.data.stepName);
+    context.queuedSteps.delete(e.stepId);
+    context.runningSteps.delete(e.stepId);
+    context.doneSteps.add(e.stepId);
     context.outstandingSteps--;
 
-    this.#runs.set(event.runId, context);
-    this.writeRunContext(event.runId);
+    this.writeRunContext(e.runId);
 
     // now get next step and start it.
     const flow = this.flowDb.get(context.flowName);
@@ -192,7 +253,7 @@ export class Engine {
       console.log(`[engine] executeStep(): no flow for ${context.flowName}`);
       return;
     }
-    const nextStep = this.#getNextStepName(flow, context, event.data.stepName);
+    const nextStep = this.#getNextStepName(flow, context, e.stepId);
 
     if (nextStep) {
       this.queueStreamingSteps(flow, context, nextStep);
