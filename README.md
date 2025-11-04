@@ -31,7 +31,7 @@ pnpm build
 
 ### 2. run demo
 
-#### Demo flow exucted with two localhost SSE streaming MCP servers
+#### Demo flow executed with two localhost SSE streaming MCP servers
 
 ![Art Streaming Demo Terminal Example](art-streaming-demo.gif)
 
