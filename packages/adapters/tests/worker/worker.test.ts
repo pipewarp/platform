@@ -1,8 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
-import { EventBusPort, QueuePort } from "@pipewarp/ports";
+import { EventBusPort, QueuePort, StreamRegistryPort } from "@pipewarp/ports";
 import { Worker, type WorkerCapability } from "../../src/worker/worker.js";
 import type { AnyEvent, Capability } from "@pipewarp/types";
 import { subscribe } from "diagnostics_channel";
+import { EmitterFactory } from "@pipewarp/events";
+import { ToolRegistry } from "../../src/tools/tool-registry.js";
 
 const bus = {
   subscribe: async () => {
@@ -23,16 +25,23 @@ describe("worker", () => {
       abortAllForWorker: vi.fn(),
     } as unknown as QueuePort;
 
-    const worker = new Worker("workerId", bus, queue);
+    const worker = new Worker("workerId", {
+      bus,
+      queue,
+      emitterFactory: {} as EmitterFactory,
+      streamRegistry: {} as StreamRegistryPort,
+      toolRegistry: {} as ToolRegistry,
+    });
 
+    const maxJobCount = 5;
     const capId = "test-c";
+
     const capability: Capability = {
       name: capId,
       queueId: "qid",
-      activeJobCount: 0,
-      maxJobCount: 2,
+      maxJobCount: maxJobCount,
       tool: {
-        id: "id",
+        id: "mcp",
         type: "inprocess",
       },
     };
@@ -45,7 +54,7 @@ describe("worker", () => {
     await worker.startCapabilityJobWaiters(capId);
 
     expect(reserve).toHaveBeenCalledTimes(1);
-    expect(capability.activeJobCount).toBe(0);
+    expect(worker.getCapabilityActiveJobCount(capId)).toBe(0);
     expect(worker.getWaiterSize(capId)).toBe(0);
     expect(worker.handleNewJob).toHaveBeenCalledWith(event);
   });
@@ -59,16 +68,22 @@ describe("worker", () => {
       abortAllForWorker: vi.fn(),
     } as unknown as QueuePort;
 
-    const worker = new Worker("workerId", bus, queue);
+    const worker = new Worker("workerId", {
+      bus,
+      queue,
+      emitterFactory: {} as EmitterFactory,
+      streamRegistry: {} as StreamRegistryPort,
+      toolRegistry: {} as ToolRegistry,
+    });
 
+    const maxJobCount = 5;
     const capId = "test-c";
     const capability: Capability = {
-      name: "test-c",
+      name: capId,
       queueId: "qid",
-      activeJobCount: 0,
-      maxJobCount: 2,
+      maxJobCount: maxJobCount,
       tool: {
-        id: "id",
+        id: "mcp",
         type: "inprocess",
       },
     };
@@ -83,7 +98,7 @@ describe("worker", () => {
     await worker.startCapabilityJobWaiters(capId);
 
     expect(reserve).toHaveBeenCalledTimes(2);
-    expect(capability.activeJobCount).toBe(0);
+    expect(worker.getCapabilityActiveJobCount(capId)).toBe(0);
     expect(worker.getWaiterSize(capId)).toBe(0);
     expect(worker.handleNewJob).toHaveBeenCalledWith(event);
   });
@@ -97,17 +112,22 @@ describe("worker", () => {
       abortAllForWorker: vi.fn(),
     } as unknown as QueuePort;
 
-    const worker = new Worker("workerId", bus, queue);
+    const worker = new Worker("workerId", {
+      bus,
+      queue,
+      emitterFactory: {} as EmitterFactory,
+      streamRegistry: {} as StreamRegistryPort,
+      toolRegistry: {} as ToolRegistry,
+    });
 
     const maxJobCount = 5;
     const capId = "test-c";
     const capability: Capability = {
       name: capId,
       queueId: "qid",
-      activeJobCount: 0,
       maxJobCount: maxJobCount,
       tool: {
-        id: "id",
+        id: "mcp",
         type: "inprocess",
       },
     };

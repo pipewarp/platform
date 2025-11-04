@@ -1,11 +1,11 @@
 import type { StepHandler } from "./step-handler.js";
 import type { ResolveStepArgs } from "../resolve.js";
-import type { AnyEvent } from "@pipewarp/types";
-import type { RunContext, ActionStep, Flow } from "@pipewarp/specs";
-import { StepEmitter } from "@pipewarp/events";
+import type { AnyEvent, StepMcpQueuedData } from "@pipewarp/types";
+import type { RunContext, Flow, McpStep } from "@pipewarp/specs";
+import type { StepEmitter } from "@pipewarp/events";
 import { PipeResolver } from "../pipe-resolver.js";
 
-export class ActionStepHandler implements StepHandler {
+export class McpStepHandler implements StepHandler {
   constructor(
     private readonly resolveArgs: ResolveStepArgs,
     private readonly pipeResolver: PipeResolver
@@ -17,22 +17,33 @@ export class ActionStepHandler implements StepHandler {
     stepName: string,
     emitter: StepEmitter
   ): Promise<void> {
-    const step: ActionStep = flow.steps[stepName] as ActionStep;
+    const step: McpStep = flow.steps[stepName] as McpStep;
 
     const args = step.args ? this.resolveArgs(context, step.args) : undefined;
 
     const pipes = this.pipeResolver.resolve(flow, context, stepName);
     try {
-      await emitter.emit("step.action.queued", "action", {
-        tool: step.tool,
-        op: step.op,
+      let args = flow.steps[stepName].args;
+      if (args !== undefined) {
+        args = this.resolveArgs(context, args);
+      }
+
+      // making data here just to log it
+      const data: StepMcpQueuedData = {
         args,
         pipe: pipes,
-      });
+        url: step.url,
+        transport: step.transport,
+        feature: step.feature,
+      };
+
+      console.log("data", JSON.stringify(data, null, 2));
+
+      await emitter.emit("step.mcp.queued", "mcp", data);
       context.steps[stepName].status = "queued";
     } catch (err) {
       console.error(
-        `[action-step-handler] emitting step ${stepName} in flow ${flow.name}`
+        `[mcp-step-handler] emitting step ${stepName} in flow ${flow.name}`
       );
       console.error(err);
     }

@@ -7,6 +7,8 @@ import {
   StepActionCompletedDataSchema,
   StepActionQueuedSchema,
   StepActionQueuedDataSchema,
+  StepMcpQueuedDataSchema,
+  StepMcpQueuedSchema,
 } from "./events.schema.js";
 
 export type EventTopic =
@@ -38,6 +40,14 @@ export const registry = {
       data: StepActionQueuedDataSchema,
     },
   },
+  "step.mcp.queued": {
+    topic: "steps.lifecycle",
+    schema: {
+      data: StepMcpQueuedDataSchema,
+      event: StepMcpQueuedSchema,
+    },
+  },
+
   "worker.registered": {
     topic: "workers.lifecycle",
     schema: {

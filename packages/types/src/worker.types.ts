@@ -1,14 +1,17 @@
+/**
+ * data structure is preliminary and subject to changes
+ */
 export type Capability = {
   name: string; // canonical name like "llm.generate" or "v1.stt.transcribe",
   aliases?: string; // optional alias for flow step map
 
   queueId: string; // same as capability name, possibly with workerId
-  activeJobCount: number; // 0;
+
   maxJobCount: number; // 1;
 
   // tool binding information
   tool: {
-    id: string;
+    id: "mcp"; //TODO: move this to external tool types aligned with tools adapter
     // type category to map routing ("process", "remote", "sdk"),
     type: "inprocess" | "remote" | "dynamic";
 
@@ -17,16 +20,17 @@ export type Capability = {
     credentialsRef?: string; // reference to credentials db index
   };
   concurrency?: {
-    activeJobCount: number;
+    activeJobCount: number; // needed by resource manager, but also in worker
     maxJobCount: number;
   };
-  // optional metadata for ui or observability?
+  // optional metadata for ui or observability
   metadata?: {
     version?: string; //
     description?: string;
   };
 };
 
+// worker description to be stored in the resource manager
 export type WorkerMetadata = {
   id: string;
   name: string;

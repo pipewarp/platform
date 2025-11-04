@@ -1,5 +1,6 @@
 import type { PipewarpContext } from "./pipewarp-context.js";
 import type { StepEventType, StepTypeFor } from "./event-map.js";
+import { CloudEvent } from "./cloud-event.js";
 
 export type StepContext<T extends StepEventType> = {
   flowId: string;
@@ -9,7 +10,8 @@ export type StepContext<T extends StepEventType> = {
 };
 
 export type StepEvent<T extends StepEventType> = Omit<
-  PipewarpContext<T>,
+  PipewarpContext,
   keyof StepContext<T>
 > &
-  StepContext<T>;
+  StepContext<T> &
+  CloudEvent<T>;

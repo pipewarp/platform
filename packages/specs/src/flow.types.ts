@@ -13,11 +13,37 @@ export const BaseStepSchema = z.object({
   on: OnSchema.optional(),
 });
 
-// TODO: Old step format; to be removed
-export const ToolStepSchema = BaseStepSchema.extend({
-  type: z.literal("tool"),
-  mcp: z.string().min(1),
-  tool: z.string().min(1),
+export const McpStepSchema = BaseStepSchema.extend({
+  type: z.literal("mcp"),
+  url: z.string(),
+  transport: z.enum(["sse", "stdio", "streamable-http", "http"]),
+  feature: z.object({
+    primitive: z.enum([
+      "resource",
+      "prompt",
+      "tool",
+      "sampling",
+      "roots",
+      "elicitation",
+    ]),
+    name: z.string(),
+  }),
+  pipe: z
+    .object({
+      to: z
+        .object({
+          step: z.string(),
+          payload: z.string(),
+        })
+        .optional(),
+      from: z
+        .object({
+          step: z.string(),
+          buffer: z.number().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export const ActionStepSchema = BaseStepSchema.extend({
@@ -56,11 +82,12 @@ export const HttpStepSchema = BaseStepSchema.extend({
 export const StepSchema = z.discriminatedUnion("type", [
   // ToolStepSchema,
   // HttpStepSchema,
+  McpStepSchema,
   ActionStepSchema,
 ]);
 
 export type Step = z.infer<typeof StepSchema>;
-export type ToolStep = z.infer<typeof ToolStepSchema>;
+export type McpStep = z.infer<typeof McpStepSchema>;
 export type HttpStep = z.infer<typeof HttpStepSchema>;
 export type ActionStep = z.infer<typeof ActionStepSchema>;
 

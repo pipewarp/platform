@@ -28,6 +28,10 @@ export class NodeRouter implements RouterPort {
       const e = event as AnyEvent<"step.action.queued">;
       this.queue.enqueue(e.data.tool, event);
     }
+    if (event.type === "step.mcp.queued") {
+      const e = event as AnyEvent<"step.mcp.queued">;
+      this.queue.enqueue(e.stepType, event);
+    }
   }
 
   async start() {

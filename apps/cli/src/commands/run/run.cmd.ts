@@ -8,6 +8,7 @@ import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
 import { McpWorker, Worker } from "@pipewarp/adapters/worker";
+import { McpTool, ToolFactories, ToolRegistry } from "@pipewarp/adapters/tools";
 import { InMemoryStreamRegistry } from "@pipewarp/adapters/stream";
 import type { AnyEvent } from "@pipewarp/types";
 import {
@@ -18,6 +19,7 @@ import {
   ResourceRegistry,
 } from "@pipewarp/engine";
 import { startDemoServers } from "./demo.js";
+import { EmitterFactory } from "@pipewarp/events";
 
 export async function cliRunAction(
   flowPath: string,
@@ -88,11 +90,7 @@ export async function cliRunAction(
   const router = new NodeRouter(bus, queue);
   const streamRegistry = new InMemoryStreamRegistry();
   const pipeResolver = new PipeResolver(streamRegistry);
-  const stepHandlerRegistry = wireStepHandlers(
-    bus,
-    resolveStepArgs,
-    pipeResolver
-  );
+  const stepHandlerRegistry = wireStepHandlers(resolveStepArgs, pipeResolver);
   const mcpWorker = new McpWorker(queue, bus, mcpStore, streamRegistry);
 
   for await (const [mcpId] of mcpStore.mcps) {
@@ -100,24 +98,24 @@ export async function cliRunAction(
     await mcpWorker.startMcp(mcpId);
   }
 
+  // setup new generic worker with tools
   const workerId = "cli-worker";
-  const worker = new Worker(workerId, bus, queue);
+  const toolFactories: ToolFactories = {
+    mcp: () => new McpTool(),
+  };
+  const toolRegistry = new ToolRegistry(toolFactories);
+  const worker = new Worker(workerId, {
+    bus,
+    queue,
+    toolRegistry,
+    emitterFactory: new EmitterFactory(bus),
+    streamRegistry,
+  });
 
   worker.addCapability({
-    name: "unicode",
-    queueId: "unicode",
-    activeJobCount: 0,
-    maxJobCount: 1,
-    tool: {
-      id: "mcp",
-      type: "inprocess",
-    },
-  });
-  worker.addCapability({
-    name: "transform",
-    queueId: "transform",
-    activeJobCount: 0,
-    maxJobCount: 1,
+    name: "mcp",
+    queueId: "mcp",
+    maxJobCount: 2,
     tool: {
       id: "mcp",
       type: "inprocess",
@@ -131,7 +129,8 @@ export async function cliRunAction(
     bus,
     streamRegistry,
     stepHandlerRegistry,
-    new ResourceRegistry()
+    new ResourceRegistry(),
+    new EmitterFactory(bus)
   );
 
   const startFlow: AnyEvent<"flow.queued"> = {
@@ -153,11 +152,15 @@ export async function cliRunAction(
   bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
     console.log("[cli] workers.lifecycle event:", e);
     if (e.type === "worker.registered") {
-      e = e as AnyEvent<"worker.registered">;
-      if (e.data.workerId === workerId && e.data.status === "accepted") {
+      const event = e as AnyEvent<"worker.registered">;
+      if (
+        event.data.workerId === workerId &&
+        event.data.status === "accepted"
+      ) {
         console.log(
           "[cli] received registration accepted, publishing flow event"
         );
+        worker.start();
         await bus.publish("flows.lifecycle", startFlow);
       }
     }
@@ -169,6 +172,7 @@ export async function cliRunAction(
       await mcpWorker.stopMcp("transform");
     } else {
       await mcpWorker.stopMcp("stt-client");
+      await worker.stopAllJobWaiters();
     }
     queue.abortAll();
   });
@@ -178,8 +182,9 @@ export async function cliRunAction(
       await mcpWorker.stopMcp("transform");
     } else {
       await mcpWorker.stopMcp("stt-client");
+      await worker.stopAllJobWaiters();
     }
-    mcpStore.close("unicode");
+    queue.abortAll();
   });
   process.on("exit", async () => {
     if (demo) {
@@ -187,6 +192,7 @@ export async function cliRunAction(
       await mcpWorker.stopMcp("transform");
     } else {
       await mcpWorker.stopMcp("stt-client");
+      await worker.stopAllJobWaiters();
     }
     queue.abortAll();
   });
