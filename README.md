@@ -2,13 +2,13 @@
 
 ### ❗ Alpha Software (v0.1.0-alpha.4)
 
-Pipewarp is in an early alpha stage and still taking shape. Some things work - mostly - but APIs and behaviors will change as development eveolves. Expect rough edges and breaking changes for now.
+Pipewarp is in an early alpha stage and still taking shape. Some things work - mostly - but APIs and behaviors will change as development evolves. Expect rough edges and breaking changes for now.
 
 ## Overview
 
-Pipewarp is an event driven workflow engine built for flexibility and composibility. It's designed to run locally first, as a single process, and aims to make orchestrating complex systems, especially AI driven ones, feel simple, transparent, and powerful. Instead of enforcing rigid rules, Pipewarp's goal is to make things possible: to connect tools, services, and data streams in whatever way fits your system.
+Pipewarp is an event driven workflow engine built for flexibility and composibility. It's designed to run locally first, as a single process, and aims to make orchestrating complex systems, especially AI driven ones, feel simple, transparent, and powerful. Instead of enforcing rigid rules, Pipewarp's goal is to make things possible: to connect tools, services, and data streams in whatever way fits your use case.
 
-Under the hood, Pipewarp treats streaming as a first-class citizen. Also, every component, from queues to workers, communicates through events, supporting modular components with swappable infrastructure. The architecture is modular and extensible, supporting everything from lightweight in-memory execution to distributed setups. Built-in observability is a core goal, with plans for integrated dashboard and support for external monitoring tools, making it easy to understand what your flows are doing at every stage.
+Under the hood, Pipewarp treats streaming as a first-class citizen. Also, every component, from queues to workers, communicates through events, allowing generic components with swappable infrastructure. The architecture is modular and extensible, supporting everything from lightweight in-memory execution to distributed setups. Built-in observability is a core goal, with plans for integrated dashboard and support for external monitoring tools, making it easy to understand what your flows are doing at every stage.
 
 ## Quickstart
 
@@ -20,7 +20,7 @@ This monorepo uses [pnpm](https://pnpm.io/) via [Corepack](https://github.com/no
 corepack enable
 ```
 
-Post alpha versions of this repo should fully support other package managers.
+Post alpha versions of this repo will support other package managers.
 
 ### 1. install + build
 
@@ -31,13 +31,11 @@ pnpm build
 
 ### 2. run demo
 
-Run a demo flow [examples/demo.streaming.flow.json](examples/demo.streaming.flow.json) with two demo MCP servers.
-
-Example:
+#### Demo flow exucted with two localhost SSE streaming MCP servers
 
 ![Art Streaming Demo Terminal Example](art-streaming-demo.gif)
 
-### Run commmands from repo root:
+#### Run Commands
 
 ```bash
 # streaming workflow; spawns child processes in one terminal
@@ -46,7 +44,7 @@ pnpm -F @pipewarp/cli start run examples/demo.streaming.flow.json -d
 pnpm -F @pipewarp/cli start run examples/demo.flow.json -d
 ```
 
-The streaming flow definition:
+#### Streaming Flow Definition ([examples/demo.streaming.flow.json](examples/demo.streaming.flow.json))
 
 ```json
 {
@@ -99,7 +97,7 @@ The streaming flow definition:
 }
 ```
 
-This cli run command, when run with this flow and the `-d` or `--demo` option, from the repo root, does the following steps:
+This cli run command, when run with this flow and the `-d` or `--demo` option, from the repo root, performs the following steps:
 
 1. Starts up two localhost MCP servers on ports 3004 and 3005 for each step as child processes. These are found at:
 
