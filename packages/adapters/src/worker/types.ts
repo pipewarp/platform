@@ -12,7 +12,7 @@ export type JobDescription = {
 // created for each dequeued job; lives until job completes or fails
 export type JobContext = {
   id: string;
-  capabilitiy: ToolId;
+  capability: ToolId;
   tool: string;
   status: "preparing" | "running";
   startedAt: string;

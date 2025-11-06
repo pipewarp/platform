@@ -23,7 +23,7 @@ export class ActionStepHandler implements StepHandler {
 
     const pipes = this.pipeResolver.resolve(flow, context, stepName);
     try {
-      await emitter.emit("step.action.queued", "action", {
+      await emitter.emit("step.action.queued", {
         tool: step.tool,
         op: step.op,
         args,

@@ -144,6 +144,9 @@ importers:
       '@pipewarp/types':
         specifier: workspace:*
         version: link:../types
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.5.2)(tsx@4.20.6)
 
   packages/ports:
     dependencies:

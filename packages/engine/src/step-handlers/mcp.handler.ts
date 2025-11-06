@@ -39,7 +39,7 @@ export class McpStepHandler implements StepHandler {
 
       console.log("data", JSON.stringify(data, null, 2));
 
-      await emitter.emit("step.mcp.queued", "mcp", data);
+      await emitter.emit("step.mcp.queued", data);
       context.steps[stepName].status = "queued";
     } catch (err) {
       console.error(

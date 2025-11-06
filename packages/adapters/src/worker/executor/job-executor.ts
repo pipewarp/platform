@@ -27,7 +27,7 @@ export class JobExecutor {
   async run(): Promise<unknown> {
     this.job.status = "running";
     const tool = this.deps.toolRegistry.resolve(
-      this.job.capabilitiy,
+      this.job.capability,
       this.job.description.key
     );
 
@@ -54,7 +54,7 @@ export class JobExecutor {
       flowId: this.job.metadata.flowId,
       runId: this.job.metadata.runId,
       stepId: this.job.metadata.stepId,
-      capability: this.job.capabilitiy,
+      capability: this.job.capability,
       workerId: this.job.id,
       ...(consumer ? { consumer } : {}),
       ...(producer ? { producer } : {}),

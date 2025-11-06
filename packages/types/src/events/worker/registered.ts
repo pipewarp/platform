@@ -6,4 +6,6 @@ export type WorkerRegisteredData = {
   registeredAt: string;
 };
 
-export type WorkerRegistered = WorkerEvent<"worker.registration.requested">;
+export type WorkerRegistered = WorkerEvent<"worker.registered"> & {
+  operation: "registered";
+};

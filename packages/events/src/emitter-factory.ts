@@ -7,12 +7,7 @@ import { randomBytes } from "crypto";
 /**
  * Create emitter objects based upon a common scope.
  *
- * Set scoped individually right now with:
- * setCloudScope()
- * setStepScope()
- *
- * That makes it more explicit for the fields you need per emitter.
- * But might just provide it to the emitter then.
+ * Set scope in init(scope)
  *
  * Create emitter objects with respective emitter function.
  *
@@ -23,17 +18,10 @@ import { randomBytes } from "crypto";
  *
  * @example
  * ```
- * const emitterFactory = new EmitterFactory(bus);
- * emitterFactory.setCloudScope({});
- * emitterFactory.setStepScope({});
- *
- * const stepEmitter = emitterFactory.newStepEmitter();
- * await stepEmitter.emit(type, data);
- *
- * // has functions for setting otel like
- * emitterFactory.startSpan({});
- *
- * // but otel still in formation, may move to own class
+ * const emitterFactory = new EmitterFactory();
+ * emitterFactory.setScope({...}: BaseScope)
+ * const stepEmitter = newStepEmitter(type, stepType, data);
+ * await stepEmitter.emit(data);
  *
  */
 
@@ -56,15 +44,6 @@ export class EmitterFactory {
   }
   setStepScope(scope: StepScope) {
     this.#stepScope = scope;
-  }
-  setParentSpanId(parentSpanId: string) {
-    this.#otel.parentSpanId = parentSpanId;
-  }
-  getOtelContext(): OtelContext {
-    return { ...this.#otel };
-  }
-  hasParent(): boolean {
-    return this.#otel.parentSpanId ? true : false;
   }
 
   newStepEmitter(): StepEmitter {
@@ -95,6 +74,14 @@ export class EmitterFactory {
     return this.#otel;
   }
 
+  setParentSpanId(parentSpanId: string) {
+    this.#otel.parentSpanId = parentSpanId;
+  }
+
+  getOtelContext(): OtelContext {
+    return { ...this.#otel };
+  }
+
   startSpan({
     hasParent = true,
     parentSpanId,
@@ -114,6 +101,9 @@ export class EmitterFactory {
       this.#otel.traceId,
       this.#otel.spanId
     );
+  }
+  hasParent(): boolean {
+    return this.#otel.parentSpanId ? true : false;
   }
 
   makeTraceParent(traceId: string, spanId: string, sampled = true): string {
