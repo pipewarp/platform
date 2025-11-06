@@ -23,7 +23,7 @@ export function interpretJob(event: AnyEvent): JobDescription {
     case "step.mcp.queued":
       const e = event as AnyEvent<"step.mcp.queued">;
 
-      ctx.capability = e.stepType;
+      ctx.capability = e.entity!;
       if (e.data.pipe.to) {
         ctx.isProducer = true;
         ctx.streamId = e.data.pipe.to.id;

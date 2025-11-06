@@ -35,7 +35,7 @@ export class Engine {
       if (e.type === "flow.queued") {
         const event = e as AnyEvent<"flow.queued">;
         await this.startFlow({
-          correlationId: event.correlationId,
+          correlationId: "none",
           flowName: event.data.flowName,
           outfile: event.data.outfile,
           test: event.data.test,
@@ -61,7 +61,6 @@ export class Engine {
           id: String(crypto.randomUUID()),
           source: "resource-registry://default",
           specversion: "1.0",
-          correlationId: String(crypto.randomUUID()),
           time: new Date().toISOString(),
           type: "worker.registered",
           data: {
@@ -69,6 +68,11 @@ export class Engine {
             status: "accepted",
             registeredAt: new Date().toISOString(),
           },
+          action: "registered",
+          domain: "worker",
+          spanid: "",
+          traceid: "",
+          traceparent: "",
         } satisfies AnyEvent<"worker.registered">);
       }
     });
@@ -133,12 +137,13 @@ export class Engine {
   ): Promise<void> {
     const stepType = flow.steps[stepName].type;
 
-    this.emitterFactory.setScope({
-      correlationId: context.correlationId,
-      flowId: context.flowName,
-      runId: context.runId,
-      source: "/engine/stepHandler",
-      stepId: stepName,
+    this.emitterFactory.setCloudScope({
+      source: "pipewarp://engine/step-handler",
+    });
+    this.emitterFactory.setStepScope({
+      flowid: context.flowName,
+      runid: context.runId,
+      stepid: stepName,
     });
 
     const stepEmitter = this.emitterFactory.newStepEmitter();
@@ -148,7 +153,7 @@ export class Engine {
       const caps = this.resourceRegistry.getCapability(capName);
       if (caps === undefined) {
         throw new Error(
-          `[engine] no capability in local resourece registry for ${capName}`
+          `[engine] no capability in local resource registry for ${capName}`
         );
       }
 
@@ -160,7 +165,7 @@ export class Engine {
       const cap = this.resourceRegistry.getCapability(stepType);
       if (cap === undefined) {
         throw new Error(
-          `[engine] no capability in local resourece registry for ${stepType}`
+          `[engine] no capability in local resource registry for ${stepType}`
         );
       }
 
@@ -225,26 +230,26 @@ export class Engine {
   async handleWorkerDone(event: AnyEvent): Promise<void> {
     const e = event as AnyEvent<"step.action.completed">;
     // update context based on completed event
-    if (!this.#runs.has(e.runId)) {
-      console.error(`[engine] invalid run id: ${e.runId}`);
+    if (!this.#runs.has(e.runid)) {
+      console.error(`[engine] invalid run id: ${e.runid}`);
       return;
     }
-    const context = this.#runs.get(e.runId)!;
+    const context = this.#runs.get(e.runid)!;
 
     const result = e.data.result
       ? (e.data.result as Array<Record<string, unknown>>)
       : [{ data: null }];
     if (e.data.result) {
-      context.steps[e.stepId].result = { result };
+      context.steps[e.stepid].result = { result };
     }
-    context.steps[e.stepId].status = e.data.ok ? "success" : "failure";
+    context.steps[e.stepid].status = e.data.ok ? "success" : "failure";
 
-    context.queuedSteps.delete(e.stepId);
-    context.runningSteps.delete(e.stepId);
-    context.doneSteps.add(e.stepId);
+    context.queuedSteps.delete(e.stepid);
+    context.runningSteps.delete(e.stepid);
+    context.doneSteps.add(e.stepid);
     context.outstandingSteps--;
 
-    this.writeRunContext(e.runId);
+    this.writeRunContext(e.runid);
 
     // now get next step and start it.
     const flow = this.flowDb.get(context.flowName);
@@ -253,7 +258,7 @@ export class Engine {
       console.log(`[engine] executeStep(): no flow for ${context.flowName}`);
       return;
     }
-    const nextStep = this.#getNextStepName(flow, context, e.stepId);
+    const nextStep = this.#getNextStepName(flow, context, e.stepid);
 
     if (nextStep) {
       this.queueStreamingSteps(flow, context, nextStep);

@@ -26,17 +26,17 @@ A single practical spec for emitting lifecycle and domain events that correlate 
 
 #### Pipewarp / Otel Extension Attributes
 
-- `traceparent` (W3C Trace Context) **always inlude**
-- `tracestate` optional W3C trace context
+- `traceparent` (W3C Trace Context) **always include**
+- `tracestate` optional W3C trace state
 - `component` (pipewarp bounded set)
 - `operation` (pipewarp bounded set)
-- ids (optional per scope, references to pipewarp values) - `flowid`, `runid`, `stepid`, `jobid`, `toolid`
+- ids (optional per scope, references to pipewarp values) - `flowid`, `runid`, `stepid`, `jobid`, `toolid`, `steptype`
 - classification (pipwarp relevant references) `capability`, `tool`
 - errors/retries `attempt`, `errorkind`, `errorcode`
 
 ### 03. Vocabulary
 
-#### `component` (lifecycle base event type)
+#### `domain` (lifecycle base event type)
 
 - `engine`
 - `worker`
@@ -49,7 +49,7 @@ A single practical spec for emitting lifecycle and domain events that correlate 
 - `cli`
 - `job`
 
-#### `operation` (lifecycle verbs)
+#### `action` (lifecycle verbs)
 
 Prefer one word verbs, past tense.
 
@@ -68,9 +68,9 @@ Prefer one word verbs, past tense.
 - `requested`
 - `saved`
 
-#### `capability` (classification of work)
+#### `entity` (classification of work)
 
-Optional map to pipewarp capabilities
+Optional map to pipewarp capabilities or domain entities
 
 - `mcp`
 - `http`
@@ -80,6 +80,7 @@ Optional map to pipewarp capabilities
 - `fs`
 - `rpc`
 - `custom`
+- `registration`
 
 #### `errorkind` (optional, bounded)
 
@@ -91,7 +92,7 @@ Optional map to pipewarp capabilities
 - `quota`
 - `conflict`
 
-### 04. Event `type` should human readable even if reduundant
+### 04. Event `type` should be human readable even if redundant
 
 Example:
 

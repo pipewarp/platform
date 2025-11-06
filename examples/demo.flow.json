@@ -1,5 +1,5 @@
 {
-  "name": "new.flow.json",
+  "name": "demo.flow.json",
   "start": "mario",
   "steps": {
     "mario": {

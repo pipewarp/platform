@@ -7,7 +7,7 @@ import { McpManager } from "@pipewarp/adapters/mcp-manager";
 import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
-import { McpWorker, Worker } from "@pipewarp/adapters/worker";
+import { Worker } from "@pipewarp/adapters/worker";
 import { McpTool, ToolFactories, ToolRegistry } from "@pipewarp/adapters/tools";
 import { InMemoryStreamRegistry } from "@pipewarp/adapters/stream";
 import type { AnyEvent } from "@pipewarp/types";
@@ -91,12 +91,6 @@ export async function cliRunAction(
   const streamRegistry = new InMemoryStreamRegistry();
   const pipeResolver = new PipeResolver(streamRegistry);
   const stepHandlerRegistry = wireStepHandlers(resolveStepArgs, pipeResolver);
-  const mcpWorker = new McpWorker(queue, bus, mcpStore, streamRegistry);
-
-  for await (const [mcpId] of mcpStore.mcps) {
-    console.log(`[cli-run] starting worker (mcpid: ${mcpId})`);
-    await mcpWorker.startMcp(mcpId);
-  }
 
   // setup new generic worker with tools
   const workerId = "cli-worker";
@@ -134,11 +128,10 @@ export async function cliRunAction(
   );
 
   const startFlow: AnyEvent<"flow.queued"> = {
-    correlationId: String(crypto.randomUUID()),
     id: String(crypto.randomUUID()),
     time: new Date().toISOString(),
     type: "flow.queued",
-    flowId: flow.name,
+    flowid: flow.name,
     source: "/cli/cmd/run",
     specversion: "1.0",
     data: {
@@ -147,6 +140,11 @@ export async function cliRunAction(
       test,
       outfile: resolvedOutPath,
     },
+    action: "queued",
+    domain: "flow",
+    spanid: "",
+    traceid: "",
+    traceparent: "",
   };
 
   bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
@@ -167,33 +165,15 @@ export async function cliRunAction(
   });
 
   process.on("SIGINT", async () => {
-    if (demo) {
-      await mcpWorker.stopMcp("unicode");
-      await mcpWorker.stopMcp("transform");
-    } else {
-      await mcpWorker.stopMcp("stt-client");
-      await worker.stopAllJobWaiters();
-    }
+    await worker.stopAllJobWaiters();
     queue.abortAll();
   });
   process.on("SIGTERM", async () => {
-    if (demo) {
-      await mcpWorker.stopMcp("unicode");
-      await mcpWorker.stopMcp("transform");
-    } else {
-      await mcpWorker.stopMcp("stt-client");
-      await worker.stopAllJobWaiters();
-    }
+    await worker.stopAllJobWaiters();
     queue.abortAll();
   });
   process.on("exit", async () => {
-    if (demo) {
-      await mcpWorker.stopMcp("unicode");
-      await mcpWorker.stopMcp("transform");
-    } else {
-      await mcpWorker.stopMcp("stt-client");
-      await worker.stopAllJobWaiters();
-    }
+    await worker.stopAllJobWaiters();
     queue.abortAll();
   });
 

@@ -30,7 +30,7 @@ export class NodeRouter implements RouterPort {
     }
     if (event.type === "step.mcp.queued") {
       const e = event as AnyEvent<"step.mcp.queued">;
-      this.queue.enqueue(e.stepType, event);
+      this.queue.enqueue(e.entity!, event);
     }
   }
 

@@ -26,4 +26,4 @@ export type StepMcpQueuedData = {
   };
 };
 
-export type StepMcpQueued = StepEvent<"step.mcp.queued">;
+export type StepMcpQueued = StepEvent<"step.mcp.queued"> & {};

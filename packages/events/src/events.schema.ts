@@ -7,10 +7,12 @@ import type {
   CloudEvent,
   EventType,
   StepType,
-  StepEventType,
-  StepContext,
-  FlowContext,
+  StepScope,
+  FlowScope,
   FlowQueuedData,
+  EventActions,
+  EventDomains,
+  EventEntities,
 } from "@pipewarp/types";
 
 export const eventTypes = [
@@ -44,6 +46,25 @@ export type CloudEventContext<T extends EventType> = Omit<
   "data"
 >;
 
+export const actionTypes = [
+  "completed",
+  "queued",
+  "registered",
+  "requested",
+] as const satisfies readonly EventActions[];
+
+export const domainTypes = [
+  "flow",
+  "step",
+  "worker",
+] as const satisfies readonly EventDomains[];
+
+export const entityTypes = [
+  "action",
+  "mcp",
+  "registration",
+] as const satisfies readonly EventEntities[];
+
 export const CloudEventContextSchema = z
   .object({
     id: z.string(),
@@ -52,6 +73,18 @@ export const CloudEventContextSchema = z
     correlationId: z.string(),
     time: z.string(),
     type: z.enum(eventTypes),
+
+    domain: z.enum(domainTypes),
+    action: z.enum(actionTypes),
+    entity: z.enum(entityTypes).optional(),
+
+    traceparent: z.string(),
+    tracestate: z.string().optional(),
+
+    traceid: z.string(),
+    spanid: z.string(),
+    parentspanid: z.string().optional(),
+
     subject: z.string().optional(),
     datacontenttype: z.string().optional(),
     dataschema: z.string().optional(),
@@ -60,18 +93,19 @@ export const CloudEventContextSchema = z
 
 export const FlowContextSchema = z
   .object({
-    flowId: z.string(),
+    flowid: z.string(),
+    domain: z.literal("flow"),
   })
-  .strict() satisfies z.ZodType<FlowContext>;
+  .strict() satisfies z.ZodType<FlowScope>;
 
 export const StepContextSchema = z
   .object({
-    flowId: z.string(),
-    runId: z.string(),
-    stepId: z.string(),
-    stepType: z.enum(stepTypes),
+    flowid: z.string(),
+    runid: z.string(),
+    stepid: z.string(),
+    domain: z.literal("step"),
   })
-  .strict() satisfies z.ZodType<StepContext<StepEventType>>;
+  .strict() satisfies z.ZodType<StepScope>;
 
 export const StepActionQueuedDataSchema = z
   .object({
@@ -152,8 +186,9 @@ export const StepActionQueuedSchema = CloudEventContextSchema.merge(
 )
   .merge(
     z.object({
-      stepType: z.literal("action"),
       type: z.literal("step.action.queued"),
+      entity: z.literal("action"),
+      action: z.literal("queued"),
       data: StepActionQueuedDataSchema,
     })
   )
@@ -164,8 +199,10 @@ export const StepActionCompletedSchema = CloudEventContextSchema.merge(
 )
   .merge(
     z.object({
-      stepType: z.literal("action"),
+      // stepType: z.literal("action"),
       type: z.literal("step.action.completed"),
+      entity: z.literal("action"),
+      action: z.literal("completed"),
       data: StepActionCompletedDataSchema,
     })
   )
@@ -178,6 +215,8 @@ export const StepMcpQueuedSchema = CloudEventContextSchema.merge(
     z.object({
       stepType: z.literal("mcp"),
       type: z.literal("step.mcp.queued"),
+      entity: z.literal("mcp"),
+      action: z.literal("queued"),
       data: StepMcpQueuedDataSchema,
     })
   )
@@ -187,6 +226,8 @@ export const FlowQueuedSchema = CloudEventContextSchema.merge(FlowContextSchema)
   .merge(
     z.object({
       type: z.literal("flow.queued"),
+      entity: z.undefined().optional(),
+      action: z.literal("queued"),
       data: FlowQueuedDataSchema,
     })
   )

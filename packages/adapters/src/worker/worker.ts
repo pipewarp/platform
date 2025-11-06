@@ -9,6 +9,7 @@ import type {
   AnyEvent,
   Capability,
   StepActionCompletedData,
+  StepEvent,
   WorkerMetadata,
 } from "@pipewarp/types";
 import type { ToolClass } from "../tools/tool-factory.js";
@@ -97,23 +98,25 @@ export class Worker {
   }
 
   // may resolve with other factors in the future for multiple tools
-  resolveTool(capabiliy: Capability, key?: string): ToolClass {
-    return this.#toolRegistry.resolve(capabiliy.tool.id, key);
+  resolveTool(capability: Capability, key?: string): ToolClass {
+    return this.#toolRegistry.resolve(capability.tool.id, key);
   }
 
   async handleNewJob(event: AnyEvent): Promise<void> {
     console.log(`[worker-new] handleNewJob() event: ${event}`);
 
+    const e = event as AnyEvent<"step.mcp.queued">;
+
     // invoke some sort of tool from a tool registry
     const jobDescription = interpretJob(event);
     const jobContext: JobContext = {
       id: jobDescription.id,
-      capabilitiy: jobDescription.capability,
+      capability: jobDescription.capability,
       metadata: {
-        flowId: event.flowId ?? "",
-        runId: event.runId ?? "",
-        stepId: event.stepId ?? "",
-        stepType: event.stepType ?? "",
+        flowId: e.flowid,
+        runId: e.runid,
+        stepId: e.stepid,
+        stepType: e.entity!,
         workerId: this.#context.workerId,
       },
       description: jobDescription,
@@ -133,12 +136,13 @@ export class Worker {
 
     console.log(`[worker-new] results ${JSON.stringify(result, null, 2)}`);
 
-    this.#emitterFactory.setScope({
-      source: "worker://step-action-completed",
-      correlationId: event.correlationId,
-      flowId: event.flowId,
-      runId: event.runId,
-      stepId: event.stepId,
+    this.#emitterFactory.setCloudScope({
+      source: "pipewarp://worker",
+    });
+    this.#emitterFactory.setStepScope({
+      flowid: e.flowid,
+      runid: e.runid,
+      stepid: e.stepid,
     });
 
     const stepEmitter = this.#emitterFactory.newStepEmitter();
@@ -158,7 +162,7 @@ export class Worker {
         result: result,
       };
     }
-    await stepEmitter.emit("step.action.completed", "action", data);
+    await stepEmitter.emit("step.action.completed", data);
   }
 
   addCapability(profile: Capability) {
@@ -182,7 +186,7 @@ export class Worker {
     const capabilities: Capability[] = [];
     const caps = this.#context.capabilities;
 
-    // stip some fields from context and create new objects
+    // strip some fields from context and create new objects
     for (const id in caps) {
       const cap: Capability = {
         name: caps[id].name,
@@ -205,13 +209,16 @@ export class Worker {
     const meta = this.getMetadata();
     const event: AnyEvent<"worker.registration.requested"> = {
       id: String(crypto.randomUUID()),
-      correlationId: String(crypto.randomUUID()),
-      source: "worker://" + this.#context.workerId,
-      time: new Date().toISOString(),
+      source: "pipewarp://worker/" + this.#context.workerId,
       specversion: "1.0",
-      datacontenttype: "application/json",
+      time: new Date().toISOString(),
       type: "worker.registration.requested",
       data: meta,
+      domain: "worker",
+      action: "requested",
+      traceparent: "",
+      traceid: "",
+      spanid: "",
     };
     await this.#bus.publish("workers.lifecycle", event);
   }
@@ -268,7 +275,7 @@ export class Worker {
           continue;
         }
       } else {
-        // if we dont await, loop will cycle forever once concurrency limit is met
+        // if we don't await, loop will cycle forever once concurrency limit is met
         await capacityRelease.promise;
       }
     }
