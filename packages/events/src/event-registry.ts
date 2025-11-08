@@ -11,16 +11,6 @@ import {
   FlowStartedDataSchema,
 } from "./schemas/flow-data.schema.js";
 import {
-  StepActionQueuedSchema,
-  StepActionCompletedSchema,
-  StepMcpQueuedSchema,
-} from "./schemas/step-event.schema.js";
-import {
-  StepActionQueuedDataSchema,
-  StepActionCompletedDataSchema,
-  StepMcpQueuedDataSchema,
-} from "./schemas/step-data.schema.js";
-import {
   EngineStartedSchema,
   EngineStoppedSchema,
 } from "./schemas/engine.event.schema.js";
@@ -36,6 +26,14 @@ import {
   RunCompletedDataSchema,
   RunStartedDataSchema,
 } from "./schemas/run.data.schema.js";
+import {
+  StepCompletedSchema,
+  StepStartedSchema,
+} from "./schemas/step.event.schema.js";
+import {
+  StepCompletedDataSchema,
+  StepStartedDataSchema,
+} from "./schemas/step.data.schema.js";
 
 export type EventTopic =
   | "steps.lifecycle"
@@ -99,32 +97,24 @@ export const registry = {
   "step.started": {
     topic: "steps.lifecycle",
     schema: {
-      event: FlowQueuedSchema,
-      data: FlowQueuedDataSchema,
+      event: StepStartedSchema,
+      data: StepStartedDataSchema,
     },
   },
-  "step.action.completed": {
+  "step.completed": {
     topic: "steps.lifecycle",
     schema: {
-      event: StepActionCompletedSchema,
-      data: StepActionCompletedDataSchema,
+      event: StepCompletedSchema,
+      data: StepCompletedDataSchema,
     },
   },
-  "step.action.queued": {
+  "step.failed": {
     topic: "steps.lifecycle",
     schema: {
-      event: StepActionQueuedSchema,
-      data: StepActionQueuedDataSchema,
+      event: StepCompletedSchema,
+      data: StepCompletedDataSchema,
     },
   },
-  "step.mcp.queued": {
-    topic: "steps.lifecycle",
-    schema: {
-      data: StepMcpQueuedDataSchema,
-      event: StepMcpQueuedSchema,
-    },
-  },
-
   "worker.registered": {
     topic: "workers.lifecycle",
     schema: {

@@ -68,20 +68,8 @@ export class EmitterFactory {
     return new RunEmitter(this.bus, scope);
   }
 
-  newStepEmitter(): StepEmitter {
-    if (!this.#cloudScope) {
-      throw new Error("[emitter-factory] no cloud scope set");
-    }
-    if (!this.#stepScope) {
-      throw new Error("[emitter-factory] no step scope set");
-    }
-
-    return new StepEmitter(
-      this.bus,
-      this.#otel,
-      this.#stepScope,
-      this.#cloudScope
-    );
+  newStepEmitter(scope: CloudScope & StepScope & OtelContext): StepEmitter {
+    return new StepEmitter(this.bus, scope);
   }
 
   startTrace(sampled = true): OtelContext {

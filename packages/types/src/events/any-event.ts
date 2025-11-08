@@ -1,6 +1,7 @@
-import type { EventType, FlowEventType, StepEventType } from "./event-map.js";
+import type { EventType, FlowEventType } from "./event-map.js";
 import type { CloudEvent } from "./shared/cloud-event.js";
-import type { StepScope } from "./shared/step-event.js";
+import type { StepScope } from "./step/event.js";
+import type { StepEventType } from "./step/map.js";
 import type { FlowScope } from "./shared/flow-event.js";
 import type { EngineEventType } from "./engine/map.js";
 import type { EngineScope } from "./engine/scope.js";

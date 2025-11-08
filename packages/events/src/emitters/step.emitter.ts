@@ -29,13 +29,14 @@ export class StepEmitter extends BaseEmitter {
 
   constructor(
     private readonly bus: EventBusPort,
-    otel: OtelContext,
-    stepScope: StepScope,
-    cloudScope: CloudScope
+    scope: CloudScope & StepScope & OtelContext
   ) {
-    super(otel, cloudScope);
-    this.otel = { ...otel };
-    this.#stepScope = { ...stepScope };
+    const { traceId, spanId, traceParent, source } = scope;
+    const { flowid, runid, stepid, steptype } = scope;
+
+    super({ traceId, spanId, traceParent }, { source });
+    this.otel = { traceId, spanId, traceParent };
+    this.#stepScope = { flowid, runid, stepid, steptype };
     this.stepOtelAttributes = stepOtelAttributes;
     this.bus = bus;
   }

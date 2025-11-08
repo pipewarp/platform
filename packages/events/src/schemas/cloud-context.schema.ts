@@ -2,7 +2,6 @@ import { z } from "zod";
 import type {
   CloudEvent,
   EventType,
-  StepType,
   EventActions,
   EventDomains,
   EventEntities,
@@ -16,9 +15,9 @@ export const eventTypes = [
   "engine.stopped",
   "run.completed",
   "run.started",
-  "step.action.queued",
-  "step.action.completed",
-  "step.mcp.queued",
+  "step.started",
+  "step.completed",
+  "step.failed",
   "worker.registered",
   "worker.registration.requested",
   "step.started",
@@ -30,17 +29,17 @@ type MissingEventTypes = Exclude<EventType, (typeof eventTypes)[number]>;
 type _ListsAllEventTypes = MissingEventTypes extends never ? true : never;
 const _checkEventTypes: _ListsAllEventTypes = true;
 
-export const stepTypes = [
-  "action",
-  "mcp",
-  undefined,
-] as const satisfies readonly StepType[];
+// export const stepTypes = [
+//   "action",
+//   "mcp",
+//   undefined,
+// ] as const satisfies readonly StepType[];
 
 // make sure the event types list is complete and not missing any events
-type MissingStepTypes = Exclude<StepType, (typeof stepTypes)[number]>;
+// type MissingStepTypes = Exclude<StepType, (typeof stepTypes)[number]>;
 // utility type not used, just checks provides compile time error if type is missing
-type _ListsAllStepTypes = MissingStepTypes extends never ? true : never;
-const _checkStepTypes: _ListsAllStepTypes = true;
+// type _ListsAllStepTypes = MissingStepTypes extends never ? true : never;
+// const _checkStepTypes: _ListsAllStepTypes = true;
 
 export type CloudEventContext<T extends EventType> = Omit<
   CloudEvent<T>,
@@ -66,8 +65,6 @@ export const domainTypes = [
 ] as const satisfies readonly EventDomains[];
 
 export const entityTypes = [
-  "action",
-  "mcp",
   "registration",
 ] as const satisfies readonly EventEntities[];
 
