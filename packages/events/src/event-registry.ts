@@ -28,12 +28,21 @@ import {
   EngineStartedDataSchema,
   EngineStoppedDataSchema,
 } from "./schemas/engine.data.schema.js";
+import {
+  RunCompletedSchema,
+  RunStartedSchema,
+} from "./schemas/run.event.schema.js";
+import {
+  RunCompletedDataSchema,
+  RunStartedDataSchema,
+} from "./schemas/run.data.schema.js";
 
 export type EventTopic =
   | "steps.lifecycle"
   | "flows.lifecycle"
   | "workers.lifecycle"
-  | "engines.lifecycle";
+  | "engines.lifecycle"
+  | "runs.lifecycle";
 
 // simple hardcoded registry mapping event types to schemas, as well as
 // topics to publish the event to
@@ -71,6 +80,20 @@ export const registry = {
     schema: {
       event: EngineStoppedSchema,
       data: EngineStoppedDataSchema,
+    },
+  },
+  "run.started": {
+    topic: "runs.lifecycle",
+    schema: {
+      event: RunStartedSchema,
+      data: RunStartedDataSchema,
+    },
+  },
+  "run.completed": {
+    topic: "runs.lifecycle",
+    schema: {
+      event: RunCompletedSchema,
+      data: RunCompletedDataSchema,
     },
   },
   "step.started": {

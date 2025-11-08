@@ -14,6 +14,8 @@ export const eventTypes = [
   "flow.completed",
   "engine.started",
   "engine.stopped",
+  "run.completed",
+  "run.started",
   "step.action.queued",
   "step.action.completed",
   "step.mcp.queued",
@@ -25,8 +27,8 @@ export const eventTypes = [
 // make sure the event types list is complete and not missing any events
 type MissingEventTypes = Exclude<EventType, (typeof eventTypes)[number]>;
 // utility type not used, just checks provides compile time error if type is missing
-type _CheckNoneMissing = MissingEventTypes extends never ? true : never;
-const _checkEventTypes: _CheckNoneMissing = true;
+type _ListsAllEventTypes = MissingEventTypes extends never ? true : never;
+const _checkEventTypes: _ListsAllEventTypes = true;
 
 export const stepTypes = [
   "action",
@@ -37,8 +39,8 @@ export const stepTypes = [
 // make sure the event types list is complete and not missing any events
 type MissingStepTypes = Exclude<StepType, (typeof stepTypes)[number]>;
 // utility type not used, just checks provides compile time error if type is missing
-type _CheckNoStepMissing = MissingStepTypes extends never ? true : never;
-const _checkStepTypes: _CheckNoStepMissing = true;
+type _ListsAllStepTypes = MissingStepTypes extends never ? true : never;
+const _checkStepTypes: _ListsAllStepTypes = true;
 
 export type CloudEventContext<T extends EventType> = Omit<
   CloudEvent<T>,
@@ -50,11 +52,16 @@ export const actionTypes = [
   "queued",
   "registered",
   "requested",
+  "started",
+  "completed",
+  "stopped",
 ] as const satisfies readonly EventActions[];
 
 export const domainTypes = [
   "flow",
+  "run",
   "step",
+  "engine",
   "worker",
 ] as const satisfies readonly EventDomains[];
 

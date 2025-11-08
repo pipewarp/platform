@@ -1,15 +1,15 @@
 import type {
-  EngineScope,
   CloudScope,
-  EngineEventData,
-  EngineEventType,
-  EngineOtelAttributesMap,
-  EngineEvent,
+  RunOtelAttributesMap,
+  RunEventData,
+  RunEventType,
+  RunEvent,
+  RunScope,
 } from "@pipewarp/types";
 import type { OtelContext } from "../types.js";
 import { BaseEmitter } from "./base.emitter.js";
 import { EventBusPort } from "@pipewarp/ports";
-import { engineOtelAttributesMap } from "../otel-attributes.js";
+import { runOtelAttributesMap } from "../otel-attributes.js";
 import { registry } from "../event-registry.js";
 
 /**
@@ -18,41 +18,41 @@ import { registry } from "../event-registry.js";
  *
  * registry should move out.
  */
-export class EngineEmitter extends BaseEmitter {
+export class RunEmitter extends BaseEmitter {
   protected otel: OtelContext;
-  protected engineOtelAttributes: EngineOtelAttributesMap;
-  #engineScope: EngineScope;
+  protected runOtelAttributesMap: RunOtelAttributesMap;
+  #runScope: RunScope;
 
   constructor(
     private readonly bus: EventBusPort,
-    scope: OtelContext & EngineScope & CloudScope
+    scope: OtelContext & RunScope & CloudScope
   ) {
     const { traceId, spanId, traceParent, source } = scope;
-    const { engineid } = scope;
+    const { flowid, runid } = scope;
 
     super({ traceId, spanId, traceParent }, { source });
 
     this.otel = { traceId, spanId, traceParent };
-    this.#engineScope = { engineid };
-    this.engineOtelAttributes = engineOtelAttributesMap;
+    this.#runScope = { flowid, runid };
+    this.runOtelAttributesMap = runOtelAttributesMap;
     this.bus = bus;
   }
 
-  async emit<T extends EngineEventType>(
+  async emit<T extends RunEventType>(
     type: T,
-    data: EngineEventData<T>
+    data: RunEventData<T>
   ): Promise<void> {
     const event = {
       ...this.envelopeHeader(),
-      ...this.#engineScope,
+      ...this.#runScope,
       data,
       type,
-      domain: this.engineOtelAttributes[type].domain,
-      action: this.engineOtelAttributes[type].action,
-      ...(this.engineOtelAttributes[type].entity
-        ? { entity: this.engineOtelAttributes[type].entity }
+      domain: this.runOtelAttributesMap[type].domain,
+      action: this.runOtelAttributesMap[type].action,
+      ...(this.runOtelAttributesMap[type].entity
+        ? { entity: this.runOtelAttributesMap[type].entity }
         : {}),
-    } satisfies EngineEvent<T>;
+    } satisfies RunEvent<T>;
 
     // console.log("event", JSON.stringify(event, null, 2));
     const entry = registry[type];

@@ -9,6 +9,7 @@ import type {
 import type { WorkerRegistrationRequestedData } from "./worker/registration-requested.js";
 import type { WorkerRegisteredData } from "./worker/registered.js";
 import type { EngineEventMap } from "./engine/map.js";
+import type { RunEventMap } from "./run/map.js";
 
 export type DomainActionDescriptor<
   Domain extends string,
@@ -34,7 +35,8 @@ export type DomainEntityActionDescriptor<
 };
 
 export type EventMap = StepEventMap &
-  EngineEventMap & {
+  EngineEventMap &
+  RunEventMap & {
     "flow.queued": DomainActionDescriptor<"flow", "queued", FlowQueuedData>;
     "flow.started": DomainActionDescriptor<"flow", "started", FlowStartedData>;
     "flow.completed": DomainActionDescriptor<

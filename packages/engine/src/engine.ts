@@ -56,13 +56,16 @@ export class Engine {
           },
         });
 
-        await this.startFlow({
-          correlationId: "none",
-          flowName: event.data.flowName,
-          outfile: event.data.outfile,
-          test: event.data.test,
-          inputs: {},
-        });
+        await this.startFlow(
+          {
+            correlationId: "none",
+            flowName: event.data.flowName,
+            outfile: event.data.outfile,
+            test: event.data.test,
+            inputs: {},
+          },
+          event.traceid
+        );
       }
     });
 
@@ -145,7 +148,7 @@ export class Engine {
     await this.bus.close();
   }
 
-  async startFlow(input: StartFlowInput): Promise<void> {
+  async startFlow(input: StartFlowInput, traceId: string): Promise<void> {
     // get flow definition
     console.log("[engine] startFlow");
     const { flowName, inputs, correlationId } = input;
@@ -165,6 +168,27 @@ export class Engine {
     context = this.#initStepContext(context, flow.start);
     console.log("[engine] made RunContext:\n", context);
 
+    const spanId = this.emitterFactory.generateSpanId();
+    const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
+    const emitter = this.emitterFactory.newRunEmitter({
+      source: "pipewarp://engine/start-flow",
+      flowid: flow.name,
+      runid: context.runId,
+      traceId,
+      spanId,
+      traceParent,
+    });
+
+    emitter.emit("run.started", {
+      run: {
+        id: context.runId,
+        status: "started",
+      },
+      engine: {
+        id: "default-engine",
+      },
+      status: "started",
+    });
     await this.queueStreamingSteps(flow, context, flow.start);
     return;
   }
@@ -328,22 +352,49 @@ export class Engine {
     } else if (context.outstandingSteps === 0) {
       console.log("[engine] no next step; no outstanding steps; run ended;");
 
-      const spanId = this.emitterFactory.generateSpanId();
-      const traceParent = this.emitterFactory.makeTraceParent(
-        spanId,
+      const runSpanId = this.emitterFactory.generateSpanId();
+      const flowSpanId = this.emitterFactory.generateSpanId();
+      const runTraceParent = this.emitterFactory.makeTraceParent(
+        runSpanId,
         e.traceid
       );
-      const emitter = this.emitterFactory.newFlowEmitter({
+      const flowTraceParent = this.emitterFactory.makeTraceParent(
+        flowSpanId,
+        e.traceid
+      );
+
+      const runEmitter = this.emitterFactory.newRunEmitter({
+        source: "pipewarp://worker/run/ended",
+        flowid: e.flowid,
+        runid: e.runid,
+        traceId: e.traceid,
+        spanId: runSpanId,
+        traceParent: runTraceParent,
+      });
+
+      runEmitter.emit("run.completed", {
+        run: {
+          id: e.runid,
+          status: "completed",
+        },
+        engine: {
+          id: "default-engine",
+        },
+        status: "completed",
+        message: "run is over",
+      });
+
+      const flowEmitter = this.emitterFactory.newFlowEmitter({
         source: "pipewarp://worker/run/ended",
         flowid: e.flowid,
         traceId: e.traceid,
-        spanId,
-        traceParent,
+        spanId: runSpanId,
+        traceParent: runTraceParent,
       });
 
       const flow = this.flowDb.get(e.flowid);
       if (!flow) return;
-      await emitter.emit("flow.completed", {
+      await flowEmitter.emit("flow.completed", {
         flow: {
           id: e.flowid,
           name: flow.name,
