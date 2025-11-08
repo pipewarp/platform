@@ -34,6 +34,28 @@ export class Engine {
       console.log("[engine bus] flows.lifecycle event:", e);
       if (e.type === "flow.queued") {
         const event = e as AnyEvent<"flow.queued">;
+
+        const spanId = this.emitterFactory.generateSpanId();
+        const traceParent = this.emitterFactory.makeTraceParent(
+          event.traceid,
+          spanId
+        );
+        const flowEmitter = this.emitterFactory.newFlowEmitter({
+          source: "pipewarp://engine/flow/queued",
+          flowid: event.flowid,
+          traceId: event.traceid,
+          spanId,
+          traceParent,
+        });
+
+        flowEmitter.emit("flow.started", {
+          flow: {
+            id: event.flowid,
+            name: event.data.flow.name,
+            version: event.data.flow.version,
+          },
+        });
+
         await this.startFlow({
           correlationId: "none",
           flowName: event.data.flowName,
@@ -264,6 +286,30 @@ export class Engine {
       this.queueStreamingSteps(flow, context, nextStep);
     } else if (context.outstandingSteps === 0) {
       console.log("[engine] no next step; no outstanding steps; run ended;");
+
+      const spanId = this.emitterFactory.generateSpanId();
+      const traceParent = this.emitterFactory.makeTraceParent(
+        spanId,
+        e.traceid
+      );
+      const emitter = this.emitterFactory.newFlowEmitter({
+        source: "pipewarp://worker/run/ended",
+        flowid: e.flowid,
+        traceId: e.traceid,
+        spanId,
+        traceParent,
+      });
+
+      const flow = this.flowDb.get(e.flowid);
+      if (!flow) return;
+      await emitter.emit("flow.completed", {
+        flow: {
+          id: e.flowid,
+          name: flow.name,
+          version: flow.version,
+        },
+      });
+
       return;
     }
   }

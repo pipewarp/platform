@@ -127,25 +127,19 @@ export async function cliRunAction(
     new EmitterFactory(bus)
   );
 
-  const startFlow: AnyEvent<"flow.queued"> = {
-    id: String(crypto.randomUUID()),
-    time: new Date().toISOString(),
-    type: "flow.queued",
-    flowid: flow.name,
-    source: "/cli/cmd/run",
-    specversion: "1.0",
-    data: {
-      flowName: flow.name,
-      inputs: { text: "text" },
-      test,
-      outfile: resolvedOutPath,
-    },
-    action: "queued",
-    domain: "flow",
-    spanid: "",
-    traceid: "",
-    traceparent: "",
-  };
+  const ef = new EmitterFactory(bus);
+
+  const traceId = ef.generateTraceId();
+  const spanId = ef.generateSpanId();
+  const traceParent = ef.makeTraceParent(traceId, spanId);
+  const flowId = String(crypto.randomUUID());
+  const flowEmitter = ef.newFlowEmitter({
+    source: "pipewarp://cli/run",
+    flowid: flowId,
+    traceId,
+    spanId,
+    traceParent,
+  });
 
   bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
     console.log("[cli] workers.lifecycle event:", e);
@@ -159,9 +153,25 @@ export async function cliRunAction(
           "[cli] received registration accepted, publishing flow event"
         );
         worker.start();
-        await bus.publish("flows.lifecycle", startFlow);
+        await flowEmitter.emit("flow.queued", {
+          flowName: flow.name,
+          outfile: resolvedOutPath,
+          inputs: { text: "text" },
+          test,
+          flow: {
+            id: flowId,
+            name: flow.name,
+            version: flow.version,
+          },
+        });
       }
     }
+
+    bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
+      if (e.type === "flow.completed") {
+        process.emit("SIGINT");
+      }
+    });
   });
 
   process.on("SIGINT", async () => {

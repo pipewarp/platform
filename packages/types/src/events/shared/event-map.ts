@@ -1,7 +1,11 @@
 import type { StepActionQueuedData } from "../step/action/queued.js";
 import type { StepActionCompletedData } from "../step/action/completed.js";
 import type { StepMcpQueuedData } from "../step/mcp/queued.js";
-import type { FlowQueuedData } from "../flow/queued.js";
+import type {
+  FlowCompletedData,
+  FlowQueuedData,
+  FlowStartedData,
+} from "../flow/data.js";
 import type { WorkerRegistrationRequestedData } from "../worker/registration-requested.js";
 import type { WorkerRegisteredData } from "../worker/registered.js";
 
@@ -29,6 +33,13 @@ export type DomainEntityActionDescriptor<
 };
 
 export interface EventMap {
+  "flow.queued": DomainActionDescriptor<"flow", "queued", FlowQueuedData>;
+  "flow.started": DomainActionDescriptor<"flow", "started", FlowStartedData>;
+  "flow.completed": DomainActionDescriptor<
+    "flow",
+    "completed",
+    FlowCompletedData
+  >;
   "step.action.queued": DomainEntityActionDescriptor<
     "step",
     "action",
@@ -48,7 +59,7 @@ export interface EventMap {
     "queued",
     StepMcpQueuedData
   >;
-  "flow.queued": DomainActionDescriptor<"flow", "queued", FlowQueuedData>;
+  "step.started": DomainActionDescriptor<"step", "started", StepMcpQueuedData>;
 
   "worker.registration.requested": DomainEntityActionDescriptor<
     "worker",
@@ -87,8 +98,10 @@ export type FlowOtelAttributesMap = {
 export type WorkerOtelAttributesMap = {
   [T in WorkerEventType]: Omit<EventMap[T], "data">;
 };
-
 export type StepEventData<T extends StepEventType> = EventMap[T]["data"];
-export type StepType = StepEventType extends `step.${infer T}.${string}`
-  ? T
-  : never;
+export type FlowEventData<T extends FlowEventType> = EventMap[T]["data"];
+// export type StepType = StepEventType extends `step.${infer T}.${string}`
+//   ? T
+//   : never;
+
+export type StepType = EventMap[StepEventType]["entity"];

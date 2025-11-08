@@ -1,5 +1,5 @@
 import { CloudScope } from "@pipewarp/types";
-import { OtelContext, EnvelopeHeader } from "./types.js";
+import { OtelContext, EnvelopeHeader } from "../types.js";
 
 /**
  * base emitter class all other emitters inherit.

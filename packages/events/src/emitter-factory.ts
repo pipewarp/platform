@@ -1,6 +1,7 @@
 import type { EventBusPort } from "@pipewarp/ports";
-import type { StepScope, CloudScope } from "@pipewarp/types";
-import { StepEmitter } from "./step-emitter.js";
+import type { StepScope, CloudScope, FlowScope } from "@pipewarp/types";
+import { StepEmitter } from "./emitters/step.emitter.js";
+import { FlowEmitter } from "./emitters/flow.emitter.js";
 import { OtelContext } from "./types.js";
 import { randomBytes } from "crypto";
 
@@ -44,6 +45,10 @@ export class EmitterFactory {
   }
   setStepScope(scope: StepScope) {
     this.#stepScope = scope;
+  }
+
+  newFlowEmitter(scope: CloudScope & FlowScope & OtelContext): FlowEmitter {
+    return new FlowEmitter(this.bus, scope);
   }
 
   newStepEmitter(): StepEmitter {

@@ -6,11 +6,11 @@ import type {
   StepEvent,
   CloudScope,
 } from "@pipewarp/types";
-import type { OtelContext } from "./types.js";
-import { BaseEmitter } from "./base-emitter.js";
+import type { OtelContext } from "../types.js";
+import { BaseEmitter } from "./base.emitter.js";
 import { EventBusPort } from "@pipewarp/ports";
-import { stepOtelAttributes } from "./otel-attributes.js";
-import { registry } from "./event-registry.js";
+import { stepOtelAttributes } from "../otel-attributes.js";
+import { registry } from "../event-registry.js";
 
 /**
  * strongly types scoped emitter for step events.

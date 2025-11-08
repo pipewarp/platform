@@ -1,6 +1,6 @@
 import type { EventBusPort } from "@pipewarp/ports";
 import type { StepScope, CloudScope } from "@pipewarp/types";
-import { StepEmitter } from "./step-emitter.js";
+import { StepEmitter } from "./emitters/step.emitter.js";
 import { OtelContext } from "./types.js";
 import { randomBytes } from "crypto";
 

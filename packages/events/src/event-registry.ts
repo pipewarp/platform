@@ -1,15 +1,25 @@
 import type { ZodSchema } from "zod";
 import type { EventType } from "@pipewarp/types";
 import {
+  FlowCompletedSchema,
   FlowQueuedSchema,
+  FlowStartedSchema,
+} from "./schemas/flow-event.schema.js";
+import {
+  FlowCompletedDataSchema,
   FlowQueuedDataSchema,
-  StepActionCompletedSchema,
-  StepActionCompletedDataSchema,
+  FlowStartedDataSchema,
+} from "./schemas/flow-data.schema.js";
+import {
   StepActionQueuedSchema,
-  StepActionQueuedDataSchema,
-  StepMcpQueuedDataSchema,
+  StepActionCompletedSchema,
   StepMcpQueuedSchema,
-} from "./events.schema.js";
+} from "./schemas/step-event.schema.js";
+import {
+  StepActionQueuedDataSchema,
+  StepActionCompletedDataSchema,
+  StepMcpQueuedDataSchema,
+} from "./schemas/step-data.schema.js";
 
 export type EventTopic =
   | "steps.lifecycle"
@@ -21,6 +31,27 @@ export type EventTopic =
 export const registry = {
   "flow.queued": {
     topic: "flows.lifecycle",
+    schema: {
+      event: FlowQueuedSchema,
+      data: FlowQueuedDataSchema,
+    },
+  },
+  "flow.started": {
+    topic: "flows.lifecycle",
+    schema: {
+      event: FlowStartedSchema,
+      data: FlowStartedDataSchema,
+    },
+  },
+  "flow.completed": {
+    topic: "flows.lifecycle",
+    schema: {
+      event: FlowCompletedSchema,
+      data: FlowCompletedDataSchema,
+    },
+  },
+  "step.started": {
+    topic: "steps.lifecycle",
     schema: {
       event: FlowQueuedSchema,
       data: FlowQueuedDataSchema,
