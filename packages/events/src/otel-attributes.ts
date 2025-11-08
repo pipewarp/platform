@@ -1,4 +1,8 @@
-import { StepOtelAttributesMap, FlowOtelAttributesMap } from "@pipewarp/types";
+import {
+  StepOtelAttributesMap,
+  FlowOtelAttributesMap,
+  EngineOtelAttributesMap,
+} from "@pipewarp/types";
 
 export const stepOtelAttributes = {
   "step.action.completed": {
@@ -40,3 +44,16 @@ export const flowOtelAttributes = {
     entity: undefined,
   },
 } satisfies FlowOtelAttributesMap;
+
+export const engineOtelAttributesMap = {
+  "engine.started": {
+    action: "started",
+    domain: "engine",
+    entity: undefined,
+  },
+  "engine.stopped": {
+    action: "stopped",
+    domain: "engine",
+    entity: undefined,
+  },
+} satisfies EngineOtelAttributesMap;

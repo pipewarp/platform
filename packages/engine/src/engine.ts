@@ -101,7 +101,48 @@ export class Engine {
   }
 
   async start() {
+    const traceId = this.emitterFactory.generateTraceId();
+    const spanId = this.emitterFactory.generateSpanId();
+    const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
+    const emitter = this.emitterFactory.newEngineEmitter({
+      source: "pipewarp://engine/start",
+      engineid: "default-engine",
+      traceId,
+      spanId,
+      traceParent,
+    });
+
+    emitter.emit("engine.started", {
+      engine: {
+        id: "default-engine",
+        version: "0.1.0-alpha.4",
+      },
+      status: "started",
+    });
     await this.subscribeToTopics();
+  }
+  async stop() {
+    const traceId = this.emitterFactory.generateTraceId();
+    const spanId = this.emitterFactory.generateSpanId();
+    const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
+    const emitter = this.emitterFactory.newEngineEmitter({
+      source: "pipewarp://engine/stop/",
+      engineid: "default-engine",
+      traceId,
+      spanId,
+      traceParent,
+    });
+
+    emitter.emit("engine.stopped", {
+      engine: {
+        id: "default-engine",
+        version: "0.1.0-alpha.4",
+      },
+      status: "stopped",
+      reason: "SIGINT called",
+    });
+
+    await this.bus.close();
   }
 
   async startFlow(input: StartFlowInput): Promise<void> {

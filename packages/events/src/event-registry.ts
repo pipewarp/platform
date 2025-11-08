@@ -20,11 +20,20 @@ import {
   StepActionCompletedDataSchema,
   StepMcpQueuedDataSchema,
 } from "./schemas/step-data.schema.js";
+import {
+  EngineStartedSchema,
+  EngineStoppedSchema,
+} from "./schemas/engine.event.schema.js";
+import {
+  EngineStartedDataSchema,
+  EngineStoppedDataSchema,
+} from "./schemas/engine.data.schema.js";
 
 export type EventTopic =
   | "steps.lifecycle"
   | "flows.lifecycle"
-  | "workers.lifecycle";
+  | "workers.lifecycle"
+  | "engines.lifecycle";
 
 // simple hardcoded registry mapping event types to schemas, as well as
 // topics to publish the event to
@@ -48,6 +57,20 @@ export const registry = {
     schema: {
       event: FlowCompletedSchema,
       data: FlowCompletedDataSchema,
+    },
+  },
+  "engine.started": {
+    topic: "engines.lifecycle",
+    schema: {
+      event: EngineStartedSchema,
+      data: EngineStartedDataSchema,
+    },
+  },
+  "engine.stopped": {
+    topic: "engines.lifecycle",
+    schema: {
+      event: EngineStoppedSchema,
+      data: EngineStoppedDataSchema,
     },
   },
   "step.started": {

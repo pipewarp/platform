@@ -1,13 +1,14 @@
-import type { StepActionQueuedData } from "../step/action/queued.js";
-import type { StepActionCompletedData } from "../step/action/completed.js";
-import type { StepMcpQueuedData } from "../step/mcp/queued.js";
+import type { StepActionQueuedData } from "./step/action/queued.js";
+import type { StepActionCompletedData } from "./step/action/completed.js";
+import type { StepMcpQueuedData } from "./step/mcp/queued.js";
 import type {
   FlowCompletedData,
   FlowQueuedData,
   FlowStartedData,
-} from "../flow/data.js";
-import type { WorkerRegistrationRequestedData } from "../worker/registration-requested.js";
-import type { WorkerRegisteredData } from "../worker/registered.js";
+} from "./flow/data.js";
+import type { WorkerRegistrationRequestedData } from "./worker/registration-requested.js";
+import type { WorkerRegisteredData } from "./worker/registered.js";
+import type { EngineEventMap } from "./engine/map.js";
 
 export type DomainActionDescriptor<
   Domain extends string,
@@ -32,14 +33,30 @@ export type DomainEntityActionDescriptor<
   data: Data;
 };
 
-export interface EventMap {
-  "flow.queued": DomainActionDescriptor<"flow", "queued", FlowQueuedData>;
-  "flow.started": DomainActionDescriptor<"flow", "started", FlowStartedData>;
-  "flow.completed": DomainActionDescriptor<
-    "flow",
-    "completed",
-    FlowCompletedData
-  >;
+export type EventMap = StepEventMap &
+  EngineEventMap & {
+    "flow.queued": DomainActionDescriptor<"flow", "queued", FlowQueuedData>;
+    "flow.started": DomainActionDescriptor<"flow", "started", FlowStartedData>;
+    "flow.completed": DomainActionDescriptor<
+      "flow",
+      "completed",
+      FlowCompletedData
+    >;
+
+    "worker.registration.requested": DomainEntityActionDescriptor<
+      "worker",
+      "registration",
+      "requested",
+      WorkerRegistrationRequestedData
+    >;
+    "worker.registered": DomainActionDescriptor<
+      "worker",
+      "registered",
+      WorkerRegisteredData
+    >;
+  };
+
+type StepEventMap = {
   "step.action.queued": DomainEntityActionDescriptor<
     "step",
     "action",
@@ -60,19 +77,7 @@ export interface EventMap {
     StepMcpQueuedData
   >;
   "step.started": DomainActionDescriptor<"step", "started", StepMcpQueuedData>;
-
-  "worker.registration.requested": DomainEntityActionDescriptor<
-    "worker",
-    "registration",
-    "requested",
-    WorkerRegistrationRequestedData
-  >;
-  "worker.registered": DomainActionDescriptor<
-    "worker",
-    "registered",
-    WorkerRegisteredData
-  >;
-}
+};
 
 export type EventType = keyof EventMap;
 export type EventData<T extends EventType> = EventMap[T]["data"];

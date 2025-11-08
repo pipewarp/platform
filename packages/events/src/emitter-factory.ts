@@ -1,9 +1,15 @@
 import type { EventBusPort } from "@pipewarp/ports";
-import type { StepScope, CloudScope, FlowScope } from "@pipewarp/types";
+import type {
+  StepScope,
+  CloudScope,
+  FlowScope,
+  EngineScope,
+} from "@pipewarp/types";
 import { StepEmitter } from "./emitters/step.emitter.js";
 import { FlowEmitter } from "./emitters/flow.emitter.js";
 import { OtelContext } from "./types.js";
 import { randomBytes } from "crypto";
+import { EngineEmitter } from "./emitters/engine.emitter.js";
 
 /**
  * Create emitter objects based upon a common scope.
@@ -45,6 +51,12 @@ export class EmitterFactory {
   }
   setStepScope(scope: StepScope) {
     this.#stepScope = scope;
+  }
+
+  newEngineEmitter(
+    scope: CloudScope & EngineScope & OtelContext
+  ): EngineEmitter {
+    return new EngineEmitter(this.bus, scope);
   }
 
   newFlowEmitter(scope: CloudScope & FlowScope & OtelContext): FlowEmitter {

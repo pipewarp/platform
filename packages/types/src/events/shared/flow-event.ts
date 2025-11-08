@@ -1,5 +1,5 @@
 import type { CloudEvent } from "./cloud-event.js";
-import type { FlowEventType } from "./event-map.js";
+import type { FlowEventType } from "../event-map.js";
 
 export type FlowScope = {
   flowid: string;

@@ -1,4 +1,4 @@
-import type { EventMap, EventType } from "./event-map.js";
+import type { EventMap, EventType } from "../event-map.js";
 
 /**
  * base cloud event envelope used for pipewarp events.

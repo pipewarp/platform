@@ -55,7 +55,8 @@ Prefer one word verbs, past tense.
 
 - `queued`
 - `started`
-- `completed`
+- `stopped` (for components like engine that have start/stop behavior)
+- `completed` (for jobs or processes)
 - `failed`
 - `canceled`
 - `retried`

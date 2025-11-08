@@ -12,6 +12,8 @@ export const eventTypes = [
   "flow.queued",
   "flow.started",
   "flow.completed",
+  "engine.started",
+  "engine.stopped",
   "step.action.queued",
   "step.action.completed",
   "step.mcp.queued",

@@ -177,6 +177,7 @@ export async function cliRunAction(
   process.on("SIGINT", async () => {
     await worker.stopAllJobWaiters();
     queue.abortAll();
+    await engine.stop();
   });
   process.on("SIGTERM", async () => {
     await worker.stopAllJobWaiters();
