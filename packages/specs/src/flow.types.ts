@@ -93,6 +93,7 @@ export type ActionStep = z.infer<typeof ActionStepSchema>;
 
 export const FlowSchema = z.object({
   name: z.string().min(1),
+  version: z.string(),
   inputs: z.record(z.string(), z.unknown()).default({}),
   outputs: z.record(z.string(), z.unknown()).default({}),
   start: z.string().min(1),

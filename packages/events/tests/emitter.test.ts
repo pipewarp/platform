@@ -1,59 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import { EmitterFactory } from "../src/scoped-emitters.js";
+import { EmitterFactory } from "../src/emitter-factory.js";
 import { EventBusPort } from "@pipewarp/ports";
-import { StepEmitter } from "../src/step-emitter.js";
+import { StepEmitter } from "../src/emitters/step.emitter.js";
 
 describe("emitter factory", () => {
-  it("emitter creators to throw without cloud scope", async () => {
-    const bus = {} as EventBusPort;
-    const ef = new EmitterFactory(bus);
-
-    expect(() => {
-      ef.newStepEmitter();
-    }).toThrow("[emitter-factory] no cloud scope set");
-  });
-
-  it("step emitter function to throw based on step scope", async () => {
-    const bus = {} as EventBusPort;
-    const ef = new EmitterFactory(bus);
-    ef.setCloudScope({
-      source: "vitest",
-    });
-
-    expect(() => {
-      ef.newStepEmitter();
-    }).toThrow("[emitter-factory] no step scope set");
-
-    ef.setStepScope({
-      flowid: "",
-      runid: "",
-      stepid: "",
-    });
-
-    expect(() => {
-      ef.newStepEmitter();
-    }).not.toThrow("[emitter-factory] no step scope set");
-  });
-
-  it("creates step emitter object with valid scopes", async () => {
-    const publish = vi.fn().mockResolvedValue(null);
-    const bus = {
-      publish,
-    } as unknown as EventBusPort;
-
-    const ef = new EmitterFactory(bus);
-    ef.setCloudScope({
-      source: "vitest",
-    });
-    ef.setStepScope({
-      flowid: "",
-      runid: "",
-      stepid: "",
-    });
-
-    const se = ef.newStepEmitter();
-    expect(se).toBeInstanceOf(StepEmitter);
-  });
   it("generates a valid trace id", async () => {
     const publish = vi.fn().mockResolvedValue(null);
     const bus = {

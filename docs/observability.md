@@ -55,7 +55,8 @@ Prefer one word verbs, past tense.
 
 - `queued`
 - `started`
-- `completed`
+- `stopped` (for components like engine that have start/stop behavior)
+- `completed` (for jobs or processes)
 - `failed`
 - `canceled`
 - `retried`
@@ -73,7 +74,6 @@ Prefer one word verbs, past tense.
 Optional map to pipewarp capabilities or domain entities
 
 - `mcp`
-- `http`
 - `shell`
 - `sql`
 - `rag`
@@ -97,7 +97,7 @@ Optional map to pipewarp capabilities or domain entities
 Example:
 
 - type `step.mcp.queued` for human readable type, but also emit attributes for otel
-- maps to `component=step`, `capability=mcp`, `operation=queued`
+- maps to `domain=step`, `entity=mcp`, `action=queued`
 
 This maps well to TypeScript data payload per type, and human readable types, while still providing open telemetry attributes to sort events. Redundant but helpful.
 

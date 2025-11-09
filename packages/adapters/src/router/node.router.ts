@@ -24,18 +24,14 @@ export class NodeRouter implements RouterPort {
       return;
     }
 
-    if (event.type === "step.action.queued") {
-      const e = event as AnyEvent<"step.action.queued">;
-      this.queue.enqueue(e.data.tool, event);
-    }
-    if (event.type === "step.mcp.queued") {
-      const e = event as AnyEvent<"step.mcp.queued">;
-      this.queue.enqueue(e.entity!, event);
+    if (event.type === "job.mcp.queued") {
+      const e = event as AnyEvent<"job.mcp.queued">;
+      this.queue.enqueue(e.data.job.capability, event);
     }
   }
 
   async start() {
-    this.bus.subscribe("steps.lifecycle", async (e) => await this.route(e));
+    this.bus.subscribe("jobs.lifecycle", async (e) => await this.route(e));
   }
   async stop() {
     this.bus.close();

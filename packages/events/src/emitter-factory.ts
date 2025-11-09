@@ -1,14 +1,35 @@
 import type { EventBusPort } from "@pipewarp/ports";
-import type { StepScope, CloudScope } from "@pipewarp/types";
-import { StepEmitter } from "./step-emitter.js";
+import type {
+  StepScope,
+  CloudScope,
+  FlowScope,
+  EngineScope,
+  RunScope,
+  JobScope,
+  ToolScope,
+  WorkerScope,
+} from "@pipewarp/types";
+import { StepEmitter } from "./emitters/step.emitter.js";
+import { FlowEmitter } from "./emitters/flow.emitter.js";
 import { OtelContext } from "./types.js";
 import { randomBytes } from "crypto";
+import { EngineEmitter } from "./emitters/engine.emitter.js";
+import { RunEmitter } from "./emitters/run.emitter.js";
+import { JobEmitter } from "./emitters/jobs.emitter.js";
+import { ToolEmitter } from "./emitters/tool.emitter.js";
+import { WorkerEmitter } from "./emitters/worker.emitter.js";
 
 /**
- * Create emitter objects based upon a common scope.
+ * NOTE: This class is currently in between being refactored.
  *
- * Set scope in init(scope)
+ * In order to preserve momentum on bootstrapping Observability,
+ * this class is staying unfinished.
  *
+ * Scopes, Shared Context Otel Features, Dependency Injection, and other issues will
+ * be refactored in the future to allow easier otel creation, proper DI,
+ * better DX for emitter creation and usage, and simplified types.
+ *
+
  * Create emitter objects with respective emitter function.
  *
  * @param bus EventBusPort
@@ -19,9 +40,8 @@ import { randomBytes } from "crypto";
  * @example
  * ```
  * const emitterFactory = new EmitterFactory();
- * emitterFactory.setScope({...}: BaseScope)
- * const stepEmitter = newStepEmitter(type, stepType, data);
- * await stepEmitter.emit(data);
+ * const stepEmitter = newStepEmitter({...});
+ * await stepEmitter.emit("event.type", data);
  *
  */
 
@@ -46,20 +66,32 @@ export class EmitterFactory {
     this.#stepScope = scope;
   }
 
-  newStepEmitter(): StepEmitter {
-    if (!this.#cloudScope) {
-      throw new Error("[emitter-factory] no cloud scope set");
-    }
-    if (!this.#stepScope) {
-      throw new Error("[emitter-factory] no step scope set");
-    }
+  newEngineEmitter(
+    scope: CloudScope & EngineScope & OtelContext
+  ): EngineEmitter {
+    return new EngineEmitter(this.bus, scope);
+  }
+  newWorkerEmitter(
+    scope: CloudScope & WorkerScope & OtelContext
+  ): WorkerEmitter {
+    return new WorkerEmitter(this.bus, scope);
+  }
 
-    return new StepEmitter(
-      this.bus,
-      this.#otel,
-      this.#stepScope,
-      this.#cloudScope
-    );
+  newFlowEmitter(scope: CloudScope & FlowScope & OtelContext): FlowEmitter {
+    return new FlowEmitter(this.bus, scope);
+  }
+  newRunEmitter(scope: CloudScope & RunScope & OtelContext): RunEmitter {
+    return new RunEmitter(this.bus, scope);
+  }
+
+  newStepEmitter(scope: CloudScope & StepScope & OtelContext): StepEmitter {
+    return new StepEmitter(this.bus, scope);
+  }
+  newJobEmitter(scope: CloudScope & JobScope & OtelContext): JobEmitter {
+    return new JobEmitter(this.bus, scope);
+  }
+  newToolEmitter(scope: CloudScope & ToolScope & OtelContext): ToolEmitter {
+    return new ToolEmitter(this.bus, scope);
   }
 
   startTrace(sampled = true): OtelContext {

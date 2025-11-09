@@ -3,8 +3,6 @@
  */
 export type Capability = {
   name: string; // canonical name like "llm.generate" or "v1.stt.transcribe",
-  aliases?: string; // optional alias for flow step map
-
   queueId: string; // same as capability name, possibly with workerId
 
   maxJobCount: number; // 1;
@@ -16,8 +14,8 @@ export type Capability = {
     type: "inprocess" | "remote" | "dynamic";
 
     // connection details for remote / dynamic tools
-    endpoint?: string;
-    credentialsRef?: string; // reference to credentials db index
+    // endpoint?: string;
+    // credentialsRef?: string; // reference to credentials db index
   };
   concurrency?: {
     activeJobCount: number; // needed by resource manager, but also in worker
