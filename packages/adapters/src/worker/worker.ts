@@ -5,13 +5,7 @@ import type {
   ToolPort,
 } from "@pipewarp/ports";
 import { EmitterFactory } from "@pipewarp/events";
-import type {
-  AnyEvent,
-  Capability,
-  StepActionCompletedData,
-  StepEvent,
-  WorkerMetadata,
-} from "@pipewarp/types";
+import type { AnyEvent, Capability, WorkerMetadata } from "@pipewarp/types";
 import type { ToolClass } from "../tools/tool-factory.js";
 import { ToolRegistry } from "../tools/tool-registry.js";
 import type { JobContext } from "./types.js";
@@ -105,7 +99,7 @@ export class Worker {
   async handleNewJob(event: AnyEvent): Promise<void> {
     console.log(`[worker-new] handleNewJob() event: ${event}`);
 
-    const e = event as AnyEvent<"step.mcp.queued">;
+    const e = event as AnyEvent<"job.mcp.queued">;
 
     // invoke some sort of tool from a tool registry
     const jobDescription = interpretJob(event);
@@ -136,33 +130,39 @@ export class Worker {
 
     console.log(`[worker-new] results ${JSON.stringify(result, null, 2)}`);
 
-    this.#emitterFactory.setCloudScope({
-      source: "pipewarp://worker",
-    });
-    this.#emitterFactory.setStepScope({
+    const spanId = this.#emitterFactory.generateSpanId();
+    const traceParent = this.#emitterFactory.makeTraceParent(e.traceid, spanId);
+
+    const jobEmitter = this.#emitterFactory.newJobEmitter({
+      source: "pipewarp://worker/job-done",
       flowid: e.flowid,
       runid: e.runid,
       stepid: e.stepid,
+      jobid: e.jobid,
+      traceId: e.traceid,
+      spanId,
+      traceParent,
     });
 
-    const stepEmitter = this.#emitterFactory.newStepEmitter();
-
-    let data: StepActionCompletedData;
-    if (result === undefined) {
-      data = {
-        ok: false,
-        message: "error",
+    if (result) {
+      await jobEmitter.emit("job.completed", {
+        job: {
+          id: e.jobid,
+          capability: e.data.job.capability,
+        },
+        status: "completed",
         result: result,
-        error: "tool returned undefined",
-      };
+      });
     } else {
-      data = {
-        ok: true,
-        message: "tool returned results",
-        result: result,
-      };
+      await jobEmitter.emit("job.failed", {
+        job: {
+          id: e.jobid,
+          capability: e.data.job.capability,
+        },
+        status: "failed",
+        reason: "tool returned undefined results",
+      });
     }
-    await stepEmitter.emit("step.action.completed", data);
   }
 
   addCapability(profile: Capability) {

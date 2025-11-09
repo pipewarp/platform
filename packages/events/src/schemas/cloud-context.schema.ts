@@ -18,6 +18,10 @@ export const eventTypes = [
   "step.started",
   "step.completed",
   "step.failed",
+  "job.mcp.queued",
+  "job.completed",
+  "job.started",
+  "job.failed",
   "worker.registered",
   "worker.registration.requested",
   "step.started",
@@ -54,12 +58,14 @@ export const actionTypes = [
   "started",
   "completed",
   "stopped",
+  "failed",
 ] as const satisfies readonly EventActions[];
 
 export const domainTypes = [
   "flow",
   "run",
   "step",
+  "job",
   "engine",
   "worker",
 ] as const satisfies readonly EventDomains[];

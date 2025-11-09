@@ -69,11 +69,11 @@ export class Engine {
       }
     });
 
-    await this.bus.subscribe("steps.lifecycle", async (e: AnyEvent) => {
+    await this.bus.subscribe("jobs.lifecycle", async (e: AnyEvent) => {
       console.log("[engine bus] steps.lifecycle event:", e);
-      if (e.type === "step.action.completed") {
-        e = e as AnyEvent<"step.action.completed">;
-        await this.handleWorkerDone(e);
+      if (e.type === "job.completed") {
+        const jobCompletedEvent = e as AnyEvent<"job.completed">;
+        await this.handleWorkerDone(jobCompletedEvent);
       }
     });
 
@@ -163,7 +163,8 @@ export class Engine {
       flow.name,
       correlationId,
       input.test,
-      input.outfile
+      input.outfile,
+      traceId
     );
     context = this.#initStepContext(context, flow.start);
     console.log("[engine] made RunContext:\n", context);
@@ -224,19 +225,25 @@ export class Engine {
   ): Promise<void> {
     const stepType = flow.steps[stepName].type;
 
-    this.emitterFactory.setCloudScope({
-      source: "pipewarp://engine/step-handler",
-    });
-    this.emitterFactory.setStepScope({
+    // const stepEmitter = this.emitterFactory.newStepEmitter();
+    const spanId = this.emitterFactory.generateSpanId();
+    const traceParent = this.emitterFactory.makeTraceParent(
+      context.traceId,
+      spanId
+    );
+    const jobEmitter = this.emitterFactory.newJobEmitter({
+      source: "pipewarp://engine/queue-step",
       flowid: context.flowName,
       runid: context.runId,
       stepid: stepName,
+      jobid: String(crypto.randomUUID()),
+      traceId: context.traceId,
+      spanId,
+      traceParent,
     });
 
-    const stepEmitter = this.emitterFactory.newStepEmitter();
-
-    if (stepType === "action") {
-      const capName = flow.steps[stepName].tool;
+    if (stepType === "mcp") {
+      const capName = flow.steps[stepName].type;
       const caps = this.resourceRegistry.getCapability(capName);
       if (caps === undefined) {
         throw new Error(
@@ -245,19 +252,7 @@ export class Engine {
       }
 
       const handler = this.stepHandlerRegistry[stepType];
-      await handler.queue(flow, context, stepName, stepEmitter);
-    }
-
-    if (stepType === "mcp") {
-      const cap = this.resourceRegistry.getCapability(stepType);
-      if (cap === undefined) {
-        throw new Error(
-          `[engine] no capability in local resource registry for ${stepType}`
-        );
-      }
-
-      const handler = this.stepHandlerRegistry[stepType];
-      await handler.queue(flow, context, stepName, stepEmitter);
+      await handler.queue(flow, context, stepName, jobEmitter);
     }
 
     context.queuedSteps.add(stepName);
@@ -268,11 +263,12 @@ export class Engine {
     flowName: string,
     correlationId: string,
     isTest: boolean | undefined = false,
-    outFile: string | undefined = "./output.json"
+    outFile: string | undefined = "./output.json",
+    traceId: string
   ): RunContext {
     const context: RunContext = {
       runId: isTest ? "test-run-id" : String(crypto.randomUUID()),
-      correlationId,
+      traceId,
       // step state stuff
       runningSteps: new Set(),
       queuedSteps: new Set(),
@@ -315,7 +311,7 @@ export class Engine {
   }
 
   async handleWorkerDone(event: AnyEvent): Promise<void> {
-    const e = event as AnyEvent<"step.action.completed">;
+    const e = event as AnyEvent<"job.completed">;
     // update context based on completed event
     if (!this.#runs.has(e.runid)) {
       console.error(`[engine] invalid run id: ${e.runid}`);
@@ -329,7 +325,7 @@ export class Engine {
     if (e.data.result) {
       context.steps[e.stepid].result = { result };
     }
-    context.steps[e.stepid].status = e.data.ok ? "success" : "failure";
+    context.steps[e.stepid].status = "success";
 
     context.queuedSteps.delete(e.stepid);
     context.runningSteps.delete(e.stepid);

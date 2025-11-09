@@ -3,6 +3,7 @@ import {
   FlowOtelAttributesMap,
   EngineOtelAttributesMap,
   RunOtelAttributesMap,
+  JobOtelAttributesMap,
 } from "@pipewarp/types";
 
 export const stepOtelAttributes = {
@@ -66,3 +67,26 @@ export const runOtelAttributesMap = {
     entity: undefined,
   },
 } satisfies RunOtelAttributesMap;
+
+export const jobOtelAttributesMap = {
+  "job.mcp.queued": {
+    action: "queued",
+    domain: "job",
+    entity: "mcp",
+  },
+  "job.completed": {
+    action: "completed",
+    domain: "job",
+    entity: undefined,
+  },
+  "job.started": {
+    action: "started",
+    domain: "job",
+    entity: undefined,
+  },
+  "job.failed": {
+    action: "failed",
+    domain: "job",
+    entity: undefined,
+  },
+} satisfies JobOtelAttributesMap;

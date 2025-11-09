@@ -5,7 +5,7 @@ import type {
   InputChunk,
   ConsumerStreamPort,
 } from "@pipewarp/ports";
-import type { StepMcpQueuedData } from "@pipewarp/types";
+import type { JobMcpQueuedData } from "@pipewarp/types";
 import { Client } from "@modelcontextprotocol/sdk/client";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -39,7 +39,7 @@ export class McpTool implements ToolPort {
   }
   async invoke(input: unknown, context: ToolContext): Promise<unknown> {
     console.log(`[tool-mcp] ${input}`);
-    const data = input as StepMcpQueuedData;
+    const data = input as JobMcpQueuedData;
     await this.connect(data.url);
 
     // NOTE: currently does not support duplex streaming

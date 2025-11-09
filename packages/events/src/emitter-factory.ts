@@ -5,6 +5,7 @@ import type {
   FlowScope,
   EngineScope,
   RunScope,
+  JobScope,
 } from "@pipewarp/types";
 import { StepEmitter } from "./emitters/step.emitter.js";
 import { FlowEmitter } from "./emitters/flow.emitter.js";
@@ -12,6 +13,7 @@ import { OtelContext } from "./types.js";
 import { randomBytes } from "crypto";
 import { EngineEmitter } from "./emitters/engine.emitter.js";
 import { RunEmitter } from "./emitters/run.emitter.js";
+import { JobEmitter } from "./emitters/jobs.emitter.js";
 
 /**
  * Create emitter objects based upon a common scope.
@@ -70,6 +72,9 @@ export class EmitterFactory {
 
   newStepEmitter(scope: CloudScope & StepScope & OtelContext): StepEmitter {
     return new StepEmitter(this.bus, scope);
+  }
+  newJobEmitter(scope: CloudScope & JobScope & OtelContext): JobEmitter {
+    return new JobEmitter(this.bus, scope);
   }
 
   startTrace(sampled = true): OtelContext {

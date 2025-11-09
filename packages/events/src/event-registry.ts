@@ -34,13 +34,26 @@ import {
   StepCompletedDataSchema,
   StepStartedDataSchema,
 } from "./schemas/step.data.schema.js";
+import {
+  JobCompletedSchema,
+  JobFailedSchema,
+  JobMcpQueuedSchema,
+  JobStartedSchema,
+} from "./schemas/job.event.schema.js";
+import {
+  JobCompletedDataSchema,
+  JobFailedDataSchema,
+  JobMcpQueuedDataSchema,
+  JobStartedDataSchema,
+} from "./schemas/job.data.schema.js";
 
 export type EventTopic =
   | "steps.lifecycle"
   | "flows.lifecycle"
   | "workers.lifecycle"
   | "engines.lifecycle"
-  | "runs.lifecycle";
+  | "runs.lifecycle"
+  | "jobs.lifecycle";
 
 // simple hardcoded registry mapping event types to schemas, as well as
 // topics to publish the event to
@@ -113,6 +126,34 @@ export const registry = {
     schema: {
       event: StepCompletedSchema,
       data: StepCompletedDataSchema,
+    },
+  },
+  "job.mcp.queued": {
+    topic: "jobs.lifecycle",
+    schema: {
+      event: JobMcpQueuedSchema,
+      data: JobMcpQueuedDataSchema,
+    },
+  },
+  "job.started": {
+    topic: "jobs.lifecycle",
+    schema: {
+      event: JobStartedSchema,
+      data: JobStartedDataSchema,
+    },
+  },
+  "job.completed": {
+    topic: "jobs.lifecycle",
+    schema: {
+      event: JobCompletedSchema,
+      data: JobCompletedDataSchema,
+    },
+  },
+  "job.failed": {
+    topic: "jobs.lifecycle",
+    schema: {
+      event: JobFailedSchema,
+      data: JobFailedDataSchema,
     },
   },
   "worker.registered": {
