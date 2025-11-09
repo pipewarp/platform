@@ -24,3 +24,9 @@ export * from "./events/job/map.js";
 export * from "./events/tool/data.js";
 export * from "./events/tool/event.js";
 export * from "./events/tool/map.js";
+
+export * from "./events/worker/data.js";
+export * from "./events/worker/event.js";
+export * from "./events/worker/map.js";
+
+export * from "./events/event-map.js";

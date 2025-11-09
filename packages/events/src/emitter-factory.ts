@@ -7,6 +7,7 @@ import type {
   RunScope,
   JobScope,
   ToolScope,
+  WorkerScope,
 } from "@pipewarp/types";
 import { StepEmitter } from "./emitters/step.emitter.js";
 import { FlowEmitter } from "./emitters/flow.emitter.js";
@@ -16,6 +17,7 @@ import { EngineEmitter } from "./emitters/engine.emitter.js";
 import { RunEmitter } from "./emitters/run.emitter.js";
 import { JobEmitter } from "./emitters/jobs.emitter.js";
 import { ToolEmitter } from "./emitters/tool.emitter.js";
+import { WorkerEmitter } from "./emitters/worker.emitter.js";
 
 /**
  * Create emitter objects based upon a common scope.
@@ -63,6 +65,11 @@ export class EmitterFactory {
     scope: CloudScope & EngineScope & OtelContext
   ): EngineEmitter {
     return new EngineEmitter(this.bus, scope);
+  }
+  newWorkerEmitter(
+    scope: CloudScope & WorkerScope & OtelContext
+  ): WorkerEmitter {
+    return new WorkerEmitter(this.bus, scope);
   }
 
   newFlowEmitter(scope: CloudScope & FlowScope & OtelContext): FlowEmitter {

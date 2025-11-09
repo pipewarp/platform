@@ -152,7 +152,7 @@ export async function cliRunAction(
         console.log(
           "[cli] received registration accepted, publishing flow event"
         );
-        worker.start();
+        await worker.start();
         await flowEmitter.emit("flow.queued", {
           flowName: flow.name,
           outfile: resolvedOutPath,

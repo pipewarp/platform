@@ -233,27 +233,67 @@ export class Worker {
 
   async requestRegistration(): Promise<void> {
     const meta = this.getMetadata();
-    const event: AnyEvent<"worker.registration.requested"> = {
-      id: String(crypto.randomUUID()),
+    // const event: AnyEvent<"worker.registration.requested"> = {
+    //   id: String(crypto.randomUUID()),
+    //   source: "pipewarp://worker/" + this.#context.workerId,
+    //   specversion: "1.0",
+    //   time: new Date().toISOString(),
+    //   type: "worker.registration.requested",
+    //   data: meta,
+    //   domain: "worker",
+    //   action: "requested",
+    //   traceparent: "",
+    //   traceid: "",
+    //   spanid: "",
+    // };
+    // await this.#bus.publish("workers.lifecycle", event);
+
+    const spanId = this.#emitterFactory.generateSpanId();
+    const traceId = this.#emitterFactory.generateTraceId();
+    const traceParent = this.#emitterFactory.makeTraceParent(traceId, spanId);
+
+    const workerEmitter = this.#emitterFactory.newWorkerEmitter({
       source: "pipewarp://worker/" + this.#context.workerId,
-      specversion: "1.0",
-      time: new Date().toISOString(),
-      type: "worker.registration.requested",
-      data: meta,
-      domain: "worker",
-      action: "requested",
-      traceparent: "",
-      traceid: "",
-      spanid: "",
-    };
-    await this.#bus.publish("workers.lifecycle", event);
+      workerid: this.#context.workerId,
+      traceId,
+      spanId,
+      traceParent,
+    });
+
+    await workerEmitter.emit("worker.registration.requested", {
+      worker: {
+        id: meta.id,
+      },
+      id: meta.id,
+      name: meta.name,
+      type: "inprocess",
+      capabilities: meta.capabilities,
+    });
   }
 
-  start(): void {
+  async start(): Promise<void> {
     for (const id in this.#context.capabilities) {
       const p = this.startCapabilityJobWaiters(id);
       this.#capabilityJobWaiters.set(id, p);
     }
+    const spanId = this.#emitterFactory.generateSpanId();
+    const traceId = this.#emitterFactory.generateTraceId();
+    const traceParent = this.#emitterFactory.makeTraceParent(traceId, spanId);
+
+    const workerEmitter = this.#emitterFactory.newWorkerEmitter({
+      source: "pipewarp://engine/resource-registry",
+      workerid: this.#context.workerId,
+      traceId,
+      spanId,
+      traceParent,
+    });
+
+    await workerEmitter.emit("worker.started", {
+      worker: {
+        id: this.#context.workerId,
+      },
+      status: "started",
+    });
   }
   stop(): void {}
 

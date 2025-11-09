@@ -6,13 +6,12 @@ import type {
   FlowQueuedData,
   FlowStartedData,
 } from "./flow/data.js";
-import type { WorkerRegistrationRequestedData } from "./worker/registration-requested.js";
-import type { WorkerRegisteredData } from "./worker/registered.js";
 import type { EngineEventMap } from "./engine/map.js";
 import type { RunEventMap } from "./run/map.js";
 import type { StepEventMap } from "./step/map.js";
 import type { JobEventMap } from "./job/map.js";
 import type { ToolEventMap } from "./tool/map.js";
+import type { WorkerEventMap } from "./worker/map.js";
 
 export type DomainActionDescriptor<
   Domain extends string,
@@ -41,7 +40,8 @@ export type EventMap = EngineEventMap &
   RunEventMap &
   StepEventMap &
   JobEventMap &
-  ToolEventMap & {
+  ToolEventMap &
+  WorkerEventMap & {
     "flow.queued": DomainActionDescriptor<"flow", "queued", FlowQueuedData>;
     "flow.started": DomainActionDescriptor<"flow", "started", FlowStartedData>;
     "flow.completed": DomainActionDescriptor<
@@ -49,42 +49,7 @@ export type EventMap = EngineEventMap &
       "completed",
       FlowCompletedData
     >;
-
-    "worker.registration.requested": DomainEntityActionDescriptor<
-      "worker",
-      "registration",
-      "requested",
-      WorkerRegistrationRequestedData
-    >;
-    "worker.registered": DomainActionDescriptor<
-      "worker",
-      "registered",
-      WorkerRegisteredData
-    >;
   };
-
-// type StepEventMap = {
-//   "step.action.queued": DomainEntityActionDescriptor<
-//     "step",
-//     "action",
-//     "queued",
-//     StepActionQueuedData
-//   >;
-//   "step.action.completed": DomainEntityActionDescriptor<
-//     "step",
-//     "action",
-//     "completed",
-//     StepActionCompletedData
-//   >;
-
-//   "step.mcp.queued": DomainEntityActionDescriptor<
-//     "step",
-//     "mcp",
-//     "queued",
-//     StepMcpQueuedData
-//   >;
-//   "step.started": DomainActionDescriptor<"step", "started", StepMcpQueuedData>;
-// };
 
 export type EventType = keyof EventMap;
 export type EventData<T extends EventType> = EventMap[T]["data"];
@@ -94,7 +59,7 @@ export type EventEntities = EventMap[EventType]["entity"];
 
 // export type StepEventType = Extract<EventType, `step.${string}`>;
 export type FlowEventType = Extract<EventType, `flow.${string}`>;
-export type WorkerEventType = Extract<EventType, `worker.${string}`>;
+// export type WorkerEventType = Extract<EventType, `worker.${string}`>;
 
 // otel attributes for all and per event type
 export type OtelAttributesMap = {
@@ -107,9 +72,9 @@ export type OtelAttributesMap = {
 export type FlowOtelAttributesMap = {
   [T in FlowEventType]: Omit<EventMap[T], "data">;
 };
-export type WorkerOtelAttributesMap = {
-  [T in WorkerEventType]: Omit<EventMap[T], "data">;
-};
+// export type WorkerOtelAttributesMap = {
+//   [T in WorkerEventType]: Omit<EventMap[T], "data">;
+// };
 // export type StepEventData<T extends StepEventType> = EventMap[T]["data"];
 export type FlowEventData<T extends FlowEventType> = EventMap[T]["data"];
 // export type StepType = StepEventType extends `step.${infer T}.${string}`

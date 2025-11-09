@@ -25,6 +25,8 @@ export const eventTypes = [
   "tool.started",
   "tool.completed",
   "tool.failed",
+  "worker.started",
+  "worker.stopped",
   "worker.registered",
   "worker.registration.requested",
   "step.started",

@@ -56,6 +56,18 @@ import {
   ToolFailedDataSchema,
   ToolStartedDataSchema,
 } from "./schemas/tool.data.schema.js";
+import {
+  WorkerRegisteredDataSchema,
+  WorkerRegistrationRequestedDataSchema,
+  WorkerStartedDataSchema,
+  WorkerStoppedDataSchema,
+} from "./schemas/worker.data.schema.js";
+import {
+  WorkerRegisteredSchema,
+  WorkerRegistrationRequestedSchema,
+  WorkerStartedSchema,
+  WorkerStoppedSchema,
+} from "./schemas/worker.event.schema.js";
 
 export type EventTopic =
   | "steps.lifecycle"
@@ -188,18 +200,32 @@ export const registry = {
       data: ToolFailedDataSchema,
     },
   },
+  "worker.started": {
+    topic: "workers.lifecycle",
+    schema: {
+      event: WorkerStartedSchema,
+      data: WorkerStartedDataSchema,
+    },
+  },
+  "worker.stopped": {
+    topic: "workers.lifecycle",
+    schema: {
+      event: WorkerStoppedSchema,
+      data: WorkerStoppedDataSchema,
+    },
+  },
   "worker.registered": {
     topic: "workers.lifecycle",
     schema: {
-      event: {} as ZodSchema,
-      data: {} as ZodSchema,
+      event: WorkerRegisteredSchema,
+      data: WorkerRegisteredDataSchema,
     },
   },
   "worker.registration.requested": {
     topic: "workers.lifecycle",
     schema: {
-      event: {} as ZodSchema,
-      data: {} as ZodSchema,
+      event: WorkerRegistrationRequestedSchema,
+      data: WorkerRegistrationRequestedDataSchema,
     },
   },
 } satisfies Record<
