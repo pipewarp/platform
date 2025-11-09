@@ -126,6 +126,32 @@ export class Worker {
       streamRegistry: this.#streamRegistry,
     });
 
+    const toolSpanId = this.#emitterFactory.generateSpanId();
+    const toolTraceParent = this.#emitterFactory.makeTraceParent(
+      e.traceid,
+      toolSpanId
+    );
+    const toolEmitter = this.#emitterFactory.newToolEmitter({
+      source: "pipewarp://worker/job-done",
+      flowid: e.flowid,
+      runid: e.runid,
+      stepid: e.stepid,
+      jobid: e.jobid,
+      toolid: jobContext.tool,
+      traceId: e.traceid,
+      spanId: toolSpanId,
+      traceParent: toolTraceParent,
+    });
+
+    await toolEmitter.emit("tool.started", {
+      tool: {
+        id: jobContext.tool,
+        name: "unknown",
+        version: "unknown",
+      },
+      log: "about to execute a tool",
+      status: "started",
+    });
     const result = await executor.run();
 
     console.log(`[worker-new] results ${JSON.stringify(result, null, 2)}`);

@@ -46,6 +46,16 @@ import {
   JobMcpQueuedDataSchema,
   JobStartedDataSchema,
 } from "./schemas/job.data.schema.js";
+import {
+  ToolCompletedSchema,
+  ToolFailedSchema,
+  ToolStartedSchema,
+} from "./schemas/tool.event.schema.js";
+import {
+  ToolCompletedDataSchema,
+  ToolFailedDataSchema,
+  ToolStartedDataSchema,
+} from "./schemas/tool.data.schema.js";
 
 export type EventTopic =
   | "steps.lifecycle"
@@ -53,7 +63,8 @@ export type EventTopic =
   | "workers.lifecycle"
   | "engines.lifecycle"
   | "runs.lifecycle"
-  | "jobs.lifecycle";
+  | "jobs.lifecycle"
+  | "tools.lifecycle";
 
 // simple hardcoded registry mapping event types to schemas, as well as
 // topics to publish the event to
@@ -154,6 +165,27 @@ export const registry = {
     schema: {
       event: JobFailedSchema,
       data: JobFailedDataSchema,
+    },
+  },
+  "tool.started": {
+    topic: "tools.lifecycle",
+    schema: {
+      event: ToolStartedSchema,
+      data: ToolStartedDataSchema,
+    },
+  },
+  "tool.completed": {
+    topic: "tools.lifecycle",
+    schema: {
+      event: ToolCompletedSchema,
+      data: ToolCompletedDataSchema,
+    },
+  },
+  "tool.failed": {
+    topic: "tools.lifecycle",
+    schema: {
+      event: ToolFailedSchema,
+      data: ToolFailedDataSchema,
     },
   },
   "worker.registered": {

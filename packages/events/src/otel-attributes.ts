@@ -4,6 +4,7 @@ import {
   EngineOtelAttributesMap,
   RunOtelAttributesMap,
   JobOtelAttributesMap,
+  ToolOtelAttributesMap,
 } from "@pipewarp/types";
 
 export const stepOtelAttributes = {
@@ -90,3 +91,21 @@ export const jobOtelAttributesMap = {
     entity: undefined,
   },
 } satisfies JobOtelAttributesMap;
+
+export const toolOtelAttributesMap = {
+  "tool.completed": {
+    action: "completed",
+    domain: "tool",
+    entity: undefined,
+  },
+  "tool.started": {
+    action: "started",
+    domain: "tool",
+    entity: undefined,
+  },
+  "tool.failed": {
+    action: "failed",
+    domain: "tool",
+    entity: undefined,
+  },
+} satisfies ToolOtelAttributesMap;

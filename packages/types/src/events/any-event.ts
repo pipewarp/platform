@@ -8,6 +8,8 @@ import type { EngineScope } from "./engine/scope.js";
 import type { RunScope, RunEventType } from "./run/index.js";
 import type { JobEventType } from "./job/map.js";
 import type { JobScope } from "./job/event.js";
+import { ToolEventType } from "./tool/map.js";
+import { ToolScope } from "./tool/event.js";
 
 /**
  * The varying base fields that are required for each event type.
@@ -22,6 +24,8 @@ export type ScopeFor<T extends EventType> = T extends StepEventType
   ? RunScope
   : T extends JobEventType
   ? JobScope
+  : T extends ToolEventType
+  ? ToolScope
   : {};
 
 /**

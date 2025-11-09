@@ -22,6 +22,9 @@ export const eventTypes = [
   "job.completed",
   "job.started",
   "job.failed",
+  "tool.started",
+  "tool.completed",
+  "tool.failed",
   "worker.registered",
   "worker.registration.requested",
   "step.started",
@@ -66,6 +69,7 @@ export const domainTypes = [
   "run",
   "step",
   "job",
+  "tool",
   "engine",
   "worker",
 ] as const satisfies readonly EventDomains[];

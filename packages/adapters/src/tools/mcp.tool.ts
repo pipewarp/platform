@@ -25,7 +25,8 @@ type McpToolContext = {
 
 export class McpTool implements ToolPort {
   id = "mcp-sse-tool";
-  name = "MCP SSE Tool";
+  name = "Internal MCP SSE Tool";
+  version = "0.1.0-alpha.4";
   #context: McpToolContext = {
     isProducing: false,
     isConsuming: false,
@@ -34,7 +35,7 @@ export class McpTool implements ToolPort {
   };
   #client: Client;
   constructor() {
-    this.#client = new Client({ name: "mcp-tool", version: "0.1.0-alpha.3" });
+    this.#client = new Client({ name: "mcp-tool", version: "0.1.0-alpha.4" });
     this.#addShutdownHooks();
   }
   async invoke(input: unknown, context: ToolContext): Promise<unknown> {
