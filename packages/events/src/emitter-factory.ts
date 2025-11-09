@@ -20,10 +20,16 @@ import { ToolEmitter } from "./emitters/tool.emitter.js";
 import { WorkerEmitter } from "./emitters/worker.emitter.js";
 
 /**
- * Create emitter objects based upon a common scope.
+ * NOTE: This class is currently in between being refactored.
  *
- * Set scope in init(scope)
+ * In order to preserve momentum on bootstrapping Observability,
+ * this class is staying unfinished.
  *
+ * Scopes, Shared Context Otel Features, Dependency Injection, and other issues will
+ * be refactored in the future to allow easier otel creation, proper DI,
+ * better DX for emitter creation and usage, and simplified types.
+ *
+
  * Create emitter objects with respective emitter function.
  *
  * @param bus EventBusPort
@@ -34,9 +40,8 @@ import { WorkerEmitter } from "./emitters/worker.emitter.js";
  * @example
  * ```
  * const emitterFactory = new EmitterFactory();
- * emitterFactory.setScope({...}: BaseScope)
- * const stepEmitter = newStepEmitter(type, stepType, data);
- * await stepEmitter.emit(data);
+ * const stepEmitter = newStepEmitter({...});
+ * await stepEmitter.emit("event.type", data);
  *
  */
 

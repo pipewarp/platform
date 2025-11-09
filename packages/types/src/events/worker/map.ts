@@ -1,7 +1,7 @@
 import {
   DomainActionDescriptor,
   DomainEntityActionDescriptor,
-} from "../event-map.js";
+} from "../shared/otel-attributes.js";
 import {
   WorkerRegisteredData,
   WorkerRegistrationRequestedData,

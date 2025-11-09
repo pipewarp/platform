@@ -77,6 +77,7 @@ export const domainTypes = [
 ] as const satisfies readonly EventDomains[];
 
 export const entityTypes = [
+  "mcp",
   "registration",
 ] as const satisfies readonly EventEntities[];
 

@@ -1,2 +1,2 @@
 export * from "./cloud-event.js";
-export * from "./flow-event.js";
+export * from "./otel-attributes.js";

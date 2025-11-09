@@ -1,7 +1,7 @@
 import type {
   DomainEntityActionDescriptor,
   DomainActionDescriptor,
-} from "../event-map.js";
+} from "../shared/otel-attributes.js";
 import {
   JobCompletedData,
   JobFailedData,

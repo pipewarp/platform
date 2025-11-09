@@ -83,24 +83,6 @@ export class Engine {
         const event = e as AnyEvent<"worker.registration.requested">;
         this.resourceRegistry.registerWorker(event.data);
 
-        // this.bus.publish("workers.lifecycle", {
-        //   id: String(crypto.randomUUID()),
-        //   source: "resource-registry://default",
-        //   specversion: "1.0",
-        //   time: new Date().toISOString(),
-        //   type: "worker.registered",
-        //   data: {
-        //     workerId: event.data.id,
-        //     status: "accepted",
-        //     registeredAt: new Date().toISOString(),
-        //   },
-        //   action: "registered",
-        //   domain: "worker",
-        //   spanid: "",
-        //   traceid: "",
-        //   traceparent: "",
-        // } satisfies AnyEvent<"worker.registered">);
-
         const spanId = this.emitterFactory.generateSpanId();
         const traceParent = this.emitterFactory.makeTraceParent(
           e.traceid,

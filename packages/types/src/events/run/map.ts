@@ -1,5 +1,5 @@
 import type { RunCompletedData, RunStartedData } from "./data.js";
-import type { DomainActionDescriptor } from "../event-map.js";
+import type { DomainActionDescriptor } from "../shared/otel-attributes.js";
 
 export type RunEventMap = {
   "run.started": DomainActionDescriptor<"run", "started", RunStartedData>;

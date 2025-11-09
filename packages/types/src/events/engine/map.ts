@@ -1,4 +1,4 @@
-import type { DomainActionDescriptor } from "../event-map.js";
+import type { DomainActionDescriptor } from "../shared/otel-attributes.js";
 import type { EngineStartedData, EngineStoppedData } from "./data.js";
 
 export type EngineEventMap = {

@@ -233,20 +233,6 @@ export class Worker {
 
   async requestRegistration(): Promise<void> {
     const meta = this.getMetadata();
-    // const event: AnyEvent<"worker.registration.requested"> = {
-    //   id: String(crypto.randomUUID()),
-    //   source: "pipewarp://worker/" + this.#context.workerId,
-    //   specversion: "1.0",
-    //   time: new Date().toISOString(),
-    //   type: "worker.registration.requested",
-    //   data: meta,
-    //   domain: "worker",
-    //   action: "requested",
-    //   traceparent: "",
-    //   traceid: "",
-    //   spanid: "",
-    // };
-    // await this.#bus.publish("workers.lifecycle", event);
 
     const spanId = this.#emitterFactory.generateSpanId();
     const traceId = this.#emitterFactory.generateTraceId();

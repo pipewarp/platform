@@ -16,11 +16,7 @@ import { registry } from "../event-registry.js";
  * strongly types scoped emitter for step events.
  * @see EmitterFactory for general usage with it
  *
- * currently does not wire up zod schema validation.
- * that should be moved to something that wires up zod schema
- * and bus topics.
- *
- * registry should move out but its not that bad.
+ * registry should move out.
  */
 export class StepEmitter extends BaseEmitter {
   protected otel: OtelContext;
