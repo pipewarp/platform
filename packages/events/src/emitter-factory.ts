@@ -142,7 +142,6 @@ export class EmitterFactory {
     const version = "00";
     const flags = sampled ? "01" : "00";
     const traceParent = `${version}-${traceId}-${spanId}-${flags}`;
-    console.log(traceParent);
     return traceParent;
   }
   generateTraceId(): string {

@@ -24,6 +24,7 @@
     "@pipewarp/ports": "workspace:*",
     "@pipewarp/types": "workspace:*",
     "@pipewarp/events": "workspace:*",
+    "@pipewarp/observability": "workspace:*",
     "commander": "^14.0.1",
     "zod": "3.25.76"
   },

@@ -35,6 +35,9 @@ importers:
       '@pipewarp/events':
         specifier: workspace:*
         version: link:../../packages/events
+      '@pipewarp/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../../packages/ports
@@ -147,6 +150,15 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.5.2)(tsx@4.20.6)
+
+  packages/observability:
+    devDependencies:
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/ports:
     dependencies:

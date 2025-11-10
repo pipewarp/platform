@@ -1,1 +1,37 @@
 // stub for console.log output for observability
+
+import type { EventSink } from "@pipewarp/ports";
+import { AnyEvent } from "@pipewarp/types";
+
+export class ConsoleSink implements EventSink {
+  readonly id = "console-sink";
+  #enableSink = false;
+  #s = "\x1b[0m";
+  #c = {
+    red: "\x1b[38;2;255;100;50m",
+    job: "\x1b[38;2;230;224;64m",
+    worker: "\x1b[38;2;252;131;226m",
+    step: "\x1b[38;2;218;131;252m",
+    engine: "\x1b[38;2;157;131;252m",
+    tool: "\x1b[38;2;64;230;130m",
+    flow: "\x1b[38;2;255;106;146m",
+    run: "\x1b[38;2;235;172;106m",
+  };
+
+  start(): void {
+    this.#enableSink = true;
+  }
+  stop(): void {
+    this.#enableSink = false;
+  }
+  handle(event: AnyEvent): void {
+    if (!this.#enableSink) return;
+    const r = this.#c.red;
+    const j = this.#c.job;
+
+    let ok = "\x1b[38;2;108;235;106m[✔]\x1b[0m";
+    if (event.action !== "completed") ok = "";
+
+    console.log(`${this.#c[event.domain]}[${event.type}]${this.#s}${ok}`);
+  }
+}

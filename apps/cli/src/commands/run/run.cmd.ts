@@ -20,6 +20,7 @@ import {
 } from "@pipewarp/engine";
 import { startDemoServers } from "./demo.js";
 import { EmitterFactory } from "@pipewarp/events";
+import { ObservabilityTap, ConsoleSink } from "@pipewarp/observability";
 
 export async function cliRunAction(
   flowPath: string,
@@ -92,6 +93,11 @@ export async function cliRunAction(
   const pipeResolver = new PipeResolver(streamRegistry);
   const stepHandlerRegistry = wireStepHandlers(resolveStepArgs, pipeResolver);
 
+  const logSink = new ConsoleSink();
+  logSink.start();
+  const tap = new ObservabilityTap(bus, [logSink]);
+  tap.start();
+
   // setup new generic worker with tools
   const workerId = "cli-worker";
   const toolFactories: ToolFactories = {
@@ -142,16 +148,12 @@ export async function cliRunAction(
   });
 
   bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
-    console.log("[cli] workers.lifecycle event:", e);
     if (e.type === "worker.registered") {
       const event = e as AnyEvent<"worker.registered">;
       if (
         event.data.workerId === workerId &&
         event.data.status === "accepted"
       ) {
-        console.log(
-          "[cli] received registration accepted, publishing flow event"
-        );
         await worker.start();
         await flowEmitter.emit("flow.queued", {
           flowName: flow.name,
