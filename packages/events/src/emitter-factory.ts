@@ -8,6 +8,7 @@ import type {
   JobScope,
   ToolScope,
   WorkerScope,
+  SystemScope,
 } from "@pipewarp/types";
 import { StepEmitter } from "./emitters/step.emitter.js";
 import { FlowEmitter } from "./emitters/flow.emitter.js";
@@ -18,6 +19,7 @@ import { RunEmitter } from "./emitters/run.emitter.js";
 import { JobEmitter } from "./emitters/jobs.emitter.js";
 import { ToolEmitter } from "./emitters/tool.emitter.js";
 import { WorkerEmitter } from "./emitters/worker.emitter.js";
+import { SystemEmitter } from "./emitters/system.emitter.js";
 
 /**
  * NOTE: This class is currently in between being refactored.
@@ -64,6 +66,12 @@ export class EmitterFactory {
   }
   setStepScope(scope: StepScope) {
     this.#stepScope = scope;
+  }
+
+  newSystemEmitter(
+    scope: CloudScope & SystemScope & OtelContext
+  ): SystemEmitter {
+    return new SystemEmitter(this.bus, scope);
   }
 
   newEngineEmitter(

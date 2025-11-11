@@ -29,7 +29,7 @@ export const eventTypes = [
   "worker.stopped",
   "worker.registered",
   "worker.registration.requested",
-  "step.started",
+  "system.logged",
 ] as const satisfies readonly EventType[];
 
 // make sure the event types list is complete and not missing any events
@@ -64,6 +64,7 @@ export const actionTypes = [
   "completed",
   "stopped",
   "failed",
+  "logged",
 ] as const satisfies readonly EventActions[];
 
 export const domainTypes = [
@@ -74,6 +75,7 @@ export const domainTypes = [
   "tool",
   "engine",
   "worker",
+  "system",
 ] as const satisfies readonly EventDomains[];
 
 export const entityTypes = [

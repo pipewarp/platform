@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent, SystemEvent } from "@pipewarp/types";
 import { EventDetails } from "./EventDetails";
 
 export type EventBarProps = {
@@ -17,6 +17,7 @@ const eventTypeColors: EventDomainColors = {
   worker: "bg-violet-800 ring-violet-400",
   job: "bg-purple-800 ring-purple-400 text-purple-200 ",
   tool: "bg-fuchsia-800 ring-fuchsia-400",
+  system: "bg-stone-700 ring-stone-400",
 };
 
 function getClasses(eventType: string) {
@@ -64,6 +65,13 @@ export function EventBar({ event }: EventBarProps) {
         {event.type}
       </div>
       {isExpanded && <EventDetails event={event} />}
+      {event.type === "system.logged" && isExpanded === false ? (
+        <div className="font-mono text-xs bg-gray-700 pl-2 pr-2">
+          {event.data.log}
+        </div>
+      ) : (
+        ""
+      )}
     </>
   );
 }

@@ -6,6 +6,7 @@ import {
   JobOtelAttributesMap,
   ToolOtelAttributesMap,
   WorkerOtelAttributesMap,
+  SystemOtelAttributesMap,
 } from "@pipewarp/types";
 
 export const stepOtelAttributes = {
@@ -133,3 +134,11 @@ export const workerOtelAttributesMap = {
     entity: "registration",
   },
 } satisfies WorkerOtelAttributesMap;
+
+export const systemOtelAttributesMap = {
+  "system.logged": {
+    action: "logged",
+    domain: "system",
+    entity: undefined,
+  },
+} satisfies SystemOtelAttributesMap;

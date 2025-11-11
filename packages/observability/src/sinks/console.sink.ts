@@ -16,6 +16,7 @@ export class ConsoleSink implements EventSink {
     tool: "\x1b[38;2;64;230;130m",
     flow: "\x1b[38;2;255;106;146m",
     run: "\x1b[38;2;235;172;106m",
+    system: "\x1b[38;2;170;170;190m",
   };
 
   start(): void {
@@ -32,6 +33,14 @@ export class ConsoleSink implements EventSink {
     let ok = "\x1b[38;2;108;235;106m[✔]\x1b[0m";
     if (event.action !== "completed") ok = "";
 
-    console.log(`${this.#c[event.domain]}[${event.type}]${this.#s}${ok}`);
+    let log = "";
+    if (event.type === "system.logged") {
+      const l = event as AnyEvent<"system.logged">;
+      log = l.data.log;
+    }
+
+    console.log(
+      `${this.#c[event.domain]}[${event.type}]${this.#s}${ok} ${log}`
+    );
   }
 }

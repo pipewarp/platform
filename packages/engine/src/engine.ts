@@ -169,7 +169,16 @@ export class Engine {
       traceId
     );
     context = this.#initStepContext(context, flow.start);
-    console.log("[engine] made RunContext");
+
+    const logEmitter = this.emitterFactory.newSystemEmitter({
+      source: "pipewarp://engine/start-flow",
+      traceId: "",
+      spanId: "",
+      traceParent: "",
+    });
+    await logEmitter.emit("system.logged", {
+      log: "[engine] made RunContext",
+    });
 
     const spanId = this.emitterFactory.generateSpanId();
     const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
@@ -396,7 +405,15 @@ export class Engine {
     if (nextStep) {
       this.queueStreamingSteps(flow, context, nextStep);
     } else if (context.outstandingSteps === 0) {
-      console.log("[engine] no next step; no outstanding steps; run ended;");
+      const logEmitter = this.emitterFactory.newSystemEmitter({
+        source: "pipewarp://engine/handle-work-done",
+        traceId: "",
+        spanId: "",
+        traceParent: "",
+      });
+      await logEmitter.emit("system.logged", {
+        log: "[engine] no next step; no outstanding steps; run ended;",
+      });
 
       const runSpanId = this.emitterFactory.generateSpanId();
       const flowSpanId = this.emitterFactory.generateSpanId();
@@ -453,12 +470,21 @@ export class Engine {
   }
 
   writeRunContext(runId: string): void {
-    console.log("[engine] writing context to disk");
     const context = this.#runs.get(runId);
     const file =
       context?.outFile !== undefined ? context.outFile : "./output.json";
 
     fs.writeFileSync(file, JSON.stringify(context, null, 2));
+
+    const logEmitter = this.emitterFactory.newSystemEmitter({
+      source: "pipewarp://engine/write-run-context",
+      traceId: "",
+      spanId: "",
+      traceParent: "",
+    });
+    logEmitter.emit("system.logged", {
+      log: "[engine] context written to disk",
+    });
     return;
   }
 }

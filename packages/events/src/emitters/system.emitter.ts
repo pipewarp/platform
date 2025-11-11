@@ -1,15 +1,15 @@
 import type {
   CloudScope,
-  ToolScope,
-  ToolEventType,
-  ToolEventData,
-  ToolEvent,
-  ToolOtelAttributesMap,
+  SystemScope,
+  SystemEventType,
+  SystemEventData,
+  SystemEvent,
+  SystemOtelAttributesMap,
 } from "@pipewarp/types";
 import type { OtelContext } from "../types.js";
 import { BaseEmitter } from "./base.emitter.js";
 import { EventBusPort } from "@pipewarp/ports";
-import { toolOtelAttributesMap } from "../otel-attributes.js";
+import { systemOtelAttributesMap } from "../otel-attributes.js";
 import { registry } from "../event-registry.js";
 
 /**
@@ -18,14 +18,14 @@ import { registry } from "../event-registry.js";
  *
  * registry should move out.
  */
-export class ToolEmitter extends BaseEmitter {
+export class SystemEmitter extends BaseEmitter {
   protected otel: OtelContext;
-  protected toolOtelAttributesMap: ToolOtelAttributesMap;
-  #toolScope: ToolScope;
+  protected systemOtelAttributesMap: SystemOtelAttributesMap;
+  #systemScope: SystemScope;
 
   constructor(
     private readonly bus: EventBusPort,
-    scope: OtelContext & ToolScope & CloudScope
+    scope: OtelContext & SystemScope & CloudScope
   ) {
     const { traceId, spanId, traceParent, source } = scope;
     const { flowid, runid, stepid, jobid, toolid } = scope;
@@ -33,26 +33,26 @@ export class ToolEmitter extends BaseEmitter {
     super({ traceId, spanId, traceParent }, { source });
 
     this.otel = { traceId, spanId, traceParent };
-    this.#toolScope = { flowid, runid, stepid, jobid, toolid };
-    this.toolOtelAttributesMap = toolOtelAttributesMap;
+    this.#systemScope = { flowid, runid, stepid, jobid, toolid };
+    this.systemOtelAttributesMap = systemOtelAttributesMap;
     this.bus = bus;
   }
 
-  async emit<T extends ToolEventType>(
+  async emit<T extends SystemEventType>(
     type: T,
-    data: ToolEventData<T>
+    data: SystemEventData<T>
   ): Promise<void> {
     const event = {
       ...this.envelopeHeader(),
-      ...this.#toolScope,
+      ...this.#systemScope,
       data,
       type,
-      domain: this.toolOtelAttributesMap[type].domain,
-      action: this.toolOtelAttributesMap[type].action,
-      ...(this.toolOtelAttributesMap[type].entity
-        ? { entity: this.toolOtelAttributesMap[type].entity }
+      domain: this.systemOtelAttributesMap[type].domain,
+      action: this.systemOtelAttributesMap[type].action,
+      ...(this.systemOtelAttributesMap[type].entity
+        ? { entity: this.systemOtelAttributesMap[type].entity }
         : {}),
-    } satisfies ToolEvent<T>;
+    } satisfies SystemEvent<T>;
 
     // console.log("event", JSON.stringify(event, null, 2));
     const entry = registry[type];

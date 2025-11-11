@@ -31,7 +31,6 @@ export class WebSocketServerSink implements EventSink {
   }
 
   handle(event: AnyEvent): void {
-    console.log(`[wss-sink] ${event.type}`);
     if (this.socket) {
       this.socket.send(JSON.stringify(event));
     }
