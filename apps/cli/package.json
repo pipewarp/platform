@@ -19,15 +19,18 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.1",
     "@pipewarp/adapters": "workspace:*",
-    "@pipewarp/specs": "workspace:*",
     "@pipewarp/engine": "workspace:*",
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/types": "workspace:*",
     "@pipewarp/events": "workspace:*",
+    "@pipewarp/observability": "workspace:*",
+    "@pipewarp/ports": "workspace:*",
+    "@pipewarp/specs": "workspace:*",
+    "@pipewarp/types": "workspace:*",
     "commander": "^14.0.1",
+    "ws": "^8.18.3",
     "zod": "3.25.76"
   },
   "devDependencies": {
+    "@types/ws": "^8.18.1",
     "vitest": "^3.2.4"
   }
 }

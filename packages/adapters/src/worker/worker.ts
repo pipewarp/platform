@@ -77,7 +77,6 @@ export class Worker {
 
   #subscribeToBus(): void {
     this.#bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
-      console.log("[worker] workers.lifecycle event:", e);
       if (e.type === "worker.registered") {
         const event = e as AnyEvent<"worker.registered">;
         if (
@@ -85,7 +84,16 @@ export class Worker {
           event.data.status === "accepted"
         ) {
           this.#context.isRegistered = true;
-          console.log("[worker] received registration accepted");
+
+          const logEmitter = this.#emitterFactory.newSystemEmitter({
+            source: "pipewarp://engine/subscribe-to-bus",
+            traceId: "",
+            spanId: "",
+            traceParent: "",
+          });
+          await logEmitter.emit("system.logged", {
+            log: "[worker] received registration accepted",
+          });
         }
       }
     });
@@ -97,8 +105,6 @@ export class Worker {
   }
 
   async handleNewJob(event: AnyEvent): Promise<void> {
-    console.log(`[worker-new] handleNewJob() event: ${event}`);
-
     const e = event as AnyEvent<"job.mcp.queued">;
 
     // invoke some sort of tool from a tool registry
@@ -153,8 +159,6 @@ export class Worker {
       status: "started",
     });
     const result = await executor.run();
-
-    console.log(`[worker-new] results ${JSON.stringify(result, null, 2)}`);
 
     const spanId = this.#emitterFactory.generateSpanId();
     const traceParent = this.#emitterFactory.makeTraceParent(e.traceid, spanId);
@@ -322,7 +326,6 @@ export class Worker {
           });
           cap.jobWaiters.add(waiter); // later implement graceful shutdown with this
         } catch (err) {
-          console.log("[worker] promise did not return job:", err);
           if (!cap.newJobWaitersAreAllowed) break;
           continue;
         }

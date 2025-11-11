@@ -20,13 +20,48 @@ import {
 } from "@pipewarp/engine";
 import { startDemoServers } from "./demo.js";
 import { EmitterFactory } from "@pipewarp/events";
+import {
+  ObservabilityTap,
+  ConsoleSink,
+  WebSocketServerSink,
+} from "@pipewarp/observability";
 
 export async function cliRunAction(
   flowPath: string,
   options: { out?: string; test?: boolean; server?: string; demo?: boolean }
 ): Promise<void> {
-  console.log("[cli-run] running run");
-  console.log("[cli-run] options:", options);
+  const queue = new InMemoryQueue();
+  const bus = new InMemoryEventBus();
+  const router = new NodeRouter(bus, queue);
+  const streamRegistry = new InMemoryStreamRegistry();
+  const pipeResolver = new PipeResolver(streamRegistry);
+  const stepHandlerRegistry = wireStepHandlers(resolveStepArgs, pipeResolver);
+
+  const logEF = new EmitterFactory(bus);
+  const logEmitter = logEF.newSystemEmitter({
+    source: "pipewarp://cli/run",
+    traceId: "",
+    spanId: "",
+    traceParent: "",
+  });
+  await logEmitter.emit("system.logged", {
+    log: "[cli] running run command with options",
+    payload: options,
+  });
+  const logSink = new ConsoleSink();
+  logSink.start();
+
+  const wsSink = new WebSocketServerSink(3006);
+
+  console.log("\nWaiting on Observability WebSocket Client");
+  await wsSink.start();
+  const tap = new ObservabilityTap(bus, [logSink, wsSink]);
+  tap.start();
+
+  await logEmitter.emit("system.logged", {
+    log: "[cli] running run command with options",
+    payload: options,
+  });
 
   const {
     out = "./output.temp.json",
@@ -43,6 +78,10 @@ export async function cliRunAction(
   const flowStore = new FlowStore();
   const { result, flow } = flowStore.validate(json);
   if (!result) {
+    await logEmitter.emit("system.logged", {
+      log: "[cli] running run command with options",
+      payload: options,
+    });
     console.error(`[cli-run] Invaid flow at ${flowPath}`);
     return;
   }
@@ -54,7 +93,10 @@ export async function cliRunAction(
   const mcpStore = new McpManager();
 
   if (demo) {
-    console.log("[cli-run] starting demo servers");
+    await logEmitter.emit("system.logged", {
+      log: "[cli] starting demo servers",
+      payload: options,
+    });
     const managedProcesses = await startDemoServers();
 
     if (!managedProcesses) {
@@ -84,13 +126,6 @@ export async function cliRunAction(
   } else {
     await mcpStore.addStdioClient(server, "stt-client");
   }
-
-  const queue = new InMemoryQueue();
-  const bus = new InMemoryEventBus();
-  const router = new NodeRouter(bus, queue);
-  const streamRegistry = new InMemoryStreamRegistry();
-  const pipeResolver = new PipeResolver(streamRegistry);
-  const stepHandlerRegistry = wireStepHandlers(resolveStepArgs, pipeResolver);
 
   // setup new generic worker with tools
   const workerId = "cli-worker";
@@ -142,16 +177,12 @@ export async function cliRunAction(
   });
 
   bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
-    console.log("[cli] workers.lifecycle event:", e);
     if (e.type === "worker.registered") {
       const event = e as AnyEvent<"worker.registered">;
       if (
         event.data.workerId === workerId &&
         event.data.status === "accepted"
       ) {
-        console.log(
-          "[cli] received registration accepted, publishing flow event"
-        );
         await worker.start();
         await flowEmitter.emit("flow.queued", {
           flowName: flow.name,

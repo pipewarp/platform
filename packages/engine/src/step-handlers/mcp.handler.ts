@@ -41,8 +41,6 @@ export class McpStepHandler implements StepHandler {
         feature: step.feature,
       };
 
-      console.log("data", JSON.stringify(data, null, 2));
-
       await emitter.emit("job.mcp.queued", data);
       context.steps[stepName].status = "queued";
     } catch (err) {

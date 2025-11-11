@@ -13,6 +13,7 @@ import type { ToolEventType } from "./tool/map.js";
 import type { ToolScope } from "./tool/event.js";
 import type { WorkerEventType } from "./worker/map.js";
 import type { WorkerScope } from "./worker/event.js";
+import { SystemScope } from "./system/event.js";
 
 /**
  * The varying base fields that are required for each event type.
@@ -31,6 +32,8 @@ export type ScopeFor<T extends EventType> = T extends StepEventType
   ? ToolScope
   : T extends WorkerEventType
   ? WorkerScope
+  : T extends SystemScope
+  ? SystemScope
   : {};
 
 /**
@@ -41,3 +44,6 @@ export type ScopeFor<T extends EventType> = T extends StepEventType
 
 export type AnyEvent<T extends EventType = EventType> = CloudEvent<T> &
   ScopeFor<T>;
+
+export type PipewarpFlowEvent = AnyEvent<FlowEventType>;
+export type PipewarpEvent = AnyEvent<EventType>;

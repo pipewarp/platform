@@ -68,6 +68,8 @@ import {
   WorkerStartedSchema,
   WorkerStoppedSchema,
 } from "./schemas/worker.event.schema.js";
+import { SystemLoggedSchema } from "./schemas/system.event.schema.js";
+import { SystemLoggedDataSchema } from "./schemas/system.data.schema.js";
 
 export type EventTopic =
   | "steps.lifecycle"
@@ -76,7 +78,8 @@ export type EventTopic =
   | "engines.lifecycle"
   | "runs.lifecycle"
   | "jobs.lifecycle"
-  | "tools.lifecycle";
+  | "tools.lifecycle"
+  | "system";
 
 // simple hardcoded registry mapping event types to schemas, as well as
 // topics to publish the event to
@@ -226,6 +229,13 @@ export const registry = {
     schema: {
       event: WorkerRegistrationRequestedSchema,
       data: WorkerRegistrationRequestedDataSchema,
+    },
+  },
+  "system.logged": {
+    topic: "system",
+    schema: {
+      event: SystemLoggedSchema,
+      data: SystemLoggedDataSchema,
     },
   },
 } satisfies Record<

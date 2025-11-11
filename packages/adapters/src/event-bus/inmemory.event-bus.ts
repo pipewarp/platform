@@ -1,9 +1,12 @@
 import { EventEmitter } from "events";
-import type { EventBusPort } from "@pipewarp/ports";
+import type { EventBusPort, PublishOptions } from "@pipewarp/ports";
 import type { AnyEvent } from "@pipewarp/types";
 
 export class InMemoryEventBus implements EventBusPort {
   #ee = new EventEmitter().setMaxListeners(0);
+  #hasObservability = false;
+  observabilityTopic = "observability";
+
   constructor() {}
 
   /**
@@ -12,13 +15,16 @@ export class InMemoryEventBus implements EventBusPort {
    * @param event EventEnvelope to send on that channel
    * @returns Promise<void>
    * @description Uses the queueMicrotask to postpone emission slightly to
-   * prefent recursive loops or having other emitions prempt the execution and
+   * prevent recursive loops or having other emitions preempt the execution and
    * handling of this emition.
    *
-   * Uses EventEmitter under the hood.
+   * Uses Node's EventEmitter under the hood.
    */
-  async publish(topic: string, event: AnyEvent): Promise<void> {
-    console.log("[inmemory-bus] publish() called; topic, event:", topic, event);
+  async publish(
+    topic: string,
+    event: AnyEvent,
+    options: PublishOptions
+  ): Promise<void> {
     if (event == undefined || event.type == undefined) {
       console.error(
         "[inmemory-bus] cannot publish event. event or event.kind is undefined"
@@ -31,6 +37,10 @@ export class InMemoryEventBus implements EventBusPort {
     queueMicrotask(() => {
       try {
         this.#ee.emit(topic, payload);
+
+        if (this.observabilityTopic && !options?.internal) {
+          this.#ee.emit(this.observabilityTopic, payload);
+        }
       } catch (err) {
         console.error(`[bus.publish]: emit error '${topic}', event:${payload}`);
         console.error(err);
@@ -42,7 +52,7 @@ export class InMemoryEventBus implements EventBusPort {
     topic: string,
     handler: (e: AnyEvent, t?: string) => Promise<void>
   ): () => unknown {
-    console.log("[inmemory-bus] subscribe() called;");
+    if (topic === this.observabilityTopic) this.#hasObservability = true;
     const safeHandler = (e: AnyEvent, t: string) => {
       try {
         handler(e, t ?? topic);
@@ -51,9 +61,13 @@ export class InMemoryEventBus implements EventBusPort {
       }
     };
     this.#ee.on(topic, safeHandler);
-    return () => this.#ee.off(topic, safeHandler);
+    return () => {
+      if (topic === this.observabilityTopic) this.#hasObservability = false;
+      this.#ee.off(topic, safeHandler);
+    };
   }
   async close(): Promise<unknown> {
+    this.#hasObservability = false;
     return this.#ee.removeAllListeners();
   }
 }
