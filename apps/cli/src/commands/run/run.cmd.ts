@@ -20,7 +20,12 @@ import {
 } from "@pipewarp/engine";
 import { startDemoServers } from "./demo.js";
 import { EmitterFactory } from "@pipewarp/events";
-import { ObservabilityTap, ConsoleSink } from "@pipewarp/observability";
+import {
+  ObservabilityTap,
+  ConsoleSink,
+  WebSocketServerSink,
+} from "@pipewarp/observability";
+import { WebSocketServer } from "ws";
 
 export async function cliRunAction(
   flowPath: string,
@@ -95,7 +100,12 @@ export async function cliRunAction(
 
   const logSink = new ConsoleSink();
   logSink.start();
-  const tap = new ObservabilityTap(bus, [logSink]);
+
+  const wsSink = new WebSocketServerSink(3006);
+
+  console.log("\nWaiting on Observability WebSocket Client");
+  await wsSink.start();
+  const tap = new ObservabilityTap(bus, [logSink, wsSink]);
   tap.start();
 
   // setup new generic worker with tools
