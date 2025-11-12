@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AnyEvent, SystemEvent } from "@pipewarp/types";
+import type { AnyEvent } from "@pipewarp/types";
 import { EventDetails } from "./EventDetails";
 
 export type EventBarProps = {
