@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import { EventBusPort, QueuePort, StreamRegistryPort } from "@pipewarp/ports";
 import { Worker, type WorkerCapability } from "../../src/worker/worker.js";
 import type { AnyEvent, Capability } from "@pipewarp/types";
-import { subscribe } from "diagnostics_channel";
 import { EmitterFactory } from "@pipewarp/events";
 import { ToolRegistry } from "../../src/tools/tool-registry.js";
 

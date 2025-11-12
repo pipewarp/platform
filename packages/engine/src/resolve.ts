@@ -33,8 +33,8 @@ export function resolveStepArgs(
       const selector = getSelector(v);
       if (selector) {
         const contextValue = getContextValue(context, selector);
-        console.log(`[resolver] arg key ${k} had value ${v}`);
-        console.log(`[resolver] now it has ${contextValue}`);
+        // console.log(`[resolver] arg key ${k} had value ${v}`);
+        // console.log(`[resolver] now it has ${contextValue}`);
         stepArgs[k] = contextValue;
       }
     }
@@ -48,7 +48,7 @@ export function getSelector(arg: string): string | false {
   const match = arg.match(regex);
 
   if (!match) return false;
-  console.log(`[resolver] found match ${match[1]} in arg ${arg}`);
+  // console.log(`[resolver] found match ${match[1]} in arg ${arg}`);
   return match[1];
 }
 
@@ -60,12 +60,12 @@ export function getContextValue(
   if (keys.length === 0 || root !== "steps" || !stepName) return;
   if (!context.steps[stepName]) return;
 
-  console.log(`[resolver] got keys ${keys}`);
+  // console.log(`[resolver] got keys ${keys}`);
 
   // selector steps.transcribe.text.url
   // keys = ["text", "url"]
 
-  console.log(`[resolver] full context\n`, JSON.stringify(context, null, 2));
+  // console.log(`[resolver] full context\n`, JSON.stringify(context, null, 2));
 
   let c: Record<string, unknown> | undefined = context.steps[stepName].result;
   if (!c) return;

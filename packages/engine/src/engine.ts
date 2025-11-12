@@ -31,56 +31,128 @@ export class Engine {
 
   async subscribeToTopics(): Promise<void> {
     await this.bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
-      console.log("[engine bus] flows.lifecycle event:", e);
       if (e.type === "flow.queued") {
         const event = e as AnyEvent<"flow.queued">;
-        await this.startFlow({
-          correlationId: event.correlationId,
-          flowName: event.data.flowName,
-          outfile: event.data.outfile,
-          test: event.data.test,
-          inputs: {},
+
+        const spanId = this.emitterFactory.generateSpanId();
+        const traceParent = this.emitterFactory.makeTraceParent(
+          event.traceid,
+          spanId
+        );
+        const flowEmitter = this.emitterFactory.newFlowEmitter({
+          source: "pipewarp://engine/flow/queued",
+          flowid: event.flowid,
+          traceId: event.traceid,
+          spanId,
+          traceParent,
         });
+
+        flowEmitter.emit("flow.started", {
+          flow: {
+            id: event.flowid,
+            name: event.data.flow.name,
+            version: event.data.flow.version,
+          },
+        });
+
+        await this.startFlow(
+          {
+            correlationId: "none",
+            flowName: event.data.flowName,
+            outfile: event.data.outfile,
+            test: event.data.test,
+            inputs: {},
+          },
+          event.traceid
+        );
       }
     });
 
-    await this.bus.subscribe("steps.lifecycle", async (e: AnyEvent) => {
-      console.log("[engine bus] steps.lifecycle event:", e);
-      if (e.type === "step.action.completed") {
-        e = e as AnyEvent<"step.action.completed">;
-        await this.handleWorkerDone(e);
+    await this.bus.subscribe("jobs.lifecycle", async (e: AnyEvent) => {
+      if (e.type === "job.completed") {
+        const jobCompletedEvent = e as AnyEvent<"job.completed">;
+        await this.handleWorkerDone(jobCompletedEvent);
       }
     });
 
     await this.bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
-      console.log("[engine] workers.lifecycle event:", e);
       if (e.type === "worker.registration.requested") {
         const event = e as AnyEvent<"worker.registration.requested">;
         this.resourceRegistry.registerWorker(event.data);
-        this.bus.publish("workers.lifecycle", {
-          id: String(crypto.randomUUID()),
-          source: "resource-registry://default",
-          specversion: "1.0",
-          correlationId: String(crypto.randomUUID()),
-          time: new Date().toISOString(),
-          type: "worker.registered",
-          data: {
-            workerId: event.data.id,
-            status: "accepted",
-            registeredAt: new Date().toISOString(),
+
+        const spanId = this.emitterFactory.generateSpanId();
+        const traceParent = this.emitterFactory.makeTraceParent(
+          e.traceid,
+          spanId
+        );
+
+        const workerEmitter = this.emitterFactory.newWorkerEmitter({
+          source: "pipewarp://engine/resource-registry",
+          workerid: event.data.worker.id,
+          traceId: event.traceid,
+          spanId,
+          traceParent,
+        });
+
+        await workerEmitter.emit("worker.registered", {
+          worker: {
+            id: event.data.worker.id,
           },
-        } satisfies AnyEvent<"worker.registered">);
+          workerId: event.data.worker.id,
+          status: "accepted",
+          registeredAt: new Date().toISOString(),
+        });
       }
     });
   }
 
   async start() {
+    const traceId = this.emitterFactory.generateTraceId();
+    const spanId = this.emitterFactory.generateSpanId();
+    const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
+    const emitter = this.emitterFactory.newEngineEmitter({
+      source: "pipewarp://engine/start",
+      engineid: "default-engine",
+      traceId,
+      spanId,
+      traceParent,
+    });
+
+    emitter.emit("engine.started", {
+      engine: {
+        id: "default-engine",
+        version: "0.1.0-alpha.4",
+      },
+      status: "started",
+    });
     await this.subscribeToTopics();
   }
+  async stop() {
+    const traceId = this.emitterFactory.generateTraceId();
+    const spanId = this.emitterFactory.generateSpanId();
+    const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
+    const emitter = this.emitterFactory.newEngineEmitter({
+      source: "pipewarp://engine/stop/",
+      engineid: "default-engine",
+      traceId,
+      spanId,
+      traceParent,
+    });
 
-  async startFlow(input: StartFlowInput): Promise<void> {
+    emitter.emit("engine.stopped", {
+      engine: {
+        id: "default-engine",
+        version: "0.1.0-alpha.4",
+      },
+      status: "stopped",
+      reason: "SIGINT called",
+    });
+
+    await this.bus.close();
+  }
+
+  async startFlow(input: StartFlowInput, traceId: string): Promise<void> {
     // get flow definition
-    console.log("[engine] startFlow");
     const { flowName, inputs, correlationId } = input;
 
     const flow = this.flowDb.get(flowName);
@@ -93,11 +165,42 @@ export class Engine {
       flow.name,
       correlationId,
       input.test,
-      input.outfile
+      input.outfile,
+      traceId
     );
     context = this.#initStepContext(context, flow.start);
-    console.log("[engine] made RunContext:\n", context);
 
+    const logEmitter = this.emitterFactory.newSystemEmitter({
+      source: "pipewarp://engine/start-flow",
+      traceId: "",
+      spanId: "",
+      traceParent: "",
+    });
+    await logEmitter.emit("system.logged", {
+      log: "[engine] made RunContext",
+    });
+
+    const spanId = this.emitterFactory.generateSpanId();
+    const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
+    const emitter = this.emitterFactory.newRunEmitter({
+      source: "pipewarp://engine/start-flow",
+      flowid: flow.name,
+      runid: context.runId,
+      traceId,
+      spanId,
+      traceParent,
+    });
+
+    emitter.emit("run.started", {
+      run: {
+        id: context.runId,
+        status: "started",
+      },
+      engine: {
+        id: "default-engine",
+      },
+      status: "started",
+    });
     await this.queueStreamingSteps(flow, context, flow.start);
     return;
   }
@@ -132,40 +235,58 @@ export class Engine {
     stepName: string
   ): Promise<void> {
     const stepType = flow.steps[stepName].type;
-
-    this.emitterFactory.setScope({
-      correlationId: context.correlationId,
-      flowId: context.flowName,
-      runId: context.runId,
-      source: "/engine/stepHandler",
-      stepId: stepName,
+    const stepSpanId = this.emitterFactory.generateSpanId();
+    const stepTraceParent = this.emitterFactory.makeTraceParent(
+      context.traceId,
+      stepSpanId
+    );
+    const stepEmitter = this.emitterFactory.newStepEmitter({
+      source: "pipewarp://engine/queue-step",
+      flowid: context.flowName,
+      runid: context.runId,
+      stepid: stepName,
+      steptype: stepType,
+      traceId: context.traceId,
+      spanId: stepSpanId,
+      traceParent: stepTraceParent,
+    });
+    stepEmitter.emit("step.started", {
+      step: {
+        id: stepName,
+        name: stepName,
+        type: stepType,
+      },
+      status: "started",
     });
 
-    const stepEmitter = this.emitterFactory.newStepEmitter();
+    // const stepEmitter = this.emitterFactory.newStepEmitter();
+    const spanId = this.emitterFactory.generateSpanId();
+    const traceParent = this.emitterFactory.makeTraceParent(
+      context.traceId,
+      spanId
+    );
+    const jobEmitter = this.emitterFactory.newJobEmitter({
+      source: "pipewarp://engine/queue-step",
+      flowid: context.flowName,
+      runid: context.runId,
+      stepid: stepName,
+      jobid: String(crypto.randomUUID()),
+      traceId: context.traceId,
+      spanId,
+      traceParent,
+    });
 
-    if (stepType === "action") {
-      const capName = flow.steps[stepName].tool;
+    if (stepType === "mcp") {
+      const capName = flow.steps[stepName].type;
       const caps = this.resourceRegistry.getCapability(capName);
       if (caps === undefined) {
         throw new Error(
-          `[engine] no capability in local resourece registry for ${capName}`
+          `[engine] no capability in local resource registry for ${capName}`
         );
       }
 
       const handler = this.stepHandlerRegistry[stepType];
-      await handler.queue(flow, context, stepName, stepEmitter);
-    }
-
-    if (stepType === "mcp") {
-      const cap = this.resourceRegistry.getCapability(stepType);
-      if (cap === undefined) {
-        throw new Error(
-          `[engine] no capability in local resourece registry for ${stepType}`
-        );
-      }
-
-      const handler = this.stepHandlerRegistry[stepType];
-      await handler.queue(flow, context, stepName, stepEmitter);
+      await handler.queue(flow, context, stepName, jobEmitter);
     }
 
     context.queuedSteps.add(stepName);
@@ -176,11 +297,12 @@ export class Engine {
     flowName: string,
     correlationId: string,
     isTest: boolean | undefined = false,
-    outFile: string | undefined = "./output.json"
+    outFile: string | undefined = "./output.json",
+    traceId: string
   ): RunContext {
     const context: RunContext = {
       runId: isTest ? "test-run-id" : String(crypto.randomUUID()),
-      correlationId,
+      traceId,
       // step state stuff
       runningSteps: new Set(),
       queuedSteps: new Set(),
@@ -223,53 +345,146 @@ export class Engine {
   }
 
   async handleWorkerDone(event: AnyEvent): Promise<void> {
-    const e = event as AnyEvent<"step.action.completed">;
+    const e = event as AnyEvent<"job.completed">;
     // update context based on completed event
-    if (!this.#runs.has(e.runId)) {
-      console.error(`[engine] invalid run id: ${e.runId}`);
+    if (!this.#runs.has(e.runid)) {
+      console.error(`[engine] invalid run id: ${e.runid}`);
       return;
     }
-    const context = this.#runs.get(e.runId)!;
+    const context = this.#runs.get(e.runid)!;
 
     const result = e.data.result
       ? (e.data.result as Array<Record<string, unknown>>)
       : [{ data: null }];
     if (e.data.result) {
-      context.steps[e.stepId].result = { result };
+      context.steps[e.stepid].result = { result };
     }
-    context.steps[e.stepId].status = e.data.ok ? "success" : "failure";
+    context.steps[e.stepid].status = "success";
 
-    context.queuedSteps.delete(e.stepId);
-    context.runningSteps.delete(e.stepId);
-    context.doneSteps.add(e.stepId);
+    const stepSpanId = this.emitterFactory.generateSpanId();
+    const stepTraceParent = this.emitterFactory.makeTraceParent(
+      context.traceId,
+      stepSpanId
+    );
+    const flow = this.flowDb.get(e.flowid)!;
+    if (!flow) return;
+    flow.steps[e.stepid].type;
+
+    const stepEmitter = this.emitterFactory.newStepEmitter({
+      source: "pipewarp://engine/handle-worker-done",
+      flowid: context.flowName,
+      runid: context.runId,
+      stepid: e.stepid,
+      steptype: flow.steps[e.stepid].type,
+      traceId: context.traceId,
+      spanId: stepSpanId,
+      traceParent: stepTraceParent,
+    });
+    stepEmitter.emit("step.completed", {
+      step: {
+        id: e.stepid,
+        name: e.stepid,
+        type: flow.steps[e.stepid].type,
+      },
+      status: "completed",
+    });
+
+    context.queuedSteps.delete(e.stepid);
+    context.runningSteps.delete(e.stepid);
+    context.doneSteps.add(e.stepid);
     context.outstandingSteps--;
 
-    this.writeRunContext(e.runId);
-
-    // now get next step and start it.
-    const flow = this.flowDb.get(context.flowName);
+    this.writeRunContext(e.runid);
 
     if (!flow) {
       console.log(`[engine] executeStep(): no flow for ${context.flowName}`);
       return;
     }
-    const nextStep = this.#getNextStepName(flow, context, e.stepId);
+    const nextStep = this.#getNextStepName(flow, context, e.stepid);
 
     if (nextStep) {
       this.queueStreamingSteps(flow, context, nextStep);
     } else if (context.outstandingSteps === 0) {
-      console.log("[engine] no next step; no outstanding steps; run ended;");
+      const logEmitter = this.emitterFactory.newSystemEmitter({
+        source: "pipewarp://engine/handle-work-done",
+        traceId: "",
+        spanId: "",
+        traceParent: "",
+      });
+      await logEmitter.emit("system.logged", {
+        log: "[engine] no next step; no outstanding steps; run ended;",
+      });
+
+      const runSpanId = this.emitterFactory.generateSpanId();
+      const flowSpanId = this.emitterFactory.generateSpanId();
+      const runTraceParent = this.emitterFactory.makeTraceParent(
+        runSpanId,
+        e.traceid
+      );
+      const flowTraceParent = this.emitterFactory.makeTraceParent(
+        flowSpanId,
+        e.traceid
+      );
+
+      const runEmitter = this.emitterFactory.newRunEmitter({
+        source: "pipewarp://worker/run/ended",
+        flowid: e.flowid,
+        runid: e.runid,
+        traceId: e.traceid,
+        spanId: runSpanId,
+        traceParent: runTraceParent,
+      });
+
+      runEmitter.emit("run.completed", {
+        run: {
+          id: e.runid,
+          status: "completed",
+        },
+        engine: {
+          id: "default-engine",
+        },
+        status: "completed",
+        message: "run is over",
+      });
+
+      const flowEmitter = this.emitterFactory.newFlowEmitter({
+        source: "pipewarp://worker/run/ended",
+        flowid: e.flowid,
+        traceId: e.traceid,
+        spanId: runSpanId,
+        traceParent: runTraceParent,
+      });
+
+      const flow = this.flowDb.get(e.flowid);
+      if (!flow) return;
+      await flowEmitter.emit("flow.completed", {
+        flow: {
+          id: e.flowid,
+          name: flow.name,
+          version: flow.version,
+        },
+      });
+
       return;
     }
   }
 
   writeRunContext(runId: string): void {
-    console.log("[engine] writing context to disk");
     const context = this.#runs.get(runId);
     const file =
       context?.outFile !== undefined ? context.outFile : "./output.json";
 
     fs.writeFileSync(file, JSON.stringify(context, null, 2));
+
+    const logEmitter = this.emitterFactory.newSystemEmitter({
+      source: "pipewarp://engine/write-run-context",
+      traceId: "",
+      spanId: "",
+      traceParent: "",
+    });
+    logEmitter.emit("system.logged", {
+      log: "[engine] context written to disk",
+    });
     return;
   }
 }

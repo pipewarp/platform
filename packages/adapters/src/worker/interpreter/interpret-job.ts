@@ -20,10 +20,10 @@ export function interpretJob(event: AnyEvent): JobDescription {
     data: event.data,
   };
   switch (event.type) {
-    case "step.mcp.queued":
-      const e = event as AnyEvent<"step.mcp.queued">;
+    case "job.mcp.queued":
+      const e = event as AnyEvent<"job.mcp.queued">;
 
-      ctx.capability = e.stepType;
+      ctx.capability = e.entity!;
       if (e.data.pipe.to) {
         ctx.isProducer = true;
         ctx.streamId = e.data.pipe.to.id;

@@ -5,12 +5,7 @@ import type {
   ToolPort,
 } from "@pipewarp/ports";
 import { EmitterFactory } from "@pipewarp/events";
-import type {
-  AnyEvent,
-  Capability,
-  StepActionCompletedData,
-  WorkerMetadata,
-} from "@pipewarp/types";
+import type { AnyEvent, Capability, WorkerMetadata } from "@pipewarp/types";
 import type { ToolClass } from "../tools/tool-factory.js";
 import { ToolRegistry } from "../tools/tool-registry.js";
 import type { JobContext } from "./types.js";
@@ -82,7 +77,6 @@ export class Worker {
 
   #subscribeToBus(): void {
     this.#bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
-      console.log("[worker] workers.lifecycle event:", e);
       if (e.type === "worker.registered") {
         const event = e as AnyEvent<"worker.registered">;
         if (
@@ -90,30 +84,39 @@ export class Worker {
           event.data.status === "accepted"
         ) {
           this.#context.isRegistered = true;
-          console.log("[worker] received registration accepted");
+
+          const logEmitter = this.#emitterFactory.newSystemEmitter({
+            source: "pipewarp://engine/subscribe-to-bus",
+            traceId: "",
+            spanId: "",
+            traceParent: "",
+          });
+          await logEmitter.emit("system.logged", {
+            log: "[worker] received registration accepted",
+          });
         }
       }
     });
   }
 
   // may resolve with other factors in the future for multiple tools
-  resolveTool(capabiliy: Capability, key?: string): ToolClass {
-    return this.#toolRegistry.resolve(capabiliy.tool.id, key);
+  resolveTool(capability: Capability, key?: string): ToolClass {
+    return this.#toolRegistry.resolve(capability.tool.id, key);
   }
 
   async handleNewJob(event: AnyEvent): Promise<void> {
-    console.log(`[worker-new] handleNewJob() event: ${event}`);
+    const e = event as AnyEvent<"job.mcp.queued">;
 
     // invoke some sort of tool from a tool registry
     const jobDescription = interpretJob(event);
     const jobContext: JobContext = {
       id: jobDescription.id,
-      capabilitiy: jobDescription.capability,
+      capability: jobDescription.capability,
       metadata: {
-        flowId: event.flowId ?? "",
-        runId: event.runId ?? "",
-        stepId: event.stepId ?? "",
-        stepType: event.stepType ?? "",
+        flowId: e.flowid,
+        runId: e.runid,
+        stepId: e.stepid,
+        stepType: e.entity!,
         workerId: this.#context.workerId,
       },
       description: jobDescription,
@@ -129,36 +132,67 @@ export class Worker {
       streamRegistry: this.#streamRegistry,
     });
 
-    const result = await executor.run();
-
-    console.log(`[worker-new] results ${JSON.stringify(result, null, 2)}`);
-
-    this.#emitterFactory.setScope({
-      source: "worker://step-action-completed",
-      correlationId: event.correlationId,
-      flowId: event.flowId,
-      runId: event.runId,
-      stepId: event.stepId,
+    const toolSpanId = this.#emitterFactory.generateSpanId();
+    const toolTraceParent = this.#emitterFactory.makeTraceParent(
+      e.traceid,
+      toolSpanId
+    );
+    const toolEmitter = this.#emitterFactory.newToolEmitter({
+      source: "pipewarp://worker/job-done",
+      flowid: e.flowid,
+      runid: e.runid,
+      stepid: e.stepid,
+      jobid: e.jobid,
+      toolid: jobContext.tool,
+      traceId: e.traceid,
+      spanId: toolSpanId,
+      traceParent: toolTraceParent,
     });
 
-    const stepEmitter = this.#emitterFactory.newStepEmitter();
+    await toolEmitter.emit("tool.started", {
+      tool: {
+        id: jobContext.tool,
+        name: "unknown",
+        version: "unknown",
+      },
+      log: "about to execute a tool",
+      status: "started",
+    });
+    const result = await executor.run();
 
-    let data: StepActionCompletedData;
-    if (result === undefined) {
-      data = {
-        ok: false,
-        message: "error",
+    const spanId = this.#emitterFactory.generateSpanId();
+    const traceParent = this.#emitterFactory.makeTraceParent(e.traceid, spanId);
+
+    const jobEmitter = this.#emitterFactory.newJobEmitter({
+      source: "pipewarp://worker/job-done",
+      flowid: e.flowid,
+      runid: e.runid,
+      stepid: e.stepid,
+      jobid: e.jobid,
+      traceId: e.traceid,
+      spanId,
+      traceParent,
+    });
+
+    if (result) {
+      await jobEmitter.emit("job.completed", {
+        job: {
+          id: e.jobid,
+          capability: e.data.job.capability,
+        },
+        status: "completed",
         result: result,
-        error: "tool returned undefined",
-      };
+      });
     } else {
-      data = {
-        ok: true,
-        message: "tool returned results",
-        result: result,
-      };
+      await jobEmitter.emit("job.failed", {
+        job: {
+          id: e.jobid,
+          capability: e.data.job.capability,
+        },
+        status: "failed",
+        reason: "tool returned undefined results",
+      });
     }
-    await stepEmitter.emit("step.action.completed", "action", data);
   }
 
   addCapability(profile: Capability) {
@@ -182,7 +216,7 @@ export class Worker {
     const capabilities: Capability[] = [];
     const caps = this.#context.capabilities;
 
-    // stip some fields from context and create new objects
+    // strip some fields from context and create new objects
     for (const id in caps) {
       const cap: Capability = {
         name: caps[id].name,
@@ -203,24 +237,53 @@ export class Worker {
 
   async requestRegistration(): Promise<void> {
     const meta = this.getMetadata();
-    const event: AnyEvent<"worker.registration.requested"> = {
-      id: String(crypto.randomUUID()),
-      correlationId: String(crypto.randomUUID()),
-      source: "worker://" + this.#context.workerId,
-      time: new Date().toISOString(),
-      specversion: "1.0",
-      datacontenttype: "application/json",
-      type: "worker.registration.requested",
-      data: meta,
-    };
-    await this.#bus.publish("workers.lifecycle", event);
+
+    const spanId = this.#emitterFactory.generateSpanId();
+    const traceId = this.#emitterFactory.generateTraceId();
+    const traceParent = this.#emitterFactory.makeTraceParent(traceId, spanId);
+
+    const workerEmitter = this.#emitterFactory.newWorkerEmitter({
+      source: "pipewarp://worker/" + this.#context.workerId,
+      workerid: this.#context.workerId,
+      traceId,
+      spanId,
+      traceParent,
+    });
+
+    await workerEmitter.emit("worker.registration.requested", {
+      worker: {
+        id: meta.id,
+      },
+      id: meta.id,
+      name: meta.name,
+      type: "inprocess",
+      capabilities: meta.capabilities,
+    });
   }
 
-  start(): void {
+  async start(): Promise<void> {
     for (const id in this.#context.capabilities) {
       const p = this.startCapabilityJobWaiters(id);
       this.#capabilityJobWaiters.set(id, p);
     }
+    const spanId = this.#emitterFactory.generateSpanId();
+    const traceId = this.#emitterFactory.generateTraceId();
+    const traceParent = this.#emitterFactory.makeTraceParent(traceId, spanId);
+
+    const workerEmitter = this.#emitterFactory.newWorkerEmitter({
+      source: "pipewarp://engine/resource-registry",
+      workerid: this.#context.workerId,
+      traceId,
+      spanId,
+      traceParent,
+    });
+
+    await workerEmitter.emit("worker.started", {
+      worker: {
+        id: this.#context.workerId,
+      },
+      status: "started",
+    });
   }
   stop(): void {}
 
@@ -263,12 +326,11 @@ export class Worker {
           });
           cap.jobWaiters.add(waiter); // later implement graceful shutdown with this
         } catch (err) {
-          console.log("[worker] promise did not return job:", err);
           if (!cap.newJobWaitersAreAllowed) break;
           continue;
         }
       } else {
-        // if we dont await, loop will cycle forever once concurrency limit is met
+        // if we don't await, loop will cycle forever once concurrency limit is met
         await capacityRelease.promise;
       }
     }

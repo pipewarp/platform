@@ -1,5 +1,6 @@
 {
-  "name": "new.flow.json",
+  "name": "demo.flow.json",
+  "version": "0.1.0-alpha.4",
   "start": "mario",
   "steps": {
     "mario": {

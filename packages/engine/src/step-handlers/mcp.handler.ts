@@ -1,8 +1,8 @@
 import type { StepHandler } from "./step-handler.js";
 import type { ResolveStepArgs } from "../resolve.js";
-import type { AnyEvent, StepMcpQueuedData } from "@pipewarp/types";
+import type { AnyEvent, JobMcpQueuedData } from "@pipewarp/types";
 import type { RunContext, Flow, McpStep } from "@pipewarp/specs";
-import type { StepEmitter } from "@pipewarp/events";
+import type { JobEmitter } from "@pipewarp/events";
 import { PipeResolver } from "../pipe-resolver.js";
 
 export class McpStepHandler implements StepHandler {
@@ -15,7 +15,7 @@ export class McpStepHandler implements StepHandler {
     flow: Flow,
     context: RunContext,
     stepName: string,
-    emitter: StepEmitter
+    emitter: JobEmitter
   ): Promise<void> {
     const step: McpStep = flow.steps[stepName] as McpStep;
 
@@ -29,7 +29,11 @@ export class McpStepHandler implements StepHandler {
       }
 
       // making data here just to log it
-      const data: StepMcpQueuedData = {
+      const data: JobMcpQueuedData = {
+        job: {
+          id: String(crypto.randomUUID()),
+          capability: step.type,
+        },
         args,
         pipe: pipes,
         url: step.url,
@@ -37,9 +41,7 @@ export class McpStepHandler implements StepHandler {
         feature: step.feature,
       };
 
-      console.log("data", JSON.stringify(data, null, 2));
-
-      await emitter.emit("step.mcp.queued", "mcp", data);
+      await emitter.emit("job.mcp.queued", data);
       context.steps[stepName].status = "queued";
     } catch (err) {
       console.error(

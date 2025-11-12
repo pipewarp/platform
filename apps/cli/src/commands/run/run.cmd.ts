@@ -7,7 +7,7 @@ import { McpManager } from "@pipewarp/adapters/mcp-manager";
 import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
-import { McpWorker, Worker } from "@pipewarp/adapters/worker";
+import { Worker } from "@pipewarp/adapters/worker";
 import { McpTool, ToolFactories, ToolRegistry } from "@pipewarp/adapters/tools";
 import { InMemoryStreamRegistry } from "@pipewarp/adapters/stream";
 import type { AnyEvent } from "@pipewarp/types";
@@ -20,13 +20,48 @@ import {
 } from "@pipewarp/engine";
 import { startDemoServers } from "./demo.js";
 import { EmitterFactory } from "@pipewarp/events";
+import {
+  ObservabilityTap,
+  ConsoleSink,
+  WebSocketServerSink,
+} from "@pipewarp/observability";
 
 export async function cliRunAction(
   flowPath: string,
   options: { out?: string; test?: boolean; server?: string; demo?: boolean }
 ): Promise<void> {
-  console.log("[cli-run] running run");
-  console.log("[cli-run] options:", options);
+  const queue = new InMemoryQueue();
+  const bus = new InMemoryEventBus();
+  const router = new NodeRouter(bus, queue);
+  const streamRegistry = new InMemoryStreamRegistry();
+  const pipeResolver = new PipeResolver(streamRegistry);
+  const stepHandlerRegistry = wireStepHandlers(resolveStepArgs, pipeResolver);
+
+  const logEF = new EmitterFactory(bus);
+  const logEmitter = logEF.newSystemEmitter({
+    source: "pipewarp://cli/run",
+    traceId: "",
+    spanId: "",
+    traceParent: "",
+  });
+  await logEmitter.emit("system.logged", {
+    log: "[cli] running run command with options",
+    payload: options,
+  });
+  const logSink = new ConsoleSink();
+  logSink.start();
+
+  const wsSink = new WebSocketServerSink(3006);
+
+  console.log("\nWaiting on Observability WebSocket Client");
+  await wsSink.start();
+  const tap = new ObservabilityTap(bus, [logSink, wsSink]);
+  tap.start();
+
+  await logEmitter.emit("system.logged", {
+    log: "[cli] running run command with options",
+    payload: options,
+  });
 
   const {
     out = "./output.temp.json",
@@ -43,6 +78,10 @@ export async function cliRunAction(
   const flowStore = new FlowStore();
   const { result, flow } = flowStore.validate(json);
   if (!result) {
+    await logEmitter.emit("system.logged", {
+      log: "[cli] running run command with options",
+      payload: options,
+    });
     console.error(`[cli-run] Invaid flow at ${flowPath}`);
     return;
   }
@@ -54,7 +93,10 @@ export async function cliRunAction(
   const mcpStore = new McpManager();
 
   if (demo) {
-    console.log("[cli-run] starting demo servers");
+    await logEmitter.emit("system.logged", {
+      log: "[cli] starting demo servers",
+      payload: options,
+    });
     const managedProcesses = await startDemoServers();
 
     if (!managedProcesses) {
@@ -83,19 +125,6 @@ export async function cliRunAction(
     });
   } else {
     await mcpStore.addStdioClient(server, "stt-client");
-  }
-
-  const queue = new InMemoryQueue();
-  const bus = new InMemoryEventBus();
-  const router = new NodeRouter(bus, queue);
-  const streamRegistry = new InMemoryStreamRegistry();
-  const pipeResolver = new PipeResolver(streamRegistry);
-  const stepHandlerRegistry = wireStepHandlers(resolveStepArgs, pipeResolver);
-  const mcpWorker = new McpWorker(queue, bus, mcpStore, streamRegistry);
-
-  for await (const [mcpId] of mcpStore.mcps) {
-    console.log(`[cli-run] starting worker (mcpid: ${mcpId})`);
-    await mcpWorker.startMcp(mcpId);
   }
 
   // setup new generic worker with tools
@@ -133,67 +162,60 @@ export async function cliRunAction(
     new EmitterFactory(bus)
   );
 
-  const startFlow: AnyEvent<"flow.queued"> = {
-    correlationId: String(crypto.randomUUID()),
-    id: String(crypto.randomUUID()),
-    time: new Date().toISOString(),
-    type: "flow.queued",
-    flowId: flow.name,
-    source: "/cli/cmd/run",
-    specversion: "1.0",
-    data: {
-      flowName: flow.name,
-      inputs: { text: "text" },
-      test,
-      outfile: resolvedOutPath,
-    },
-  };
+  const ef = new EmitterFactory(bus);
+
+  const traceId = ef.generateTraceId();
+  const spanId = ef.generateSpanId();
+  const traceParent = ef.makeTraceParent(traceId, spanId);
+  const flowId = String(crypto.randomUUID());
+  const flowEmitter = ef.newFlowEmitter({
+    source: "pipewarp://cli/run",
+    flowid: flowId,
+    traceId,
+    spanId,
+    traceParent,
+  });
 
   bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
-    console.log("[cli] workers.lifecycle event:", e);
     if (e.type === "worker.registered") {
       const event = e as AnyEvent<"worker.registered">;
       if (
         event.data.workerId === workerId &&
         event.data.status === "accepted"
       ) {
-        console.log(
-          "[cli] received registration accepted, publishing flow event"
-        );
-        worker.start();
-        await bus.publish("flows.lifecycle", startFlow);
+        await worker.start();
+        await flowEmitter.emit("flow.queued", {
+          flowName: flow.name,
+          outfile: resolvedOutPath,
+          inputs: { text: "text" },
+          test,
+          flow: {
+            id: flowId,
+            name: flow.name,
+            version: flow.version,
+          },
+        });
       }
     }
+
+    bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
+      if (e.type === "flow.completed") {
+        process.emit("SIGINT");
+      }
+    });
   });
 
   process.on("SIGINT", async () => {
-    if (demo) {
-      await mcpWorker.stopMcp("unicode");
-      await mcpWorker.stopMcp("transform");
-    } else {
-      await mcpWorker.stopMcp("stt-client");
-      await worker.stopAllJobWaiters();
-    }
+    await worker.stopAllJobWaiters();
     queue.abortAll();
+    await engine.stop();
   });
   process.on("SIGTERM", async () => {
-    if (demo) {
-      await mcpWorker.stopMcp("unicode");
-      await mcpWorker.stopMcp("transform");
-    } else {
-      await mcpWorker.stopMcp("stt-client");
-      await worker.stopAllJobWaiters();
-    }
+    await worker.stopAllJobWaiters();
     queue.abortAll();
   });
   process.on("exit", async () => {
-    if (demo) {
-      await mcpWorker.stopMcp("unicode");
-      await mcpWorker.stopMcp("transform");
-    } else {
-      await mcpWorker.stopMcp("stt-client");
-      await worker.stopAllJobWaiters();
-    }
+    await worker.stopAllJobWaiters();
     queue.abortAll();
   });
 
