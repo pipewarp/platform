@@ -31,7 +31,7 @@ A single practical spec for emitting lifecycle and domain events that correlate 
 - `component` (pipewarp bounded set)
 - `operation` (pipewarp bounded set)
 - ids (optional per scope, references to pipewarp values) - `flowid`, `runid`, `stepid`, `jobid`, `toolid`, `steptype`
-- classification (pipwarp relevant references) `capability`, `tool`
+- classification (pipewarp relevant references) `capability`, `tool`
 - errors/retries `attempt`, `errorkind`, `errorcode`
 
 ### 03. Vocabulary
@@ -48,6 +48,7 @@ A single practical spec for emitting lifecycle and domain events that correlate 
 - `stream`
 - `cli`
 - `job`
+- `system`
 
 #### `action` (lifecycle verbs)
 
@@ -68,6 +69,7 @@ Prefer one word verbs, past tense.
 - `registered`
 - `requested`
 - `saved`
+- `logged`
 
 #### `entity` (classification of work)
 
