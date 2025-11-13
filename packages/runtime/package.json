@@ -16,7 +16,11 @@
     "lint": "echo lint"
   },
   "packageManager": "pnpm@10.17.1",
-  "dependencies": {},
+  "dependencies": {
+    "@pipewarp/engine": "workspace:*",
+    "@pipewarp/adapters": "workspace:*",
+    "@pipewarp/events": "workspace:*"
+  },
   "devDependencies": {
     "@pipewarp/ports": "workspace:*",
     "@pipewarp/types": "workspace:*"

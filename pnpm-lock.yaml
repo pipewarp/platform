@@ -41,6 +41,9 @@ importers:
       '@pipewarp/ports':
         specifier: workspace:*
         version: link:../../packages/ports
+      '@pipewarp/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@pipewarp/specs':
         specifier: workspace:*
         version: link:../../packages/specs
@@ -299,6 +302,16 @@ importers:
         version: link:../types
 
   packages/runtime:
+    dependencies:
+      '@pipewarp/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@pipewarp/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@pipewarp/events':
+        specifier: workspace:*
+        version: link:../events
     devDependencies:
       '@pipewarp/ports':
         specifier: workspace:*
