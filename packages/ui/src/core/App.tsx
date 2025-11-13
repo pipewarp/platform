@@ -1,8 +1,7 @@
-import { useState } from "react";
-export function AppTwo() {
+export function App() {
   return (
     <div>
-      <p>Test of the core stuff.</p>
+      <p>Shared base app component.</p>
     </div>
   );
 }
