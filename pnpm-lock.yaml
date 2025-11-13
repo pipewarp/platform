@@ -298,6 +298,15 @@ importers:
         specifier: workspace:*
         version: link:../types
 
+  packages/runtime:
+    devDependencies:
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
+
   packages/specs:
     dependencies:
       zod:
