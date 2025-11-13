@@ -22,5 +22,10 @@
     "apps/*",
     "packages/*",
     "examples/"
-  ]
+  ],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
+  }
 }
