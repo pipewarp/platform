@@ -19,8 +19,13 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@pipewarp/ui": ["../../packages/ui/src/index.ts"],
+      "@pipewarp/ui/*": ["../../packages/ui/src/*"]
+    }
   },
+
   "include": ["src", "electron"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
