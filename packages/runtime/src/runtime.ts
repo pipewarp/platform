@@ -14,19 +14,29 @@ import {
 } from "@pipewarp/engine";
 import { EmitterFactory } from "@pipewarp/events";
 import { EventBusPort, StreamRegistryPort } from "@pipewarp/ports";
+import {
+  makeBusFactory,
+  makeQueueFactory,
+} from "./factories/registry.factory.js";
+import type { RuntimeConfig } from "./types/runtime.config.js";
+import type { RuntimeContext } from "./types/runtime.context.js";
 
-export type InProcessRuntimeContext = {
-  queue: InMemoryQueue;
-  bus: InMemoryEventBus;
-  router: NodeRouter;
-  engine: Engine;
-  worker: Worker;
-  flowStore: FlowStore;
-};
+export function makeRuntimeContext(config: RuntimeConfig): RuntimeContext {
+  const busFactory = makeBusFactory(
+    config.bus.placement,
+    config.bus.transport,
+    config.bus.store
+  );
 
-export function createInProcessRuntimeContext(): InProcessRuntimeContext {
-  const queue = new InMemoryQueue();
-  const bus = new InMemoryEventBus();
+  const bus = busFactory();
+
+  const queueFactory = makeQueueFactory(
+    config.queue.placement,
+    config.queue.transport,
+    config.queue.store
+  );
+  const queue = queueFactory();
+
   const router = new NodeRouter(bus, queue);
   const streamRegistry = new InMemoryStreamRegistry();
   const emitterFactory = new EmitterFactory(bus);
@@ -41,16 +51,22 @@ export function createInProcessRuntimeContext(): InProcessRuntimeContext {
     emitterFactory
   );
   const worker = createInProcessWorker(
+    config.worker.id,
     bus,
     queue,
     streamRegistry,
     emitterFactory
   );
 
-  return { queue, bus, router, engine, worker, flowStore };
+  return {
+    queue,
+    bus,
+    router,
+    engine,
+    worker,
+    flowStore,
+  };
 }
-
-export function startInProcessRuntime(ctx: InProcessRuntimeContext) {}
 
 export function createInProcessEngine(
   flowDb: FlowStore,
@@ -75,6 +91,7 @@ export function createInProcessEngine(
 }
 
 export function createInProcessWorker(
+  id: string,
   bus: EventBusPort,
   queue: InMemoryQueue,
   streamRegistry: StreamRegistryPort,
@@ -84,7 +101,7 @@ export function createInProcessWorker(
     mcp: () => new McpTool(),
   };
   const toolRegistry = new ToolRegistry(toolFactories);
-  const worker = new Worker("default-worker", {
+  const worker = new Worker(id, {
     bus,
     emitterFactory,
     queue,

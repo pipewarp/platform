@@ -11,13 +11,38 @@ import {
   ConsoleSink,
   WebSocketServerSink,
 } from "@pipewarp/observability";
-import { createInProcessRuntimeContext } from "@pipewarp/runtime";
+import { makeRuntimeContext} from "@pipewarp/runtime";
 
 export async function cliRunAction(
   flowPath: string,
   options: { out?: string; test?: boolean; server?: string; demo?: boolean }
 ): Promise<void> {
-  const ctx = createInProcessRuntimeContext();
+  const ctx = makeRuntimeContext({
+    bus: {
+      id: "",
+      placement: "embedded",
+      transport: "event-emitter",
+      store: "none"
+    },
+    queue: {
+      id: "",
+      placement: "embedded",
+      transport: "deferred-promise",
+      store: "none"
+    },
+    router: {
+      id: ""
+    },
+    engine: {
+      id: ""
+    },
+    worker: {
+      id: "default-worker"
+    },
+    stream: {
+      id: ""
+    }
+  });
 
   const logEF = new EmitterFactory(ctx.bus);
   const logEmitter = logEF.newSystemEmitter({
@@ -109,7 +134,7 @@ export async function cliRunAction(
   }
 
   // setup new generic worker with tools
-  const workerId = "default-worker";
+  
   ctx.worker.addCapability({
     name: "mcp",
     queueId: "mcp",
@@ -140,7 +165,7 @@ export async function cliRunAction(
     if (e.type === "worker.registered") {
       const event = e as AnyEvent<"worker.registered">;
       if (
-        event.data.workerId === workerId &&
+        event.data.workerId === "default-worker" &&
         event.data.status === "accepted"
       ) {
         await ctx.worker.start();
