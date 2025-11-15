@@ -1,7 +1,7 @@
 {
-  "name": "@pipewarp/ports",
+  "name": "@pipewarp/controller",
   "version": "0.1.0-alpha.6",
-  "private": "true",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -10,13 +10,18 @@
     }
   },
   "scripts": {
-    "build": "tsc --incremental false",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "echo test",
     "lint": "echo lint"
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
+    "@pipewarp/runtime": "workspace:*",
+    "@pipewarp/events": "workspace:*"
+  },
+  "devDependencies": {
+    "@pipewarp/ports": "workspace:*",
     "@pipewarp/types": "workspace:*"
   }
 }
