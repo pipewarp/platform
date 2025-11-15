@@ -7,7 +7,7 @@
     "pwp": "./dist/main.js"
   },
   "scripts": {
-    "build": "tsc --incremental false",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "echo test",
     "test:e2e": "vitest test",
@@ -25,6 +25,7 @@
     "@pipewarp/ports": "workspace:*",
     "@pipewarp/specs": "workspace:*",
     "@pipewarp/types": "workspace:*",
+    "@pipewarp/runtime": "workspace:*",
     "commander": "^14.0.1",
     "ws": "^8.18.3",
     "zod": "3.25.76"

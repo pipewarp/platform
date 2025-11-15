@@ -4,7 +4,7 @@ import type { EventSink } from "@pipewarp/ports";
 import { AnyEvent } from "@pipewarp/types";
 
 export class ConsoleSink implements EventSink {
-  readonly id = "console-sink";
+  readonly id = "console-log-sink";
   #enableSink = false;
   #s = "\x1b[0m";
   #c = {
@@ -19,10 +19,10 @@ export class ConsoleSink implements EventSink {
     system: "\x1b[38;2;170;170;190m",
   };
 
-  start(): void {
+  async start(): Promise<void> {
     this.#enableSink = true;
   }
-  stop(): void {
+  async stop(): Promise<void> {
     this.#enableSink = false;
   }
   handle(event: AnyEvent): void {

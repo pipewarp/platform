@@ -1,7 +1,7 @@
 {
-  "name": "@pipewarp/engine",
-  "version": "0.1.0-alpha.5",
-  "private": "true",
+  "name": "@pipewarp/runtime",
+  "version": "0.1.0-alpha.6",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -17,10 +17,13 @@
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
+    "@pipewarp/engine": "workspace:*",
     "@pipewarp/adapters": "workspace:*",
+    "@pipewarp/events": "workspace:*",
+    "@pipewarp/observability": "workspace:*"
+  },
+  "devDependencies": {
     "@pipewarp/ports": "workspace:*",
-    "@pipewarp/specs": "workspace:*",
-    "@pipewarp/types": "workspace:*",
-    "@pipewarp/events": "workspace:*"
+    "@pipewarp/types": "workspace:*"
   }
 }
