@@ -21,6 +21,20 @@ import {
 import type { ObservabilityConfig, RuntimeConfig, WorkerConfig } from "./types/runtime.config.js";
 import type { RuntimeContext, SinkMap } from "./types/runtime.context.js";
 import { ConsoleSink, ObservabilityTap, WebSocketServerSink } from "@pipewarp/observability";
+import { WorkflowRuntime } from "./workflow.runtime.js";
+import { FlowService } from "@pipewarp/services";
+
+
+
+export function createRuntime(config: RuntimeConfig): WorkflowRuntime { 
+  const ctx = makeRuntimeContext(config);
+
+  const ef = new EmitterFactory(ctx.bus);
+
+  const flowService = new FlowService(ctx.bus, ef);
+  const runtime = new WorkflowRuntime(ctx, { flowService });
+  return runtime;
+}
 
 export function makeRuntimeContext(config: RuntimeConfig): RuntimeContext {
   const busFactory = makeBusFactory(
@@ -72,17 +86,7 @@ export function makeRuntimeContext(config: RuntimeConfig): RuntimeContext {
   };
 }
 
-export async function startRuntime(ctx: RuntimeContext)  {
-  await ctx.router.start();
-  
-  for (const sink of Object.values(ctx.sinks)) {
-    await sink.start()
-  }
-  ctx.tap.start();
 
-  await ctx.engine.start();
-  await ctx.worker.requestRegistration();
-};
 
 export function createObservability(config: ObservabilityConfig, bus: EventBusPort): { tap: ObservabilityTap, sinks: SinkMap } {
   const tap = new ObservabilityTap(bus);

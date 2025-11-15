@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from "electron";
-import { makeRuntimeContext, startRuntime } from "@pipewarp/runtime";
+import { bootstrap } from "./bootstrap.js";
+
 // import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -53,7 +54,7 @@ function createWindow() {
   }
 }
 
-const ctx = makeRuntimeContext({
+const { controller } = bootstrap({
   bus: {
     id: "",
     placement: "embedded",
@@ -75,14 +76,14 @@ const ctx = makeRuntimeContext({
   worker: {
     id: "",
     capabilities: [{
-        name: "mcp",
-        queueId: "mcp",
-        maxJobCount: 2,
-        tool: {
-          id: "mcp",
-          type: "inprocess",
-        },
-      }]
+      name: "mcp",
+      queueId: "mcp",
+      maxJobCount: 2,
+      tool: {
+        id: "mcp",
+        type: "inprocess",
+      },
+    }]
   },
   stream: {
     id: ""
@@ -90,11 +91,21 @@ const ctx = makeRuntimeContext({
   observability: {
     id: "",
     sinks: ["console-log-sink"],
-    webSocketPort: 3006
   },
 });
 
-await startRuntime(ctx);
+await controller.startRuntime();
+await controller.startFlow({
+  flow: {
+    id: "flow-id",
+    name: "flow-name",
+    version: "flow-version"
+  },
+  flowName: "flow-name",
+  inputs: {},
+  outfile: "output.temp.json"
+});
+
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
