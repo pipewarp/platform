@@ -69,6 +69,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@pipewarp/controller':
+        specifier: workspace:*
+        version: link:../../packages/controller
       '@pipewarp/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
@@ -259,9 +262,6 @@ importers:
 
   packages/controller:
     dependencies:
-      '@pipewarp/events':
-        specifier: workspace:*
-        version: link:../events
       '@pipewarp/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -346,6 +346,22 @@ importers:
       '@pipewarp/observability':
         specifier: workspace:*
         version: link:../observability
+      '@pipewarp/services':
+        specifier: workspace:*
+        version: link:../services
+    devDependencies:
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
+
+  packages/services:
+    dependencies:
+      '@pipewarp/events':
+        specifier: workspace:*
+        version: link:../events
     devDependencies:
       '@pipewarp/ports':
         specifier: workspace:*
