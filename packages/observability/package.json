@@ -10,7 +10,7 @@
     }
   },
   "scripts": {
-    "build": "tsc --incremental false",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "echo test",
     "lint": "echo lint"

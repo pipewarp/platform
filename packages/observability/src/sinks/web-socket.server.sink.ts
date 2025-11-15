@@ -26,7 +26,7 @@ export class WebSocketServerSink implements EventSink {
     });
   }
 
-  stop(): Promise<void> | void {
+  stop(): Promise<void> {
     throw new Error("Method not implemented.");
   }
 

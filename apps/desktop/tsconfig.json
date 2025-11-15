@@ -22,7 +22,7 @@
     "types": ["node"],
     "paths": {
       "@pipewarp/ui": ["../../packages/ui/src/index.ts"],
-      "@pipewarp/ui/*": ["../../packages/ui/src/*"]
+      "@pipewarp/ui/*": ["../../packages/ui/src/*"],
     }
   },
 

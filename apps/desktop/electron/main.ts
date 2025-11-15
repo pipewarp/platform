@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from "electron";
+import { makeRuntimeContext, startRuntime } from "@pipewarp/runtime";
 // import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -51,6 +52,49 @@ function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
 }
+
+const ctx = makeRuntimeContext({
+  bus: {
+    id: "",
+    placement: "embedded",
+    transport: "event-emitter",
+    store: "none"
+  },
+  queue: {
+    id: "",
+    placement: "embedded",
+    transport: "deferred-promise",
+    store: "none"
+  },
+  router: {
+    id: ""
+  },
+  engine: {
+    id: ""
+  },
+  worker: {
+    id: "",
+    capabilities: [{
+        name: "mcp",
+        queueId: "mcp",
+        maxJobCount: 2,
+        tool: {
+          id: "mcp",
+          type: "inprocess",
+        },
+      }]
+  },
+  stream: {
+    id: ""
+  },
+  observability: {
+    id: "",
+    sinks: ["console-log-sink"],
+    webSocketPort: 3006
+  },
+});
+
+await startRuntime(ctx);
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

@@ -23,8 +23,7 @@ export function makeRegistryFactory<R extends Registry>(registry: R) {
     }
 
     const factory = transportRegistry[store];
-    if (!factory) {
-      // if (!factory || typeof factory !== "function") {
+    if (!factory || typeof factory !== "function") {
       throw new Error(`[runtime] no registry for store ${String(store)}`);
     }
 

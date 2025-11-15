@@ -1,17 +1,12 @@
 import fs from "fs";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent, Capability} from "@pipewarp/types";
 import { Command } from "commander";
 import { resolveCliPath } from "../../resolve-path.js";
 import { startDemoServers } from "./demo.js";
 
 import { McpManager } from "@pipewarp/adapters/mcp-manager";
 import { EmitterFactory } from "@pipewarp/events";
-import {
-  ObservabilityTap,
-  ConsoleSink,
-  WebSocketServerSink,
-} from "@pipewarp/observability";
-import { makeRuntimeContext} from "@pipewarp/runtime";
+import { makeRuntimeContext, startRuntime} from "@pipewarp/runtime";
 
 export async function cliRunAction(
   flowPath: string,
@@ -37,37 +32,33 @@ export async function cliRunAction(
       id: ""
     },
     worker: {
-      id: "default-worker"
+      id: "default-worker",
+      capabilities: [{
+        name: "mcp",
+        queueId: "mcp",
+        maxJobCount: 2,
+        tool: {
+          id: "mcp",
+          type: "inprocess",
+        },
+      }]
     },
     stream: {
       id: ""
-    }
+    },
+    observability: {
+      id: "",
+      sinks: ["console-log-sink", "websocket-sink"],
+      webSocketPort: 3006
+    },
   });
 
-  const logEF = new EmitterFactory(ctx.bus);
-  const logEmitter = logEF.newSystemEmitter({
+  const cliEmitterFactory = new EmitterFactory(ctx.bus);
+  const logEmitter = cliEmitterFactory.newSystemEmitter({
     source: "pipewarp://cli/run",
     traceId: "",
     spanId: "",
     traceParent: "",
-  });
-  await logEmitter.emit("system.logged", {
-    log: "[cli] running run command with options",
-    payload: options,
-  });
-  const logSink = new ConsoleSink();
-  logSink.start();
-
-  const wsSink = new WebSocketServerSink(3006);
-
-  console.log("\nWaiting on Observability WebSocket Client");
-  await wsSink.start();
-  const tap = new ObservabilityTap(ctx.bus, [logSink, wsSink]);
-  tap.start();
-
-  await logEmitter.emit("system.logged", {
-    log: "[cli] running run command with options",
-    payload: options,
   });
 
   const {
@@ -84,10 +75,6 @@ export async function cliRunAction(
 
   const { result, flow } = ctx.flowStore.validate(json);
   if (!result) {
-    await logEmitter.emit("system.logged", {
-      log: "[cli] running run command with options",
-      payload: options,
-    });
     console.error(`[cli-run] Invaid flow at ${flowPath}`);
     return;
   }
@@ -99,10 +86,6 @@ export async function cliRunAction(
   const mcpStore = new McpManager();
 
   if (demo) {
-    await logEmitter.emit("system.logged", {
-      log: "[cli] starting demo servers",
-      payload: options,
-    });
     const managedProcesses = await startDemoServers();
 
     if (!managedProcesses) {
@@ -135,25 +118,14 @@ export async function cliRunAction(
 
   // setup new generic worker with tools
   
-  ctx.worker.addCapability({
-    name: "mcp",
-    queueId: "mcp",
-    maxJobCount: 2,
-    tool: {
-      id: "mcp",
-      type: "inprocess",
-    },
-  });
+  
 
-  await ctx.router.start();
 
-  const ef = new EmitterFactory(ctx.bus);
-
-  const traceId = ef.generateTraceId();
-  const spanId = ef.generateSpanId();
-  const traceParent = ef.makeTraceParent(traceId, spanId);
+  const traceId = cliEmitterFactory.generateTraceId();
+  const spanId = cliEmitterFactory.generateSpanId();
+  const traceParent = cliEmitterFactory.makeTraceParent(traceId, spanId);
   const flowId = String(crypto.randomUUID());
-  const flowEmitter = ef.newFlowEmitter({
+  const flowEmitter = cliEmitterFactory.newFlowEmitter({
     source: "pipewarp://cli/run",
     flowid: flowId,
     traceId,
@@ -204,8 +176,15 @@ export async function cliRunAction(
     ctx.queue.abortAll();
   });
 
-  await ctx.engine.start();
-  await ctx.worker.requestRegistration();
+  
+  console.log("\nWaiting on Observability WebSocket Client");
+  await startRuntime(ctx);
+
+  await logEmitter.emit("system.logged", {
+      log: "[cli] running run command with options",
+      payload: options,
+    });
+
 }
 
 export function registerRunCmd(program: Command): Command {

@@ -1,3 +1,4 @@
+import { EventSink } from "@pipewarp/ports";
 import type {
   BusPlacement,
   BusTransport,
@@ -8,6 +9,8 @@ import {
   QueueStore,
   QueueTransport,
 } from "../registries/queue.registry.js";
+import { SinkId, } from "./runtime.context.js";
+import { Capability } from "@pipewarp/types";
 
 export type BusConfig = {
   id: string;
@@ -33,10 +36,21 @@ export type EngineConfig = {
 
 export type WorkerConfig = {
   id: string;
+  capabilities: Capability[]
 };
+
 export type StreamConfig = {
   id: string;
 };
+
+export type ObservabilityConfig = {
+  id: string;
+  sinks?: SinkId[]
+  webSocketPort?: number;
+};
+
+
+
 export type RuntimeConfig = {
   bus: BusConfig;
   queue: QueueConfig;
@@ -44,4 +58,5 @@ export type RuntimeConfig = {
   engine: EngineConfig;
   worker: WorkerConfig;
   stream: StreamConfig;
+  observability: ObservabilityConfig;
 };

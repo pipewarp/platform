@@ -19,7 +19,8 @@
   "dependencies": {
     "@pipewarp/engine": "workspace:*",
     "@pipewarp/adapters": "workspace:*",
-    "@pipewarp/events": "workspace:*"
+    "@pipewarp/events": "workspace:*",
+    "@pipewarp/observability": "workspace:*"
   },
   "devDependencies": {
     "@pipewarp/ports": "workspace:*",

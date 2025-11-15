@@ -1,4 +1,4 @@
-import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
+
 import { InMemoryQueue } from "@pipewarp/adapters/queue";
 import { NodeRouter } from "@pipewarp/adapters/router";
 import { Worker } from "@pipewarp/adapters/worker";
@@ -18,8 +18,9 @@ import {
   makeBusFactory,
   makeQueueFactory,
 } from "./factories/registry.factory.js";
-import type { RuntimeConfig } from "./types/runtime.config.js";
-import type { RuntimeContext } from "./types/runtime.context.js";
+import type { ObservabilityConfig, RuntimeConfig, WorkerConfig } from "./types/runtime.config.js";
+import type { RuntimeContext, SinkMap } from "./types/runtime.context.js";
+import { ConsoleSink, ObservabilityTap, WebSocketServerSink } from "@pipewarp/observability";
 
 export function makeRuntimeContext(config: RuntimeConfig): RuntimeContext {
   const busFactory = makeBusFactory(
@@ -42,8 +43,6 @@ export function makeRuntimeContext(config: RuntimeConfig): RuntimeContext {
   const emitterFactory = new EmitterFactory(bus);
   const flowStore = new FlowStore();
 
-  // later add observability
-
   const engine = createInProcessEngine(
     flowStore,
     bus,
@@ -55,8 +54,11 @@ export function makeRuntimeContext(config: RuntimeConfig): RuntimeContext {
     bus,
     queue,
     streamRegistry,
-    emitterFactory
+    emitterFactory,
+    config.worker,
   );
+
+  const {tap, sinks} = createObservability(config.observability, bus);
 
   return {
     queue,
@@ -65,7 +67,46 @@ export function makeRuntimeContext(config: RuntimeConfig): RuntimeContext {
     engine,
     worker,
     flowStore,
+    tap,
+    sinks,
   };
+}
+
+export async function startRuntime(ctx: RuntimeContext)  {
+  await ctx.router.start();
+  
+  for (const sink of Object.values(ctx.sinks)) {
+    await sink.start()
+  }
+  ctx.tap.start();
+
+  await ctx.engine.start();
+  await ctx.worker.requestRegistration();
+};
+
+export function createObservability(config: ObservabilityConfig, bus: EventBusPort): { tap: ObservabilityTap, sinks: SinkMap } {
+  const tap = new ObservabilityTap(bus);
+  const sinks: SinkMap = {};
+  if (config.sinks) {
+    for (const sink of config.sinks) {
+      switch (sink) {
+        case "console-log-sink":
+          const consoleSink = new ConsoleSink();
+          sinks["console-log-sink"] = consoleSink
+          tap.attachSink(consoleSink);
+          break;
+        case "websocket-sink":
+          if (config.webSocketPort !== undefined) {
+            const webSocketServerSink = new WebSocketServerSink(config.webSocketPort);
+            sinks["websocket-sink"] = webSocketServerSink
+            tap.attachSink(webSocketServerSink);
+          }
+          break;
+        default: break;
+      }
+    }
+  }
+  return {tap, sinks}
 }
 
 export function createInProcessEngine(
@@ -95,7 +136,8 @@ export function createInProcessWorker(
   bus: EventBusPort,
   queue: InMemoryQueue,
   streamRegistry: StreamRegistryPort,
-  emitterFactory: EmitterFactory
+  emitterFactory: EmitterFactory,
+  config: WorkerConfig
 ): Worker {
   const toolFactories: ToolFactories = {
     mcp: () => new McpTool(),
@@ -108,6 +150,10 @@ export function createInProcessWorker(
     streamRegistry,
     toolRegistry,
   });
+
+  for (const cap of config.capabilities) {
+    worker.addCapability(cap);
+  }
 
   return worker;
 }

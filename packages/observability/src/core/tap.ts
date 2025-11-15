@@ -24,6 +24,7 @@ export class ObservabilityTap {
   attachSink(sink: EventSink) {
     this.#sinks.set(sink.id, sink);
   }
+
   detachSink(sink: EventSink) {
     this.#sinks.delete(sink.id);
   }
