@@ -87,7 +87,9 @@
     "typescript": "^5.2.2",
     "vite": "^7.2.2",
     "vite-plugin-electron": "^0.28.6",
-    "vite-plugin-electron-renderer": "^0.14.5"
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "@pipewarp/types": "workspace:*",
+    "@pipewarp/ports": "workspace:*"
   },
   "main": "dist-electron/main.js"
 }

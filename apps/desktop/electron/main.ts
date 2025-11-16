@@ -34,12 +34,14 @@ function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
-      preload: path.join(__dirname, "preload.mjs"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
     },
   });
+
+  console.log(path.join(__dirname, "preload.cjs"));
 
   // Test active push message to Renderer-process.
   win.webContents.on("did-finish-load", () => {
@@ -54,7 +56,7 @@ function createWindow() {
   }
 }
 
-const { controller } = bootstrap({
+export const { controller } = bootstrap({
   bus: {
     id: "",
     placement: "embedded",
@@ -94,17 +96,7 @@ const { controller } = bootstrap({
   },
 });
 
-await controller.startRuntime();
-await controller.startFlow({
-  flow: {
-    id: "flow-id",
-    name: "flow-name",
-    version: "flow-version"
-  },
-  flowName: "flow-name",
-  inputs: {},
-  outfile: "output.temp.json"
-});
+
 
 
 // Quit when all windows are closed, except on macOS. There, it's common

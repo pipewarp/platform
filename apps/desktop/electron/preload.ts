@@ -1,5 +1,5 @@
 import { ipcRenderer, contextBridge } from 'electron'
-
+console.log("preload loaded 1");
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
   on(...args: Parameters<typeof ipcRenderer.on>) {
@@ -19,6 +19,14 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     return ipcRenderer.invoke(channel, ...omit)
   },
 
+
   // You can expose other APTs you need here.
   // ...
-})
+});
+
+
+contextBridge.exposeInMainWorld("electronAPI", {
+  invoke: (channel: string, payload: unknown) => ipcRenderer.invoke(channel, payload)
+});
+
+console.log("preload loaded 2");

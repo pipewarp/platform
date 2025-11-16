@@ -94,6 +94,12 @@ importers:
       '@electron/notarize':
         specifier: ^3.1.1
         version: 3.1.1
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../../packages/ports
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@types/react':
         specifier: ^18.2.64
         version: 18.3.26
