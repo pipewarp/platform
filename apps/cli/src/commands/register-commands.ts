@@ -1,8 +1,11 @@
 import type { Command } from "commander";
 import { registerRunCmd } from "./run/run.cmd.js";
 import { registerValidateCmd } from "./validate/validate.js";
+import { registerNewRunCmd } from "./run/new-run.cmd.js";
+import { WorkflowController } from "@pipewarp/controller";
 
-export function registerCommands(program: Command) {
+export function registerCommands(program: Command, controller: WorkflowController) {
   registerRunCmd(program);
-  registerValidateCmd(program);
+  registerNewRunCmd(program, controller);
+  registerValidateCmd(program, controller);
 }

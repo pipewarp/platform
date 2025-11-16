@@ -71,8 +71,6 @@ export class Worker {
     this.#toolRegistry = deps.toolRegistry;
     this.#emitterFactory = deps.emitterFactory;
     this.#streamRegistry = deps.streamRegistry;
-
-    this.#subscribeToBus();
   }
 
   #subscribeToBus(): void {
@@ -84,7 +82,7 @@ export class Worker {
           event.data.status === "accepted"
         ) {
           this.#context.isRegistered = true;
-
+          console.log("we are here");
           const logEmitter = this.#emitterFactory.newSystemEmitter({
             source: "pipewarp://engine/subscribe-to-bus",
             traceId: "",
@@ -262,6 +260,7 @@ export class Worker {
   }
 
   async start(): Promise<void> {
+    this.#subscribeToBus();
     for (const id in this.#context.capabilities) {
       const p = this.startCapabilityJobWaiters(id);
       this.#capabilityJobWaiters.set(id, p);

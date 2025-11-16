@@ -29,6 +29,9 @@ importers:
       '@pipewarp/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
+      '@pipewarp/controller':
+        specifier: workspace:*
+        version: link:../../packages/controller
       '@pipewarp/engine':
         specifier: workspace:*
         version: link:../../packages/engine
