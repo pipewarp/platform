@@ -1,15 +1,28 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { App } from "@pipewarp/ui";
+import { App, ControllerProvider  } from "@pipewarp/ui";
 import "./index.css";
+import { ElectronControllerClient } from "../electron/electron-controller.client.js";
+
+const controller = new ElectronControllerClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <ControllerProvider client={controller}>
+      <App />
+    </ControllerProvider>
   </React.StrictMode>
 );
 
-// Use contextBridge
+// if (!window.ipcRenderer) {
+//   console.error('[renderer] ipcRenderer missing - did the preload fail?');
+// } else {
+//   window.ipcRenderer.on("main-process-message", (_event, message) => {
+//     console.log(message);
+//   });
+// }
+
+
 window.ipcRenderer.on("main-process-message", (_event, message) => {
   console.log(message);
 });

@@ -1,5 +1,5 @@
 {
-  "name": "@pipewarp/runtime",
+  "name": "@pipewarp/controller",
   "version": "0.1.0-alpha.6",
   "private": true,
   "type": "module",
@@ -17,11 +17,7 @@
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "@pipewarp/engine": "workspace:*",
-    "@pipewarp/adapters": "workspace:*",
-    "@pipewarp/events": "workspace:*",
-    "@pipewarp/observability": "workspace:*",
-    "@pipewarp/services": "workspace:*"
+    "@pipewarp/runtime": "workspace:*"
   },
   "devDependencies": {
     "@pipewarp/ports": "workspace:*",

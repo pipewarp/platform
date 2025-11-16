@@ -1,18 +1,19 @@
 import fs from "fs";
-import type { AnyEvent, Capability} from "@pipewarp/types";
+import type { AnyEvent } from "@pipewarp/types";
 import { Command } from "commander";
 import { resolveCliPath } from "../../resolve-path.js";
 import { startDemoServers } from "./demo.js";
 
 import { McpManager } from "@pipewarp/adapters/mcp-manager";
 import { EmitterFactory } from "@pipewarp/events";
-import { makeRuntimeContext, startRuntime} from "@pipewarp/runtime";
+import { makeRuntimeContext, createRuntime, type RuntimeConfig} from "@pipewarp/runtime";
 
 export async function cliRunAction(
   flowPath: string,
   options: { out?: string; test?: boolean; server?: string; demo?: boolean }
 ): Promise<void> {
-  const ctx = makeRuntimeContext({
+
+  const config: RuntimeConfig = {
     bus: {
       id: "",
       placement: "embedded",
@@ -51,7 +52,11 @@ export async function cliRunAction(
       sinks: ["console-log-sink", "websocket-sink"],
       webSocketPort: 3006
     },
-  });
+  }
+
+
+  const ctx = makeRuntimeContext(config);
+  const runtime = createRuntime(config);
 
   const cliEmitterFactory = new EmitterFactory(ctx.bus);
   const logEmitter = cliEmitterFactory.newSystemEmitter({
@@ -178,7 +183,7 @@ export async function cliRunAction(
 
   
   console.log("\nWaiting on Observability WebSocket Client");
-  await startRuntime(ctx);
+  await runtime.startRuntime();
 
   await logEmitter.emit("system.logged", {
       log: "[cli] running run command with options",

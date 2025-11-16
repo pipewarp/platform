@@ -69,6 +69,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@pipewarp/controller':
+        specifier: workspace:*
+        version: link:../../packages/controller
       '@pipewarp/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
@@ -91,6 +94,12 @@ importers:
       '@electron/notarize':
         specifier: ^3.1.1
         version: 3.1.1
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../../packages/ports
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@types/react':
         specifier: ^18.2.64
         version: 18.3.26
@@ -257,6 +266,19 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.10.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)
 
+  packages/controller:
+    dependencies:
+      '@pipewarp/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+    devDependencies:
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
+
   packages/engine:
     dependencies:
       '@pipewarp/adapters':
@@ -330,6 +352,22 @@ importers:
       '@pipewarp/observability':
         specifier: workspace:*
         version: link:../observability
+      '@pipewarp/services':
+        specifier: workspace:*
+        version: link:../services
+    devDependencies:
+      '@pipewarp/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@pipewarp/types':
+        specifier: workspace:*
+        version: link:../types
+
+  packages/services:
+    dependencies:
+      '@pipewarp/events':
+        specifier: workspace:*
+        version: link:../events
     devDependencies:
       '@pipewarp/ports':
         specifier: workspace:*
