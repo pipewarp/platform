@@ -13,8 +13,7 @@ export class WorkflowController implements ControllerPort {
     return;
   }
 
-  async startRuntime() {
-    await this.runtime.startRuntime();
+  async startRuntime(): Promise<string> {
+    return await this.runtime.startRuntime();
   }
-
 }

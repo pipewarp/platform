@@ -8,7 +8,7 @@ export class WorkflowRuntime {
     this.flow = services.flowService;
   }
 
-  async startRuntime()  {
+  async startRuntime(): Promise<string>  {
     await this.ctx.router.start();
     
     for (const sink of Object.values(this.ctx.sinks)) {
@@ -18,5 +18,7 @@ export class WorkflowRuntime {
   
     await this.ctx.engine.start();
     await this.ctx.worker.requestRegistration();
+
+    return "started";
   };
 };

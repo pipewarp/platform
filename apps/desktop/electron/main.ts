@@ -98,8 +98,8 @@ export const { controller } = bootstrap({
   },
 });
 
-ipcMain.handle("controller:startRuntime", async () => { 
-  await controller.startRuntime()
+ipcMain.handle("controller:startRuntime", async (): Promise<string> => { 
+  return await controller.startRuntime()
 });
 ipcMain.handle("controller:startFlow", async (_event, args: FlowQueuedData) => { 
   await controller.startFlow(args)
