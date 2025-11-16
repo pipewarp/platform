@@ -1,24 +1,21 @@
 import { createContext, useContext } from "react";
-import type { ControllerClient } from "@pipewarp/ports";
+import type { ControllerClient, ControllerPort } from "@pipewarp/ports";
 
-
-const ControllerContext = createContext<ControllerClient | null>(null);
-
+const ControllerContext = createContext<ControllerPort | null>(null);
 
 export function ControllerProvider(props: {
-  client: ControllerClient;
+  controller: ControllerPort;
   children: React.ReactNode;
 }) { 
 
   return (
-    <ControllerContext.Provider value= { props.client } >
+    <ControllerContext.Provider value={props.controller}>
       { props.children }
     </ControllerContext.Provider>
-    
   );
 }
 
-export function useController(): ControllerClient {
+export function useController(): ControllerPort {
   const ctx = useContext(ControllerContext);
   if (!ctx) { 
     throw new Error("useController must be used within a ControllerProvider");

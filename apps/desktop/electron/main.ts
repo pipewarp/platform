@@ -6,6 +6,7 @@ import { bootstrap } from "./bootstrap.js";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { FlowQueuedData } from "@pipewarp/types";
+import { runtimeConfig } from "./runtime-config.js";
 
 // const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -43,8 +44,6 @@ function createWindow() {
     },
   });
 
-  // console.log(path.join(__dirname, "preload.cjs"));
-
   // Test active push message to Renderer-process.
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
@@ -58,45 +57,7 @@ function createWindow() {
   }
 }
 
-export const { controller } = bootstrap({
-  bus: {
-    id: "",
-    placement: "embedded",
-    transport: "event-emitter",
-    store: "none"
-  },
-  queue: {
-    id: "",
-    placement: "embedded",
-    transport: "deferred-promise",
-    store: "none"
-  },
-  router: {
-    id: ""
-  },
-  engine: {
-    id: ""
-  },
-  worker: {
-    id: "",
-    capabilities: [{
-      name: "mcp",
-      queueId: "mcp",
-      maxJobCount: 2,
-      tool: {
-        id: "mcp",
-        type: "inprocess",
-      },
-    }]
-  },
-  stream: {
-    id: ""
-  },
-  observability: {
-    id: "",
-    sinks: ["console-log-sink"],
-  },
-});
+export const { controller } = bootstrap(runtimeConfig);
 
 ipcMain.handle("controller:startRuntime", async (): Promise<string> => { 
   return await controller.startRuntime()
@@ -104,9 +65,6 @@ ipcMain.handle("controller:startRuntime", async (): Promise<string> => {
 ipcMain.handle("controller:startFlow", async (_event, args: FlowQueuedData) => { 
   await controller.startFlow(args)
 });
-
-
-
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
