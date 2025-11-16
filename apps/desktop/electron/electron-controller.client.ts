@@ -12,7 +12,8 @@ export class ElectronControllerClient implements ControllerClient {
   async startFlow(input: FlowQueuedData): Promise<void> {
     this.api.invoke("controller:startFlow", input);
   }
-  startRuntime(): void {
+  async startRuntime(): Promise<void> {
+    console.log("[electron-controller-client] startRuntime() invoked");
     this.api.invoke("controller:startRuntime", {});
   }
 }

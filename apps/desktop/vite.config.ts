@@ -32,7 +32,7 @@ export default defineConfig({
             sourcemap: true,
             target: ELECTRON_NODE,
             outDir: "dist-electron", // keep main & preload side-by-side
-            rollupOptions: { output: {format: "cjs", entryFileNames: "preload.cjs"} }
+            // rollupOptions: { output: {format: "cjs", entryFileNames: "preload.cjs", chunkFileNames: "preload.[name].cjs"} }
           },
         },
         

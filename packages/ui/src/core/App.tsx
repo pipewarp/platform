@@ -3,9 +3,8 @@ import { Button } from "./Button.js";
 export function App() {
   const controller = useController();
 
-  const handleRuntimeClick = () => {
-    console.log("hi");
-    controller.startRuntime();
+  const handleRuntimeClick = async () => {
+    await controller.startRuntime();
   };
   const handleStartFlowClick = async() => {
     await controller.startFlow({
@@ -23,7 +22,6 @@ export function App() {
     <div>
       <button onClick={() => handleRuntimeClick()}>Start Runtime</button>
       <button onClick={handleStartFlowClick}>Start Flow</button>
-      <Button/>
     </div>
   );
 }

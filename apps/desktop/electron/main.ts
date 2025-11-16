@@ -1,9 +1,11 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import { bootstrap } from "./bootstrap.js";
+
 
 // import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { FlowQueuedData } from "@pipewarp/types";
 
 // const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -34,14 +36,14 @@ function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
-      preload: path.join(__dirname, "preload.cjs"),
+      preload: path.join(__dirname, "preload.mjs"),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
     },
   });
 
-  console.log(path.join(__dirname, "preload.cjs"));
+  // console.log(path.join(__dirname, "preload.cjs"));
 
   // Test active push message to Renderer-process.
   win.webContents.on("did-finish-load", () => {
@@ -94,6 +96,13 @@ export const { controller } = bootstrap({
     id: "",
     sinks: ["console-log-sink"],
   },
+});
+
+ipcMain.handle("controller:startRuntime", async () => { 
+  await controller.startRuntime()
+});
+ipcMain.handle("controller:startFlow", async (_event, args: FlowQueuedData) => { 
+  await controller.startFlow(args)
 });
 
 
