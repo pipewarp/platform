@@ -21,7 +21,7 @@ export const runtimeConfig = {
     id: ""
   },
   worker: {
-    id: "",
+    id: "desktop-worker",
     capabilities: [{
       name: "mcp",
       queueId: "mcp",

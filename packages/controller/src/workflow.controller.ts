@@ -1,4 +1,4 @@
-import type { ControllerPort } from "@pipewarp/ports";
+import type { ControllerPort, RuntimeStatus } from "@pipewarp/ports";
 import { WorkflowRuntime } from "@pipewarp/runtime";
 import { FlowQueuedData } from "@pipewarp/types";
 
@@ -13,7 +13,10 @@ export class WorkflowController implements ControllerPort {
     return;
   }
 
-  async startRuntime(): Promise<string> {
+  async startRuntime(): Promise<RuntimeStatus> {
     return await this.runtime.startRuntime();
+  }
+  async stopRuntime(): Promise<RuntimeStatus> {
+    return await this.runtime.stopRuntime();
   }
 }

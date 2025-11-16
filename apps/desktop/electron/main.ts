@@ -65,6 +65,9 @@ ipcMain.handle("controller:startRuntime", async (): Promise<string> => {
 ipcMain.handle("controller:startFlow", async (_event, args: FlowQueuedData) => { 
   await controller.startFlow(args)
 });
+ipcMain.handle("controller:stopRuntime", async () => { 
+  return await controller.stopRuntime()
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

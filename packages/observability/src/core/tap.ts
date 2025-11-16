@@ -28,4 +28,12 @@ export class ObservabilityTap {
   detachSink(sink: EventSink) {
     this.#sinks.delete(sink.id);
   }
+  stop() { 
+    try {
+      this.bus.close();
+    }
+    catch (err) {
+      console.log(`[observability-tap] could not close: ${err}`)
+    }
+  }
 }

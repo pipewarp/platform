@@ -6,7 +6,6 @@ export function Header() {
     <header>
       <h2>Pipewarp Desktop</h2>
       <RuntimeControls/>
-   
     </header>
   );
 }

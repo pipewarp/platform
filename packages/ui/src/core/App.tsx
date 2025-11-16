@@ -8,10 +8,7 @@ export function App() {
   const controller = useController();
 
 
-  const handleRuntimeClick = async () => {
-    const result = await controller.startRuntime();
-    if (result) setRuntimeStatus("started")
-  };
+
   const handleStartFlowClick = async() => {
     await controller.startFlow({
       flow: {

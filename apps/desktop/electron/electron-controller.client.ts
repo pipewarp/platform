@@ -1,5 +1,5 @@
 import { FlowQueuedData } from "@pipewarp/types";
-import { ControllerPort } from "@pipewarp/ports";
+import { ControllerPort, RuntimeStatus } from "@pipewarp/ports";
 
 
 export class ElectronController implements ControllerPort {
@@ -13,13 +13,17 @@ export class ElectronController implements ControllerPort {
     this.api.invoke("controller:startFlow", input);
     return;
   }
-  async startRuntime(): Promise<string> {
+  async startRuntime(): Promise<RuntimeStatus> {
     console.log("[electron-controller-client] startRuntime() invoked");
     const result = await this.api.invoke("controller:startRuntime", {});
 
-    if (result) {
-      return "started"
-    }
-    return "not started";
+    if (result === "running") return "running"
+    return "stopped";
+  }
+  async stopRuntime(): Promise<RuntimeStatus> {
+    const result = await this.api.invoke("controller:stopRuntime", {});
+
+    if (result === "stopped") return "stopped"
+    return "running";
   }
 }
