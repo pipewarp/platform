@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useController } from "../context/ControllerContext.js";
-import { Button } from "./Button.js";
-import { Dashboard } from "../layout/Dashboard.js";
 import { Header } from "../layout/Header.js";
+import {  WorkflowList } from "../components/WorkflowList.js";
+import { WorkflowFolder } from "../components/WorkflowFolder.js";
 export function App() {
   const [runtimeStatus, setRuntimeStatus] = useState<string>("stopped");
   const controller = useController();
@@ -21,9 +21,15 @@ export function App() {
       outfile: "output.something.json"
     });
   }
+
   return (
     <>
-      <Header/>
+      <Header />
+      <main>
+        <h2>Workflows</h2>
+        <WorkflowFolder/>
+        <WorkflowList/>
+      </main>
     </>
   );
 }
