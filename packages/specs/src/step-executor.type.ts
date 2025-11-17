@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { Step } from "./flow.types.js";
 import { RunContext } from "./engine.types.js";
-// import { Ports } from "../ports/ports.js";
 
 type Ports = {};
 

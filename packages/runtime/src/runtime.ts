@@ -4,7 +4,7 @@ import { NodeRouter } from "@pipewarp/adapters/router";
 import { Worker } from "@pipewarp/adapters/worker";
 import { McpTool, ToolFactories, ToolRegistry } from "@pipewarp/adapters/tools";
 import { InMemoryStreamRegistry } from "@pipewarp/adapters/stream";
-import { FlowStore } from "@pipewarp/adapters/flow-store";
+import { FlowStore, FlowStoreFs } from "@pipewarp/adapters/flow-store";
 import {
   Engine,
   PipeResolver,
@@ -32,7 +32,7 @@ export function createRuntime(config: RuntimeConfig): WorkflowRuntime {
 
   const ef = new EmitterFactory(ctx.bus);
 
-  const flowService = new FlowService(ctx.bus, ef);
+  const flowService = new FlowService(ctx.bus, ef, new FlowStoreFs());
   const runtime = new WorkflowRuntime(ctx, { flowService });
   return runtime;
 }
