@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import { bootstrap } from "./bootstrap.js";
 
 
@@ -36,6 +36,8 @@ let win: BrowserWindow | null;
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    width: 1200,
+    height: 800,
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       contextIsolation: true,
@@ -68,6 +70,13 @@ ipcMain.handle("controller:startFlow", async (_event, args: FlowQueuedData) => {
 ipcMain.handle("controller:stopRuntime", async () => { 
   return await controller.stopRuntime()
 });
+ipcMain.handle("controller:listFlows", async (_event, args: { absoluteDirPath?: string }) => { 
+  // dialog.showOpenDialog({properties: ["openDirectory"]})
+  return await controller.listFlows(args);
+
+});
+
+
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

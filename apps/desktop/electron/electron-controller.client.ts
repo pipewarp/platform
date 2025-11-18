@@ -1,7 +1,7 @@
 import { FlowQueuedData } from "@pipewarp/types";
-import { ControllerPort, RuntimeStatus } from "@pipewarp/ports";
+import { ControllerPort, FlowList, RuntimeStatus } from "@pipewarp/ports";
 
-
+// TODO: implement type mapping on API invoke channels
 export class ElectronController implements ControllerPort {
   private get api() { 
     if (!window.electronAPI) {
@@ -26,4 +26,10 @@ export class ElectronController implements ControllerPort {
     if (result === "stopped") return "stopped"
     return "running";
   }
+  async listFlows(args: { absoluteDirPath?: string; }): Promise<FlowList> {
+    console.log("[electron-controller] listFlows() args:", args);
+    const result = await this.api.invoke("controller:listFlows", args);
+    return result as FlowList;
+    
+  } 
 }

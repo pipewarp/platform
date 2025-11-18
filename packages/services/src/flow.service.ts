@@ -1,27 +1,10 @@
-import type { EventBusPort, FlowStorePort } from "@pipewarp/ports";
+import type { EventBusPort, FlowStorePort, FlowList } from "@pipewarp/ports";
 import type { FlowQueuedData } from "@pipewarp/types";
 import { EmitterFactory } from "@pipewarp/events";
 import { FlowSchema, type Flow } from "@pipewarp/specs";
 import { createHash } from "crypto";
 import path from "node:path";
 
-
-export type FlowList = {
-  validFlows: {
-    [flowId: string]: {
-      filename: string;
-      name: string;
-      version: string;
-      description?: string;
-      absolutePath: string;
-    }
-  }
-  invalidFlows: {
-    [path: string]: {
-      errorMessage: string;
-    }
-  }
-};
 export class FlowService { 
   constructor(private readonly bus: EventBusPort, private readonly ef: EmitterFactory, private readonly flowStore: FlowStorePort) { }
   
@@ -39,11 +22,10 @@ export class FlowService {
       traceParent,
     });
     await flowEmitter.emit("flow.queued", data);
-    
   };
 
-  async listFlows(dir: string): Promise<FlowList> {
-    const flows = this.flowStore.readFlows({ dir: "./" });
+  async listFlows(args: {absoluteDirPath?: string}): Promise<FlowList> {
+    const flows = this.flowStore.readFlows({ dir: args.absoluteDirPath });
 
     const flowList: FlowList = {
       validFlows: {},
@@ -51,7 +33,7 @@ export class FlowService {
     };
 
     for (const [absolutePath, blob] of flows.entries()) { 
-      const flow = this.validateFlow(blob);
+      const flow = this.validateJsonFlow(blob);
       if (typeof flow === "string") {
         flowList.invalidFlows[absolutePath] = { errorMessage: flow };
       }
@@ -69,15 +51,20 @@ export class FlowService {
   }
 
 
-  validateFlow(blob: unknown): Flow | string {
+  validateJsonFlow(blob: unknown): Flow | string {
     if (blob === undefined) return "Invalid flow: Undefined";
-      
-    const result = FlowSchema.safeParse(blob);
-    if (!result.success) {
-      return JSON.stringify(result.error, null, 2);
+    try {
+      const flow = JSON.parse(blob as string);
+      const result = FlowSchema.safeParse(flow);
+      if (!result.success) {
+        return JSON.stringify(result.error, null, 2);
+      }
+      return result.data;
+    }
+    catch (err) {
+      return `Invalid flow: Error parsing Json: ${err}"`;
     }
 
-    return result.data;
   }
 
   makeId(name: string, version: string, path?: string, p0?: {}): string { 

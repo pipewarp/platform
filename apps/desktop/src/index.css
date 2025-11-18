@@ -90,10 +90,24 @@ header {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  min-width: 90vw;
+  min-width: 95vw;
 }
 
 
+#divided-main {
+  display: flex;
+}
+#left-panel, #right-panel {
+  max-width: 45vw;
+  max-height: 90vh;
+
+}
+#left-panel {
+ 
+}
+#right-panel {
+  margin-left: 2.5rem;
+}
 /** workflow list stuff **/
 #workflow-folder {
   display: flex;
@@ -114,32 +128,62 @@ header {
   padding-left:0;
 }
 
+#workflow-list-container {
+  overflow-x: hidden;
+  overflow-y:auto;
+  height: 70vh;
+  width: 40vw;
+  background-color:#3b60801e;
+  border-radius: 1rem;
+  padding: 0rem 1rem;
+}
+
+
 #workflow-list li {
   display: flex;
   list-style-type: none;
   padding-left:0;
-  margin-top: 2rem;
+  margin-top: 1rem;
+
 }
 
 #workflow-list li button {
-
   list-style-type: none;
   width: 5rem;
   background-color: rgb(27, 123, 161);
 }
 
 .workflow-filename {
-
+color:hsl(0, 0%, 70%);
   font-size: 0.90rem;
 }
 .workflow-details {
   margin-left: 1.0rem;
 }
+.invalid-workflow-details {
+  margin-left: 6rem;
+}
 .workflow-details p {
   margin:0;
+}
+.workflow-description {
+  color:hsl(216, 31%, 90%);
+  padding-top: 0.5rem;
+  padding-bottom: 0.3rem;
+  font-size: 0.9rem;
 }
 .workflow-name {
   margin-top: 0;
   font-size: 1.1rem;
   font-weight:bold;
+}
+.invalid-workflow-name {
+  margin-top: 0;
+  font-size: 1.1rem;
+  font-weight:bold;
+  margin-bottom: 0;
+}
+.invalid-workflow-error {
+  margin-top: 0rem;
+  font-size: 0.85rem;
 }

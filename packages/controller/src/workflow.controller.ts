@@ -1,4 +1,4 @@
-import type { ControllerPort, RuntimeStatus } from "@pipewarp/ports";
+import type { ControllerPort, FlowList, RuntimeStatus } from "@pipewarp/ports";
 import { WorkflowRuntime } from "@pipewarp/runtime";
 import { FlowQueuedData } from "@pipewarp/types";
 
@@ -18,5 +18,11 @@ export class WorkflowController implements ControllerPort {
   }
   async stopRuntime(): Promise<RuntimeStatus> {
     return await this.runtime.stopRuntime();
+  }
+  async listFlows(args: { absoluteDirPath?: string }): Promise<FlowList> { 
+    if (args.absoluteDirPath === undefined) {
+      throw new Error("[workflow-controller] listFlows directory undefined");
+    }
+    return await this.runtime.flow.listFlows(args);
   }
 }

@@ -3,18 +3,18 @@ import fs from "fs";
 import path from "path";
 
 export class FlowStoreFs implements FlowStorePort {
-  readFlow(args: { filePath?: string }): unknown {
+  readFlow(args: { filePath?: string }): string | undefined {
     const { filePath } = args;
     if (!filePath) {
       throw new Error("[flow-store-fs] readFlow must supply a path.");
     }
+    if (!path.isAbsolute(filePath)) return;
     const stats = fs.statSync(filePath);
     
     // skip non files or if the file is greater than ~ 5 MB
     if (!stats.isFile || stats.size > 5000000) return;
     
     if (path.extname(filePath) !== ".json" || !filePath.endsWith(".flow.json")) return;
-    if (!path.isAbsolute(filePath)) return;
     
     try {
       const blob = fs.readFileSync(filePath, { encoding: "utf-8" });
@@ -26,17 +26,20 @@ export class FlowStoreFs implements FlowStorePort {
     }
   }
 
-  readFlows(args: {dir?: string}): Map<string, unknown> {
+  readFlows(args: {dir?: string}): Map<string, string> {
     const { dir } = args;
     if (!dir) throw new Error("[flow-store-fs] must provide a directory");
     if (!path.isAbsolute(dir)) throw new Error("[flow-store-fs] dir must be absolute");
 
     const contents = fs.readdirSync(dir, { encoding: "utf-8" });
+
+    const fullPaths = contents.map(filename => path.join(dir, filename));
     
-    const flows = new Map<string, unknown>();
+    const flows = new Map<string, string>();
     
-    for (const filePath of contents) { 
-      if (filePath.endsWith(".flow.json")) { 
+    for (const filePath of fullPaths) { 
+      if (filePath.endsWith(".flow.json")) {
+
         const blob = this.readFlow({ filePath });
         if (blob !== undefined) flows.set(filePath, blob);
       }
