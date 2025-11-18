@@ -30,6 +30,10 @@ export class ElectronController implements ControllerPort {
     console.log("[electron-controller] listFlows() args:", args);
     const result = await this.api.invoke("controller:listFlows", args);
     return result as FlowList;
-    
+  
   } 
+  async getFlowDir(): Promise<string> {
+    const result = await this.api.invoke("controller:pickFlowDir", undefined) as string[]
+    return result[0];
+  }
 }

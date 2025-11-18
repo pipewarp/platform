@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { App, ControllerProvider  } from "@pipewarp/ui";
 import "./index.css";
-import { ElectronController } from "../electron/electron-controller.client.js";
+import { ElectronController } from "../electron/electron.controller.js"
 
 const electronController = new ElectronController();
 

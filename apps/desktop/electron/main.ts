@@ -75,6 +75,12 @@ ipcMain.handle("controller:listFlows", async (_event, args: { absoluteDirPath?: 
   return await controller.listFlows(args);
 
 });
+ipcMain.handle("controller:pickFlowDir", async () => { 
+  const path = await dialog.showOpenDialog({ properties: ["openDirectory"] })
+  console.log(path);
+  return path.filePaths
+
+});
 
 
 
