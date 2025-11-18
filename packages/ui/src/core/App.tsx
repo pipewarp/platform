@@ -7,21 +7,6 @@ export function App() {
   const [runtimeStatus, setRuntimeStatus] = useState<string>("stopped");
   const controller = useController();
 
-
-
-  const handleStartFlowClick = async() => {
-    await controller.startFlow({
-      flow: {
-        id: "flow-id",
-        name: "flow-name",
-        version: "flow-version"
-      },
-      flowName: "flow-name",
-      inputs: {},
-      outfile: "output.something.json"
-    });
-  }
-
   return (
     <>
       <Header />

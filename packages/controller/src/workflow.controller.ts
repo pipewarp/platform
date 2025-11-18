@@ -8,8 +8,8 @@ export class WorkflowController implements ControllerPort {
 
   constructor(private readonly runtime: WorkflowRuntime) { }
 
-  async startFlow(input: FlowQueuedData): Promise<string | undefined> {
-    await this.runtime.flow.startFlow(input);
+  async startFlow(args: { absoluteFilePath?: string }): Promise<string | undefined> {
+    await this.runtime.flow.startFlow(args);
     return;
   }
 

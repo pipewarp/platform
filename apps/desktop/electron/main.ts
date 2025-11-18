@@ -5,7 +5,6 @@ import { bootstrap } from "./bootstrap.js";
 // import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { FlowQueuedData } from "@pipewarp/types";
 import { runtimeConfig } from "./runtime-config.js";
 
 // const require = createRequire(import.meta.url)
@@ -64,7 +63,7 @@ export const { controller } = bootstrap(runtimeConfig);
 ipcMain.handle("controller:startRuntime", async (): Promise<string> => { 
   return await controller.startRuntime()
 });
-ipcMain.handle("controller:startFlow", async (_event, args: FlowQueuedData) => { 
+ipcMain.handle("controller:startFlow", async (_event, args) => { 
   await controller.startFlow(args)
 });
 ipcMain.handle("controller:stopRuntime", async () => { 

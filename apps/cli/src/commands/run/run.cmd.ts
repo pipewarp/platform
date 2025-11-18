@@ -156,6 +156,7 @@ export async function cliRunAction(
             name: flow.name,
             version: flow.version,
           },
+          definition: {},
         });
       }
     }

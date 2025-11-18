@@ -11,6 +11,7 @@ export type FlowQueuedData = FlowDescriptor & {
   inputs: Record<string, unknown>;
   test?: boolean;
   outfile: string;
+  definition: unknown;
 };
 
 export type FlowStartedData = FlowDescriptor & {};

@@ -5,7 +5,7 @@ import type {
   StartFlowInput,
   StreamRegistryPort,
 } from "@pipewarp/ports";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent, FlowQueuedData } from "@pipewarp/types";
 import { EmitterFactory } from "@pipewarp/events";
 import { FlowStore } from "@pipewarp/adapters/flow-store";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
@@ -55,16 +55,7 @@ export class Engine {
           },
         });
 
-        await this.startFlow(
-          {
-            correlationId: "none",
-            flowName: event.data.flowName,
-            outfile: event.data.outfile,
-            test: event.data.test,
-            inputs: {},
-          },
-          event.traceid
-        );
+        await this.startFlow(event);
       }
     });
 
@@ -151,42 +142,36 @@ export class Engine {
     await this.bus.close();
   }
 
-  async startFlow(input: StartFlowInput, traceId: string): Promise<void> {
-    // get flow definition
-    const { flowName, inputs, correlationId } = input;
-
-    const flow = this.flowDb.get(flowName);
-    if (!flow) {
-      console.error(`[engine] no flow in database for name: ${flowName}`);
-      return;
-    }
-    // make context
-    let context = this.#buildRunContext(
-      flow.name,
-      correlationId,
-      input.test,
-      input.outfile,
-      traceId
-    );
+  async startFlow(event: AnyEvent<"flow.queued">): Promise<void> {
+    /**
+     * casting as flow now because the specs package cannot be 
+     * imported into @pipewarp/types.  
+     * this will change when flow definitions are moved to the 
+     * types package, and specs is a home for schemas
+     */
+    const flow = event.data.definition as Flow;
+    let context = this.#buildRunContext(event);
     context = this.#initStepContext(context, flow.start);
 
+    const systemSpanId = this.emitterFactory.generateSpanId();
+    const systemTraceParent = this.emitterFactory.makeTraceParent(event.traceid, systemSpanId);
     const logEmitter = this.emitterFactory.newSystemEmitter({
       source: "pipewarp://engine/start-flow",
-      traceId: "",
-      spanId: "",
-      traceParent: "",
+      traceId: event.traceid,
+      spanId: systemSpanId,
+      traceParent: systemTraceParent,
     });
     await logEmitter.emit("system.logged", {
       log: "[engine] made RunContext",
     });
 
     const spanId = this.emitterFactory.generateSpanId();
-    const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
+    const traceParent = this.emitterFactory.makeTraceParent(event.traceid, spanId);
     const emitter = this.emitterFactory.newRunEmitter({
       source: "pipewarp://engine/start-flow",
       flowid: flow.name,
       runid: context.runId,
-      traceId,
+      traceId: event.traceid,
       spanId,
       traceParent,
     });
@@ -294,15 +279,13 @@ export class Engine {
     this.#runs.set(context.runId, context);
   }
   #buildRunContext(
-    flowName: string,
-    correlationId: string,
-    isTest: boolean | undefined = false,
-    outFile: string | undefined = "./output.json",
-    traceId: string
+    event: AnyEvent<"flow.queued">
   ): RunContext {
     const context: RunContext = {
-      runId: isTest ? "test-run-id" : String(crypto.randomUUID()),
-      traceId,
+      definition: event.data.definition as Flow,
+      flowId: event.data.flow.id,
+      runId: event.data.test ? "test-run-id" : String(crypto.randomUUID()),
+      traceId: event.traceid,
       // step state stuff
       runningSteps: new Set(),
       queuedSteps: new Set(),
@@ -311,10 +294,10 @@ export class Engine {
       outstandingSteps: 0,
 
       // test stuff
-      test: isTest,
-      outFile,
+      test: event.data.test,
+      outFile: event.data.outfile,
 
-      flowName,
+      flowName: event.data.flowName,
       status: "running",
       globals: {},
       exports: {},
@@ -366,7 +349,8 @@ export class Engine {
       context.traceId,
       stepSpanId
     );
-    const flow = this.flowDb.get(e.flowid)!;
+    const flow = context.definition;
+
     if (!flow) return;
     flow.steps[e.stepid].type;
 

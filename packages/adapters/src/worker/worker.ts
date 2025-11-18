@@ -82,12 +82,13 @@ export class Worker {
           event.data.status === "accepted"
         ) {
           this.#context.isRegistered = true;
-          console.log("we are here");
+          const spanId = this.#emitterFactory.generateSpanId();
+          const traceParent = this.#emitterFactory.makeTraceParent(e.traceid, spanId);
           const logEmitter = this.#emitterFactory.newSystemEmitter({
             source: "pipewarp://engine/subscribe-to-bus",
-            traceId: "",
-            spanId: "",
-            traceParent: "",
+            traceId: e.traceid,
+            spanId,
+            traceParent,
           });
           await logEmitter.emit("system.logged", {
             log: "[worker] received registration accepted",

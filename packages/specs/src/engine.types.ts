@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { StepSchema } from "./flow.types.js";
+import { FlowSchema, StepSchema } from "./flow.types.js";
 
 export const StatusSchema = z.enum([
   "running",
@@ -33,11 +33,13 @@ export const RunContextSchema = z.object({
   outstandingSteps: z.number(),
 
   flowName: z.string().min(1),
+  flowId: z.string().min(1),
   test: z.boolean().default(false).optional(),
   outFile: z.string().default("./output.json").optional(),
   inputs: z.record(z.string(), z.unknown()),
   exports: z.record(z.string(), z.unknown()),
   globals: z.record(z.string(), z.unknown()),
+  definition: FlowSchema,
   status: StatusSchema,
   steps: z.record(
     z.string(),
