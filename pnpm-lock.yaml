@@ -371,6 +371,9 @@ importers:
       '@pipewarp/events':
         specifier: workspace:*
         version: link:../events
+      '@pipewarp/specs':
+        specifier: workspace:*
+        version: link:../specs
     devDependencies:
       '@pipewarp/ports':
         specifier: workspace:*

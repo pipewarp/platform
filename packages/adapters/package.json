@@ -1,6 +1,6 @@
 {
   "name": "@pipewarp/adapters",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "private": "true",
   "type": "module",
   "exports": {
@@ -38,7 +38,7 @@
     }
   },
   "scripts": {
-    "build": "tsc --incremental false",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "lint": "echo lint"

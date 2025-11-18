@@ -6,7 +6,8 @@
     "outDir": "dist",
     "rootDir": "src",
     "types": [],
-    "noEmit": true
+    "noEmit": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
   "include": ["src"]
 }

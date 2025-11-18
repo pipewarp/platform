@@ -17,7 +17,8 @@
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "@pipewarp/events": "workspace:*"
+    "@pipewarp/events": "workspace:*",
+    "@pipewarp/specs": "workspace:*"
   },
   "devDependencies": {
     "@pipewarp/ports": "workspace:*",
