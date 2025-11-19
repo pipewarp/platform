@@ -1,6 +1,6 @@
 import { FlowService, type Services } from "@pipewarp/services";
 import { RuntimeContext } from "./types/runtime.context.js";
-import { RuntimeStatus } from "@pipewarp/ports";
+import { EventSink, RuntimeStatus } from "@pipewarp/ports";
 
 
 export class WorkflowRuntime { 
@@ -45,5 +45,9 @@ export class WorkflowRuntime {
       console.error(`[workflow-runtime] error stopping runtime ${err}`)
     }
     return "running";
+  }
+
+  attachSink(sink: EventSink) { 
+    this.ctx.tap.attachSink(sink);
   }
 };

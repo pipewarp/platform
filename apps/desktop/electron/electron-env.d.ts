@@ -1,5 +1,4 @@
 /// <reference types="vite-plugin-electron/electron-env" />
-
 declare namespace NodeJS {
   interface ProcessEnv {
     /**
@@ -15,14 +14,20 @@ declare namespace NodeJS {
      * │
      * ```
      */
-    APP_ROOT: string
+    APP_ROOT: string;
     /** /dist/ or /public/ */
-    VITE_PUBLIC: string
+    VITE_PUBLIC: string;
   }
 }
 
+type IpcOnArgs = Parameters<typeof import("electron")["ipcRenderer"]["on"]>;
+type IpcOn = (...args: IpcOnArgs) => () => void;
+
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
-  ipcRenderer: import('electron').IpcRenderer,
-  electronAPI?: { invoke: (channel: string, payload: unknown) => Promise<unknown>; }
+  ipcRenderer: import("electron").IpcRenderer;
+  electronAPI?: {
+    invoke: (channel: string, payload: unknown) => Promise<unknown>;
+    on: IpcOn;
+  };
 }

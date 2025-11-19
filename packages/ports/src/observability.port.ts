@@ -5,6 +5,6 @@ export interface EventSink {
 
   start(): Promise<void>;
   stop(): Promise<void>;
-
   handle(event: AnyEvent): Promise<void> | void;
 }
+
