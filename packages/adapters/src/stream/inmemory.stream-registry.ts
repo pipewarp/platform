@@ -7,7 +7,7 @@ import type {
   StreamRegistryPort,
 } from "@lcase/ports";
 
-// currently immports InMemoryStream core for depedency.
+// currently imports InMemoryStream core for dependency.
 // NOTE: let registry accept a *factory* arg; createCore(id, options) -> Core
 // plug in different cores (redis, kafka, etc) without touching callers.
 // DI through tiny function to create the Core instead of importing for

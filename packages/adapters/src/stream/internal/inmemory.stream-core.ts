@@ -16,11 +16,11 @@ import type {
 // it should not be exported to public.
 
 type DeferredResolve<NextValue> = (v: NextValue) => void;
-type DeferedReject = (e?: unknown) => void;
+type DeferredReject = (e?: unknown) => void;
 type Deferred<NextValue> = {
   promise: Promise<NextValue>;
   resolve: DeferredResolve<NextValue>;
-  reject: DeferedReject;
+  reject: DeferredReject;
 };
 const DONE = Symbol("done"); // producer done + nothing left in queue;
 type NextValue = Chunk | typeof DONE;
@@ -28,7 +28,7 @@ type NextValue = Chunk | typeof DONE;
 // helper not exported, module scoped
 function createDeferred<NextValue>(): Deferred<NextValue> {
   let resolve!: DeferredResolve<NextValue>;
-  let reject!: DeferedReject;
+  let reject!: DeferredReject;
   const promise = new Promise<NextValue>((res, rej) => {
     resolve = res;
     reject = rej;
