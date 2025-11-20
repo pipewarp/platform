@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { InMemoryStreamCore } from "../../src/stream/internal/inmemory.stream-core";
-import type { InputChunk } from "@pipewarp/ports";
+import type { InputChunk } from "@lcase/ports";
 
 describe("in-memory stream core", () => {
   it("delivers chunks in order sent", async () => {

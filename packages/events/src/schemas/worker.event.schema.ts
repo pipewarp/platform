@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CloudEventContextSchema } from "./cloud-context.schema.js";
-import type { AnyEvent, WorkerScope } from "@pipewarp/types";
+import type { AnyEvent, WorkerScope } from "@lcase/types";
 import {
   WorkerStartedDataSchema,
   WorkerStoppedDataSchema,

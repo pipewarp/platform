@@ -1,13 +1,13 @@
 import fs from "fs";
-import type { RunContext, Flow } from "@pipewarp/specs";
+import type { RunContext, Flow } from "@lcase/specs";
 import type {
   EventBusPort,
   StartFlowInput,
   StreamRegistryPort,
-} from "@pipewarp/ports";
-import type { AnyEvent, FlowQueuedData } from "@pipewarp/types";
-import { EmitterFactory } from "@pipewarp/events";
-import { FlowStore } from "@pipewarp/adapters/flow-store";
+} from "@lcase/ports";
+import type { AnyEvent, FlowQueuedData } from "@lcase/types";
+import { EmitterFactory } from "@lcase/events";
+import { FlowStore } from "@lcase/adapters/flow-store";
 import type { StepHandlerRegistry } from "./step-handler.registry.js";
 import { ResourceRegistry } from "./resource-registry.js";
 
@@ -40,7 +40,7 @@ export class Engine {
           spanId
         );
         const flowEmitter = this.emitterFactory.newFlowEmitter({
-          source: "pipewarp://engine/flow/queued",
+          source: "lowercase://engine/flow/queued",
           flowid: event.flowid,
           traceId: event.traceid,
           spanId,
@@ -78,7 +78,7 @@ export class Engine {
         );
 
         const workerEmitter = this.emitterFactory.newWorkerEmitter({
-          source: "pipewarp://engine/resource-registry",
+          source: "lowercase://engine/resource-registry",
           workerid: event.data.worker.id,
           traceId: event.traceid,
           spanId,
@@ -102,7 +102,7 @@ export class Engine {
     const spanId = this.emitterFactory.generateSpanId();
     const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
     const emitter = this.emitterFactory.newEngineEmitter({
-      source: "pipewarp://engine/start",
+      source: "lowercase://engine/start",
       engineid: "default-engine",
       traceId,
       spanId,
@@ -123,7 +123,7 @@ export class Engine {
     const spanId = this.emitterFactory.generateSpanId();
     const traceParent = this.emitterFactory.makeTraceParent(traceId, spanId);
     const emitter = this.emitterFactory.newEngineEmitter({
-      source: "pipewarp://engine/stop/",
+      source: "lowercase://engine/stop/",
       engineid: "default-engine",
       traceId,
       spanId,
@@ -145,7 +145,7 @@ export class Engine {
   async startFlow(event: AnyEvent<"flow.queued">): Promise<void> {
     /**
      * casting as flow now because the specs package cannot be
-     * imported into @pipewarp/types.
+     * imported into @lcase/types.
      * this will change when flow definitions are moved to the
      * types package, and specs is a home for schemas
      */
@@ -159,7 +159,7 @@ export class Engine {
       systemSpanId
     );
     const logEmitter = this.emitterFactory.newSystemEmitter({
-      source: "pipewarp://engine/start-flow",
+      source: "lowercase://engine/start-flow",
       traceId: event.traceid,
       spanId: systemSpanId,
       traceParent: systemTraceParent,
@@ -174,7 +174,7 @@ export class Engine {
       spanId
     );
     const emitter = this.emitterFactory.newRunEmitter({
-      source: "pipewarp://engine/start-flow",
+      source: "lowercase://engine/start-flow",
       flowid: flow.name,
       runid: context.runId,
       traceId: event.traceid,
@@ -232,7 +232,7 @@ export class Engine {
       stepSpanId
     );
     const stepEmitter = this.emitterFactory.newStepEmitter({
-      source: "pipewarp://engine/queue-step",
+      source: "lowercase://engine/queue-step",
       flowid: context.flowName,
       runid: context.runId,
       stepid: stepName,
@@ -257,7 +257,7 @@ export class Engine {
       spanId
     );
     const jobEmitter = this.emitterFactory.newJobEmitter({
-      source: "pipewarp://engine/queue-step",
+      source: "lowercase://engine/queue-step",
       flowid: context.flowName,
       runid: context.runId,
       stepid: stepName,
@@ -359,7 +359,7 @@ export class Engine {
     flow.steps[e.stepid].type;
 
     const stepEmitter = this.emitterFactory.newStepEmitter({
-      source: "pipewarp://engine/handle-worker-done",
+      source: "lowercase://engine/handle-worker-done",
       flowid: context.flowName,
       runid: context.runId,
       stepid: e.stepid,
@@ -394,7 +394,7 @@ export class Engine {
       this.queueStreamingSteps(flow, context, nextStep);
     } else if (context.outstandingSteps === 0) {
       const logEmitter = this.emitterFactory.newSystemEmitter({
-        source: "pipewarp://engine/handle-work-done",
+        source: "lowercase://engine/handle-work-done",
         traceId: "",
         spanId: "",
         traceParent: "",
@@ -415,7 +415,7 @@ export class Engine {
       );
 
       const runEmitter = this.emitterFactory.newRunEmitter({
-        source: "pipewarp://worker/run/ended",
+        source: "lowercase://worker/run/ended",
         flowid: e.flowid,
         runid: e.runid,
         traceId: e.traceid,
@@ -436,7 +436,7 @@ export class Engine {
       });
 
       const flowEmitter = this.emitterFactory.newFlowEmitter({
-        source: "pipewarp://worker/run/ended",
+        source: "lowercase://worker/run/ended",
         flowid: e.flowid,
         traceId: e.traceid,
         spanId: runSpanId,
@@ -465,7 +465,7 @@ export class Engine {
     fs.writeFileSync(file, JSON.stringify(context, null, 2));
 
     const logEmitter = this.emitterFactory.newSystemEmitter({
-      source: "pipewarp://engine/write-run-context",
+      source: "lowercase://engine/write-run-context",
       traceId: "",
       spanId: "",
       traceParent: "",

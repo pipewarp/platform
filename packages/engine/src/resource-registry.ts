@@ -1,4 +1,4 @@
-import type { Capability, WorkerMetadata } from "@pipewarp/types";
+import type { Capability, WorkerMetadata } from "@lcase/types";
 
 // NOTE: currently assumes one worker structure
 // not final, just a sketch for getting/setting data

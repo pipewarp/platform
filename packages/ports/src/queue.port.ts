@@ -1,4 +1,4 @@
-import { AnyEvent } from "@pipewarp/types";
+import { AnyEvent } from "@lcase/types";
 
 /**
  * QueuePort defines the interface for a message queue system.

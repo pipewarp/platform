@@ -3,7 +3,7 @@
 //   StepActionQueuedData,
 //   StepActionCompletedData,
 //   StepMcpQueuedData,
-// } from "@pipewarp/types";
+// } from "@lcase/types";
 // export const StepActionQueuedDataSchema = z
 //   .object({
 //     tool: z.string().min(1),

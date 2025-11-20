@@ -1,18 +1,18 @@
-# pipewarp
+# lowercase
 
-### ❗ Alpha Software (v0.1.0-alpha.5)
+### ❗ Alpha Software (v0.1.0-alpha.6)
 
-Pipewarp is in an early alpha stage and still taking shape. Some things work - mostly - but APIs and behaviors will change as development evolves. Expect rough edges and breaking changes for now.
+**lowercase** is in an early alpha stage and still taking shape. Some things work - mostly - but APIs and behaviors will change as development evolves. Expect rough edges and breaking changes for now.
 
 ## Overview
 
-Pipewarp is an event driven workflow engine built for flexibility and composability. It's designed to run locally first, as a single process, and aims to make orchestrating complex systems, especially AI driven ones, feel simple, transparent, and powerful. Instead of enforcing rigid rules, Pipewarp's goal is to make things possible: to connect tools, services, and data streams in whatever way fits your use case.
+**lowercase** is an event driven workflow engine built for flexibility and composability. It's designed to run locally first, as a single process, and aims to make orchestrating complex systems, especially AI driven ones, feel simple, transparent, and powerful. Instead of enforcing rigid rules, **lowercase**'s goal is to make things possible: to connect tools, services, and data streams in whatever way fits your use case.
 
-Under the hood, Pipewarp treats streaming as a first-class citizen. Every component, from queues to workers, communicates through events, allowing generic components with swappable infrastructure. The architecture is modular and extensible, supporting everything from lightweight in-memory execution to distributed setups. Built-in observability is a core goal, with plans for integrated dashboard and support for external monitoring tools, making it easy to understand what your flows are doing at every stage.
+Under the hood, **lowercase** treats streaming as a first-class citizen. Every component, from queues to workers, communicates through events, allowing generic components with swappable infrastructure. The architecture is modular and extensible, supporting everything from lightweight in-memory execution to distributed setups. Built-in observability is a core goal, with plans for integrated dashboard and support for external monitoring tools, making it easy to understand what your flows are doing at every stage.
 
 ## Current State
 
-In brief, currently the system has several in process components: engine, event bus, router, queues, worker, tools, stream, and observability sinks + tap. A cli wires up the runtime, and a vite dev dashboard provides minimal observability.
+In brief, currently the system has several in process components: engine, event bus, router, queues, worker, tools, stream, and observability sinks + tap. An electron desktop app wires up the runtime to run flows. A cli can also run flows and optionally plug into a web socket observability frontend.
 
 ## Quickstart
 
@@ -35,55 +35,48 @@ pnpm build
 
 ### 2. run demo
 
-```bash
-# start observability dashboard a thttp://localhost:5174/
-pnpm -F @pipewarp/observe-web dev
+#### Desktop Demo
 
+```bash
+pnpm -F @lcase/desktop dev
+```
+
+Basic desktop usage:
+
+- Select a folder that contains flow definitions with the "folder button
+- Start the runtime with the "start" button
+- Run a flow with the "run" button
+- Click on events to see their details, and click "clear" to clear the event list
+
+#### CLI Demo
+
+```bash
 # run one of the following flows:
 
-# streaming workflow; spawns child server proccesses
-pnpm -F @pipewarp/cli start run examples/demo.streaming.flow.json -d
+# streaming workflow; spawns child servers
+pnpm -F @lcase/cli start run examples/demo.streaming.flow.json -d
 
 # non streaming workflow
-pnpm -F @pipewarp/cli start run examples/demo.flow.json -d
+pnpm -F @lcase/cli start run examples/demo.flow.json -d
 
-# click "connect" on web socket dashboard when ready to run the flow
-
-# when flow is complete, click "disconnect" in observability dashboard
+# you may need to terminate the process with ctrl+c or other process signals
 ```
 
 ### Examples
 
-#### Demo flow executed with two localhost SSE streaming MCP servers
+#### Demo flow executed in desktop application
+
+![Art Streaming Demo Terminal Example](desktop.png)
+
+#### Demo flow executed in CLI with two localhost SSE streaming MCP servers
 
 ![Art Streaming Demo Terminal Example](art-streaming-demo.gif)
 
 #### Basic Observability WebSocket Event Viewer
 
+This event viewer `@lcase/observe-web` is currently un-wired from the cli by default but can be wired in.
+
 ![Art Streaming Demo Terminal Example](observe-web.png)
-
-### Streaming Flow Explained
-
-#### Streaming Flow Definition ([examples/demo.streaming.flow.json](examples/demo.streaming.flow.json))
-
-The demo streaming flow, when run with the cli run command from repo root, and the `-d` or `--demo` option, performs the following steps:
-
-1. Connects to an observability web socket server.
-
-2. Starts up two localhost MCP servers on ports 3004 and 3005 for each step as child processes. These are found at:
-
-   - [examples/mcp-servers/unicode.server.ts](examples/mcp-servers/unicode.server.ts)
-   - [examples/mcp-servers/tranform.server.ts](examples/mcp-servers/transform.server.ts)
-
-3. Wires up the runtime components and queues the flow to run via a `flow.queued` event.
-
-4. The first step named `mario` calls an mcp server and invokes the tool operation named `draw`. It passes args to it to alter its behavior. This tool produces unicode art that resembles mario, streamed from an SSE endpoint. This output is piped to the luigi step.
-
-5. In parallel (single threaded), the step named `luigi` is executed. It contacts an mcp server and runs a tool called `transform` with specific arguments. The interpolated string `$.pipe` refers to the streaming output of the `mario` step. The `transform` tool takes unicode characters and swaps specific colors of characters, to produce a "luigi" styled unicode output. That output is streamed over SSE and not captured in the flow (duplex streaming not yet supported).
-
-6. The engine's `RunContext` is saved as `output.temp.json` in the root of the repo. It contains details about the run, including the output from each step's tool invocation.
-
-See [apps/cli/README.md](apps/cli/README.md) for more details about the cli.
 
 ## unit tests
 
@@ -99,48 +92,59 @@ Further test coverage will grow as the architecture is cemented. Large breaking 
 
 ## Monorepo Packages
 
-| Package                     | Purpose                               |
-| --------------------------- | ------------------------------------- |
-| **@pipewarp/types**         | Shared types across packages.         |
-| **@pipewarp/ports**         | Ports and their supporting types.     |
-| **@pipewarp/specs**         | Flow specification.                   |
-| **@pipewarp/events**        | Event schemas and helper functions.   |
-| **@pipewarp/adapters**      | Implementations of ports.             |
-| **@pipewarp/engine**        | Event driven workflow engine.         |
-| **@pipewarp/observability** | Observability events tap and sinks.   |
-| **@pipewarp/cli**           | CLI for running and validating flows. |
-| **@pipewarp/observe-web**   | Vite web observability event viewer.  |
-| **@pipewarp/examples**      | Example / demo flows and servers.     |
+| Package                  | Purpose                                    |
+| ------------------------ | ------------------------------------------ |
+| **@lcase/types**         | Shared types across packages.              |
+| **@lcase/ports**         | Ports and their supporting types.          |
+| **@lcase/specs**         | Flow specification.                        |
+| **@lcase/events**        | Event schemas and helper functions.        |
+| **@lcase/adapters**      | Implementations of ports.                  |
+| **@lcase/engine**        | Event driven workflow engine.              |
+| **@lcase/observability** | Observability events tap and sinks.        |
+| **@lcase/runtime**       | Wires up a configurable runtime.           |
+| **@lcase/controller**    | Defines an api interface for backend apps. |
+| **@lcase/services**      | Implements grouped application logic.      |
+| **@lcase/cli**           | CLI for running and validating flows.      |
+| **@lcase/desktop**       | Electron desktop application.              |
+| **@lcase/observe-web**   | Vite web observability event viewer.       |
+| **@lcase/examples**      | Example / demo flows and servers.          |
 
-## Alpha 5 Highlights: release v0.1.0-alpha.5
-
-### Observability Scaffolded with Lifecycle Events
-
-- New `@pipewarp/observability` package: scaffolds observability tap and sinks
-- New `@pipewarp/observe-web` package: vite barebones WebSocket observability viewer
-- New lifecycle event types in `@pipewarp/types`
-- Update `EmitterFactory` in `@pipewarp/events` to work with all event types.
-- Otel Trace and Span fields integrated into emitters and types
-- Zod schemas for all event types, used in event emitters.
-
-## Next for Alpha 6
+## Alpha 6 Release Highlights: v0.1.0-alpha.6
 
 ### Electron Application
 
-- A working electron dashboard.
-- Real time run feedback via observability.
-- Runtime layer wires up components to run as persistant process controlled through the dashboard.
-- Reusable UI for webserver and other versions.
-- Reusable use case pipeline logic between different deployments.
-- Flow execution from disk `.json` flows.
+- Working Electron application at `@lcase/desktop`
+- Persistent runtime with start/stop.
+- Read flows from disk and run them.
+- New `@lcase/controller` package for shared API surfaces.
+- New `@lcase/services` package for implementing application logic.
+- New `@lcase/runtime` to wire up dependencies with a config object.
 
-## Beyond Alpha 6
+## Next for Alpha 7
 
-- New tool types (http, websocket, subprocess, etc)
-- New control flow types (branching, parallel, wait, etc)
+### Flow Control + Tools
+
+- New tool types (http, prompt, RAG, eval, etc)
+- New flow control (parallel, join, etc)
+- Refactor Engine components
+- Refactor Worker and Tools
+- Refactor flow definition in typescript with separate schema in `@lcase/specs`
+- Refactor Event Emitter otel span creation
+
+## Beyond Alpha 7
+
 - Observability persistence for replay / analysis.
-- Web server application
-- Swappable infra for components.
-- Refactor engine for better extensibility
-- Refactor worker and tooling boundaries
-- Refactor event emitters and otel span creation
+- Web server application.
+- Swappable infra (redis) implementation for components.
+- Refactor engine for better extensibility.
+- Refactor worker and tooling boundaries.
+- Refactor event emitters and otel span creation.
+
+## License
+
+This project is licensed under [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/)
+
+You are free to use, modify, and share the source code for noncommercial purposes, including personal, educational, and research use.
+
+Commercial use is not permitted without permission from the author.
+If you're interested in commercial use or have questions, feel free to reach out.

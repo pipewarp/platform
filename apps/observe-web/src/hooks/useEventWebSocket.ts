@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from "react";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent } from "@lcase/types";
 
 export type EventWebSocketHandles = {
   isConnected: boolean;

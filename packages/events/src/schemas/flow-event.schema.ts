@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { AnyEvent, FlowScope } from "@pipewarp/types";
+import type { AnyEvent, FlowScope } from "@lcase/types";
 import {
   FlowCompletedDataSchema,
   FlowQueuedDataSchema,

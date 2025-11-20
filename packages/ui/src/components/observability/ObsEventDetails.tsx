@@ -1,4 +1,4 @@
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent } from "@lcase/types";
 
 export function ObsEventDetails({ event }: { event: AnyEvent }) {
   return (

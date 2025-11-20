@@ -1,5 +1,5 @@
 import type { ZodSchema } from "zod";
-import type { EventType } from "@pipewarp/types";
+import type { EventType } from "@lcase/types";
 import {
   FlowCompletedSchema,
   FlowQueuedSchema,

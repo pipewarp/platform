@@ -5,7 +5,7 @@ import type {
   JobFailedData,
   JobMcpQueuedData,
   JobStartedData,
-} from "@pipewarp/types";
+} from "@lcase/types";
 
 const JobDescriptorDataSchema = z
   .object({

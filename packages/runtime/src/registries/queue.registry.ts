@@ -1,4 +1,4 @@
-import { InMemoryQueue } from "@pipewarp/adapters/queue";
+import { InMemoryQueue } from "@lcase/adapters/queue";
 import type { Registry } from "../types/registry.js";
 
 export const queueRegistry = {

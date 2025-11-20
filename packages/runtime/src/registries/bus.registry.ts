@@ -1,5 +1,5 @@
 import type { Registry } from "../types/registry.js";
-import { InMemoryEventBus } from "@pipewarp/adapters/event-bus";
+import { InMemoryEventBus } from "@lcase/adapters/event-bus";
 
 export const busRegistry = {
   embedded: {

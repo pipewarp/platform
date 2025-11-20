@@ -1,6 +1,6 @@
-import type { Flow, RunContext } from "@pipewarp/specs";
-import type { AnyEvent } from "@pipewarp/types";
-import { JobEmitter } from "@pipewarp/events";
+import type { Flow, RunContext } from "@lcase/specs";
+import type { AnyEvent } from "@lcase/types";
+import { JobEmitter } from "@lcase/events";
 
 export interface StepHandler {
   queue(

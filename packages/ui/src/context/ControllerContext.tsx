@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { ClientControllerPort } from "@pipewarp/ports";
+import type { ClientControllerPort } from "@lcase/ports";
 
 const ControllerContext = createContext<ClientControllerPort | null>(null);
 

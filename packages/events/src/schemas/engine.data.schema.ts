@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { EngineStartedData, EngineStoppedData } from "@pipewarp/types";
+import type { EngineStartedData, EngineStoppedData } from "@lcase/types";
 
 const EngineDescriptorSchema = z.object({
   id: z.string(),

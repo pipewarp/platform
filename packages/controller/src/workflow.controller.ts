@@ -3,9 +3,9 @@ import type {
   EventSink,
   FlowList,
   RuntimeStatus,
-} from "@pipewarp/ports";
-import { WorkflowRuntime } from "@pipewarp/runtime";
-import { FlowQueuedData } from "@pipewarp/types";
+} from "@lcase/ports";
+import { WorkflowRuntime } from "@lcase/runtime";
+import { FlowQueuedData } from "@lcase/types";
 
 export class WorkflowController implements ServerControllerPort {
   constructor(private readonly runtime: WorkflowRuntime) {}

@@ -1,4 +1,4 @@
-import { CloudScope } from "@pipewarp/types";
+import { CloudScope } from "@lcase/types";
 
 export type EmitterContext = {
   traceId: string;

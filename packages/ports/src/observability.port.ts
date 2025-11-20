@@ -1,4 +1,4 @@
-import { AnyEvent } from "@pipewarp/types";
+import { AnyEvent } from "@lcase/types";
 
 export interface EventSink {
   readonly id: string;
@@ -7,4 +7,3 @@ export interface EventSink {
   stop(): Promise<void>;
   handle(event: AnyEvent): Promise<void> | void;
 }
-

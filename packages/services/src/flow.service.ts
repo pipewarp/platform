@@ -1,7 +1,7 @@
-import type { EventBusPort, FlowStorePort, FlowList } from "@pipewarp/ports";
-import type { FlowQueuedData } from "@pipewarp/types";
-import { EmitterFactory } from "@pipewarp/events";
-import { FlowSchema, type Flow } from "@pipewarp/specs";
+import type { EventBusPort, FlowStorePort, FlowList } from "@lcase/ports";
+import type { FlowQueuedData } from "@lcase/types";
+import { EmitterFactory } from "@lcase/events";
+import { FlowSchema, type Flow } from "@lcase/specs";
 import { createHash } from "crypto";
 import path from "node:path";
 
@@ -21,7 +21,6 @@ export class FlowService {
 
     if (!flow) return;
 
-    
     const validatedFlow = this.validateJsonFlow(flow);
 
     if (typeof validatedFlow === "string") return;
@@ -30,9 +29,13 @@ export class FlowService {
     const spanId = this.ef.generateSpanId();
     const traceParent = this.ef.makeTraceParent(traceId, spanId);
 
-    const flowId = this.makeId(validatedFlow.name, validatedFlow.version, args.absoluteFilePath);
+    const flowId = this.makeId(
+      validatedFlow.name,
+      validatedFlow.version,
+      args.absoluteFilePath
+    );
     const flowEmitter = this.ef.newFlowEmitter({
-      source: "pipewarp://flow-service/start-flow",
+      source: "lowercase://flow-service/start-flow",
       flowid: flowId,
       traceId,
       spanId,
@@ -47,8 +50,8 @@ export class FlowService {
       flowName: validatedFlow.name,
       inputs: {},
       outfile: "output.temp.json",
-      definition: validatedFlow
-    });    
+      definition: validatedFlow,
+    });
   }
 
   async listFlows(args: { absoluteDirPath?: string }): Promise<FlowList> {

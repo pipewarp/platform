@@ -1,5 +1,5 @@
 {
-  "name": "@pipewarp/desktop",
+  "name": "@lcase/desktop",
   "private": true,
   "version": "0.1.0-alpha.6",
   "type": "module",
@@ -8,12 +8,11 @@
     "build": "vite build",
     "pack": "electron-builder --dir",
     "make": "electron-builder",
-    "make:mac:unsigned": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
-    "clean": "rimraf dist dist-electron out"
+    "make:mac:unsigned": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac"
   },
   "build": {
-    "appId": "com.pipewarp.desktop",
-    "productName": "Pipewarp Desktop",
+    "appId": "com.lowercase.desktop",
+    "productName": "lowercase Desktop",
     "files": [
       "dist/**",
       "dist-electron/**",
@@ -61,8 +60,8 @@
     }
   },
   "dependencies": {
-    "@pipewarp/controller": "workspace:*",
-    "@pipewarp/runtime": "workspace:*",
+    "@lcase/controller": "workspace:*",
+    "@lcase/runtime": "workspace:*",
     "bufferutil": "^4.0.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -71,8 +70,8 @@
   },
   "devDependencies": {
     "@electron/notarize": "^3.1.1",
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/types": "workspace:*",
+    "@lcase/ports": "workspace:*",
+    "@lcase/types": "workspace:*",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@types/ws": "^8.18.1",
@@ -85,7 +84,6 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "rimraf": "^6.1.0",
     "typescript": "^5.2.2",
     "vite": "^7.2.2",
     "vite-plugin-electron": "^0.28.6",

@@ -1,39 +1,40 @@
-import type { RuntimeConfig } from "@pipewarp/runtime";
-
+import type { RuntimeConfig } from "@lcase/runtime";
 
 export const runtimeConfig = {
   bus: {
     id: "",
     placement: "embedded",
     transport: "event-emitter",
-    store: "none"
+    store: "none",
   },
   queue: {
     id: "",
     placement: "embedded",
     transport: "deferred-promise",
-    store: "none"
+    store: "none",
   },
   router: {
-    id: ""
+    id: "",
   },
   engine: {
-    id: ""
+    id: "",
   },
   worker: {
     id: "desktop-worker",
-    capabilities: [{
-      name: "mcp",
-      queueId: "mcp",
-      maxJobCount: 2,
-      tool: {
-        id: "mcp",
-        type: "inprocess",
+    capabilities: [
+      {
+        name: "mcp",
+        queueId: "mcp",
+        maxJobCount: 2,
+        tool: {
+          id: "mcp",
+          type: "inprocess",
+        },
       },
-    }]
+    ],
   },
   stream: {
-    id: ""
+    id: "",
   },
   observability: {
     id: "",

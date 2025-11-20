@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { SystemLoggedData } from "@pipewarp/types";
+import type { SystemLoggedData } from "@lcase/types";
 
 export const SystemLoggedDataSchema = z
   .object({

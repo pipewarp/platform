@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CloudEventContextSchema } from "./cloud-context.schema.js";
-import type { AnyEvent, ToolScope } from "@pipewarp/types";
+import type { AnyEvent, ToolScope } from "@lcase/types";
 import {
   ToolCompletedDataSchema,
   ToolFailedDataSchema,

@@ -1,5 +1,5 @@
 {
-  "name": "@pipewarp/adapters",
+  "name": "@lcase/adapters",
   "version": "0.1.0-alpha.6",
   "private": "true",
   "type": "module",
@@ -46,10 +46,10 @@
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.1",
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/specs": "workspace:*",
-    "@pipewarp/types": "workspace:*",
-    "@pipewarp/events": "workspace:*",
+    "@lcase/ports": "workspace:*",
+    "@lcase/specs": "workspace:*",
+    "@lcase/types": "workspace:*",
+    "@lcase/events": "workspace:*",
     "zod": "3.25.76"
   },
   "devDependencies": {

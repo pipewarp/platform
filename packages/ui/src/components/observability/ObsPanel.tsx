@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useController } from "../../context/ControllerContext.js";
 import { useObsEvent } from "../../hooks/obsEvent.js";
-import { AnyEvent } from "@pipewarp/types";
+import { AnyEvent } from "@lcase/types";
 import { ObsEventBar } from "./ObsEventBar.js";
 import { ObsControls } from "./ObsControls.js";
 import { AppContext } from "../../context/AppContext.js";

@@ -1,5 +1,5 @@
-import { QueuePort } from "@pipewarp/ports";
-import type { AnyEvent } from "@pipewarp/types";
+import { QueuePort } from "@lcase/ports";
+import type { AnyEvent } from "@lcase/types";
 
 type QueueId = string;
 type WorkerId = string;
@@ -10,7 +10,7 @@ type Waiter = {
 
 /**
  * First implementation:
- * No rety; ack and nack are noop
+ * No retry; ack and nack are noop
  * FIFO queue as array.  May not scale well
  * Reserve now acts as a dequeue but uses promise resolution to prevent resovling
  * until something is in the queue.  This way, consumers of the queue do not need

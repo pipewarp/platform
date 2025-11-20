@@ -1,4 +1,4 @@
-import { ClientControllerPort, FlowList, RuntimeStatus } from "@pipewarp/ports";
+import { ClientControllerPort, FlowList, RuntimeStatus } from "@lcase/ports";
 
 // TODO: implement type mapping on API invoke channels
 export class ElectronController implements ClientControllerPort {

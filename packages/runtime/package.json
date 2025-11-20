@@ -1,5 +1,5 @@
 {
-  "name": "@pipewarp/runtime",
+  "name": "@lcase/runtime",
   "version": "0.1.0-alpha.6",
   "private": true,
   "type": "module",
@@ -17,14 +17,14 @@
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "@pipewarp/engine": "workspace:*",
-    "@pipewarp/adapters": "workspace:*",
-    "@pipewarp/events": "workspace:*",
-    "@pipewarp/observability": "workspace:*",
-    "@pipewarp/services": "workspace:*"
+    "@lcase/engine": "workspace:*",
+    "@lcase/adapters": "workspace:*",
+    "@lcase/events": "workspace:*",
+    "@lcase/observability": "workspace:*",
+    "@lcase/services": "workspace:*"
   },
   "devDependencies": {
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/types": "workspace:*"
+    "@lcase/ports": "workspace:*",
+    "@lcase/types": "workspace:*"
   }
 }

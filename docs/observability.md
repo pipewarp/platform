@@ -1,4 +1,4 @@
-# Pipewarp Observability
+# lowercase Observability
 
 ## Status
 
@@ -24,14 +24,14 @@ A single practical spec for emitting lifecycle and domain events that correlate 
 - `type` (human readable stable taxonomy, important for current type system)
 - `data` (domain payload)
 
-#### Pipewarp / Otel Extension Attributes
+#### lowercase / Otel Extension Attributes
 
 - `traceparent` (W3C Trace Context) **always include**
 - `tracestate` optional W3C trace state
-- `component` (pipewarp bounded set)
-- `operation` (pipewarp bounded set)
-- ids (optional per scope, references to pipewarp values) - `flowid`, `runid`, `stepid`, `jobid`, `toolid`, `steptype`
-- classification (pipewarp relevant references) `capability`, `tool`
+- `component` (lowercase bounded set)
+- `operation` (lowercase bounded set)
+- ids (optional per scope, references to lowercase values) - `flowid`, `runid`, `stepid`, `jobid`, `toolid`, `steptype`
+- classification (lowercase relevant references) `capability`, `tool`
 - errors/retries `attempt`, `errorkind`, `errorcode`
 
 ### 03. Vocabulary
@@ -73,7 +73,7 @@ Prefer one word verbs, past tense.
 
 #### `entity` (classification of work)
 
-Optional map to pipewarp capabilities or domain entities
+Optional map to **lowercase** capabilities or domain entities
 
 - `mcp`
 - `shell`

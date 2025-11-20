@@ -1,7 +1,7 @@
 // stub for console.log output for observability
 
-import type { EventSink } from "@pipewarp/ports";
-import { AnyEvent } from "@pipewarp/types";
+import type { EventSink } from "@lcase/ports";
+import { AnyEvent } from "@lcase/types";
 
 export class ConsoleSink implements EventSink {
   readonly id = "console-log-sink";
@@ -44,4 +44,3 @@ export class ConsoleSink implements EventSink {
     );
   }
 }
-

@@ -1,4 +1,4 @@
-import type { ValidFlowDescriptor } from "@pipewarp/ports";
+import type { ValidFlowDescriptor } from "@lcase/ports";
 import { useController } from "../context/ControllerContext.js";
 import { useContext } from "react";
 import { AppContext } from "../context/AppContext.js";

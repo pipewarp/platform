@@ -1,5 +1,5 @@
-import type { EventBusPort, EventSink } from "@pipewarp/ports";
-import { AnyEvent } from "@pipewarp/types";
+import type { EventBusPort, EventSink } from "@lcase/ports";
+import { AnyEvent } from "@lcase/types";
 
 export class ObservabilityTap {
   #subscribeTopic = "observability";
@@ -28,12 +28,11 @@ export class ObservabilityTap {
   detachSink(sink: EventSink) {
     this.#sinks.delete(sink.id);
   }
-  stop() { 
+  stop() {
     try {
       this.bus.close();
-    }
-    catch (err) {
-      console.log(`[observability-tap] could not close: ${err}`)
+    } catch (err) {
+      console.log(`[observability-tap] could not close: ${err}`);
     }
   }
 }

@@ -4,8 +4,8 @@ import type {
   ToolPort,
   InputChunk,
   ConsumerStreamPort,
-} from "@pipewarp/ports";
-import type { JobMcpQueuedData } from "@pipewarp/types";
+} from "@lcase/ports";
+import type { JobMcpQueuedData } from "@lcase/types";
 import { Client } from "@modelcontextprotocol/sdk/client";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent } from "@lcase/types";
 import { useController } from "../context/ControllerContext.js";
 
 const delayIncrementMs = 20;

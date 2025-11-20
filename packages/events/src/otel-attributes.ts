@@ -7,7 +7,7 @@ import {
   ToolOtelAttributesMap,
   WorkerOtelAttributesMap,
   SystemOtelAttributesMap,
-} from "@pipewarp/types";
+} from "@lcase/types";
 
 export const stepOtelAttributes = {
   "step.started": {

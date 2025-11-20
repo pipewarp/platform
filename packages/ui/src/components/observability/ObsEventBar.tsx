@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AnyEvent } from "@pipewarp/types";
+import { AnyEvent } from "@lcase/types";
 import { ObsEventDetails } from "./ObsEventDetails.js";
 
 export type EventDomainColors = {
