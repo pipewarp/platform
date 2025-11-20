@@ -133,7 +133,7 @@ export class Engine {
     emitter.emit("engine.stopped", {
       engine: {
         id: "default-engine",
-        version: "0.1.0-alpha.4",
+        version: "0.1.0-alpha.6",
       },
       status: "stopped",
       reason: "SIGINT called",
@@ -144,9 +144,9 @@ export class Engine {
 
   async startFlow(event: AnyEvent<"flow.queued">): Promise<void> {
     /**
-     * casting as flow now because the specs package cannot be 
-     * imported into @pipewarp/types.  
-     * this will change when flow definitions are moved to the 
+     * casting as flow now because the specs package cannot be
+     * imported into @pipewarp/types.
+     * this will change when flow definitions are moved to the
      * types package, and specs is a home for schemas
      */
     const flow = event.data.definition as Flow;
@@ -154,7 +154,10 @@ export class Engine {
     context = this.#initStepContext(context, flow.start);
 
     const systemSpanId = this.emitterFactory.generateSpanId();
-    const systemTraceParent = this.emitterFactory.makeTraceParent(event.traceid, systemSpanId);
+    const systemTraceParent = this.emitterFactory.makeTraceParent(
+      event.traceid,
+      systemSpanId
+    );
     const logEmitter = this.emitterFactory.newSystemEmitter({
       source: "pipewarp://engine/start-flow",
       traceId: event.traceid,
@@ -166,7 +169,10 @@ export class Engine {
     });
 
     const spanId = this.emitterFactory.generateSpanId();
-    const traceParent = this.emitterFactory.makeTraceParent(event.traceid, spanId);
+    const traceParent = this.emitterFactory.makeTraceParent(
+      event.traceid,
+      spanId
+    );
     const emitter = this.emitterFactory.newRunEmitter({
       source: "pipewarp://engine/start-flow",
       flowid: flow.name,
@@ -278,9 +284,7 @@ export class Engine {
     context.outstandingSteps++;
     this.#runs.set(context.runId, context);
   }
-  #buildRunContext(
-    event: AnyEvent<"flow.queued">
-  ): RunContext {
+  #buildRunContext(event: AnyEvent<"flow.queued">): RunContext {
     const context: RunContext = {
       definition: event.data.definition as Flow,
       flowId: event.data.flow.id,
@@ -456,7 +460,7 @@ export class Engine {
   writeRunContext(runId: string): void {
     const context = this.#runs.get(runId);
     const file =
-      context?.outFile !== undefined ? context.outFile : "./output.json";
+      context?.outFile !== undefined ? context.outFile : "./output.temp.json";
 
     fs.writeFileSync(file, JSON.stringify(context, null, 2));
 
@@ -467,7 +471,7 @@ export class Engine {
       traceParent: "",
     });
     logEmitter.emit("system.logged", {
-      log: "[engine] context written to disk",
+      log: `[engine] context written to disk at ${file}`,
     });
     return;
   }

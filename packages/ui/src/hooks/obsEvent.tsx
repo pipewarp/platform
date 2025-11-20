@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import type { AnyEvent } from "@pipewarp/types";
 import { useController } from "../context/ControllerContext.js";
 

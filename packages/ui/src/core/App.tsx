@@ -3,6 +3,7 @@ import { useController } from "../context/ControllerContext.js";
 import { Header } from "../layout/Header.js";
 import { FlowManager } from "../components/FlowManager.js";
 import { ObsPanel } from "../components/observability/ObsPanel.js";
+import { AppContextProvider } from "../context/AppContext.js";
 
 export function App() {
   const [runtimeStatus, setRuntimeStatus] = useState<string>("stopped");
@@ -10,22 +11,20 @@ export function App() {
 
   return (
     <>
-      <Header />
-      <main>
-        <div id="divided-main">
-          <div id="left-panel">
-            <FlowManager />
+      <AppContextProvider>
+        <Header />
+        <main>
+          <div id="divided-main">
+            <div id="left-panel">
+              <FlowManager />
+            </div>
+            <div id="right-panel">
+              <h2>Observability</h2>
+              <ObsPanel />
+            </div>
           </div>
-          <div id="right-panel">
-            <h2>Observability</h2>
-            <ObsPanel />
-            <p>
-              This is a panel that will hold observability information like
-              connect/disconnect, live streaming events, etc.
-            </p>
-          </div>
-        </div>
-      </main>
+        </main>
+      </AppContextProvider>
     </>
   );
 }
