@@ -11,7 +11,7 @@ const sessions = new Map<string, SSEServerTransport>();
 const port = 3004;
 const mcp = new McpServer({
   name: "unicode-server",
-  version: "0.1.0-alpha.5",
+  version: "0.1.0-alpha.6",
   capabilities: { logging: {} },
 });
 
