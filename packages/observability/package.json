@@ -1,5 +1,5 @@
 {
-  "name": "@pipewarp/observability",
+  "name": "@lcase/observability",
   "version": "0.1.0-alpha.6",
   "private": true,
   "type": "module",
@@ -20,8 +20,8 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/types": "workspace:*",
+    "@lcase/ports": "workspace:*",
+    "@lcase/types": "workspace:*",
     "@types/ws": "^8.18.1",
     "vitest": "^3.2.4"
   }

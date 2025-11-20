@@ -5,7 +5,7 @@ import type {
   EventActions,
   EventDomains,
   EventEntities,
-} from "@pipewarp/types";
+} from "@lcase/types";
 
 export const eventTypes = [
   "flow.queued",

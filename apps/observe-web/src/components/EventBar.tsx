@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent } from "@lcase/types";
 import { EventDetails } from "./EventDetails";
 
 export type EventBarProps = {
@@ -48,7 +48,7 @@ export function EventBar({ event }: EventBarProps) {
         font-sans pl-2
         text-center
         cursor-pointer
-        
+
         text-lg
         rounded-md
         mb-0.5

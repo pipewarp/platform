@@ -2,8 +2,8 @@ import { Command } from "commander";
 import fs from "fs";
 import { resolveCliPath } from "../../resolve-path.js";
 
-import { FlowSchema } from "@pipewarp/specs";
-import { WorkflowController } from "@pipewarp/controller";
+import { FlowSchema } from "@lcase/specs";
+import { WorkflowController } from "@lcase/controller";
 
 export function cliValidateAction(flowPath: string) {
   const resolvedFlowPath = resolveCliPath(flowPath);
@@ -23,7 +23,10 @@ export function cliValidateAction(flowPath: string) {
     console.log("Error:", e);
   }
 }
-export function registerValidateCmd(program: Command, controller: WorkflowController){
+export function registerValidateCmd(
+  program: Command,
+  controller: WorkflowController
+) {
   program.command("validate <flowPath>").action(cliValidateAction);
   return program;
 }

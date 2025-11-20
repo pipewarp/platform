@@ -1,5 +1,5 @@
 {
-  "name": "@pipewarp/services",
+  "name": "@lcase/services",
   "version": "0.1.0-alpha.6",
   "private": true,
   "type": "module",
@@ -17,11 +17,11 @@
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "@pipewarp/events": "workspace:*",
-    "@pipewarp/specs": "workspace:*"
+    "@lcase/events": "workspace:*",
+    "@lcase/specs": "workspace:*"
   },
   "devDependencies": {
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/types": "workspace:*"
+    "@lcase/ports": "workspace:*",
+    "@lcase/types": "workspace:*"
   }
 }

@@ -1,5 +1,5 @@
-import { StreamRegistryPort } from "@pipewarp/ports";
-import type { ActionStep, Flow, RunContext } from "@pipewarp/specs";
+import { StreamRegistryPort } from "@lcase/ports";
+import type { ActionStep, Flow, RunContext } from "@lcase/specs";
 import { randomUUID } from "crypto";
 
 export type ResolvedPipes = {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent } from "@lcase/types";
 import { CloudEventContextSchema } from "./cloud-context.schema.js";
 import {
   EngineStartedDataSchema,

@@ -1,5 +1,5 @@
-import type { RouterPort, QueuePort, EventBusPort } from "@pipewarp/ports";
-import type { AnyEvent } from "@pipewarp/types";
+import type { RouterPort, QueuePort, EventBusPort } from "@lcase/ports";
+import type { AnyEvent } from "@lcase/types";
 
 export type RouterContext = {
   [capability: string]: {

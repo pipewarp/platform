@@ -1,5 +1,5 @@
-import { EventSink } from "@pipewarp/ports";
-import { AnyEvent } from "@pipewarp/types";
+import { EventSink } from "@lcase/ports";
+import { AnyEvent } from "@lcase/types";
 import { WebSocket, WebSocketServer } from "ws";
 
 export class WebSocketServerSink implements EventSink {

@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Button } from "../components/Button";
 import { EventBar } from "../components/EventBar";
 import { useEventWebSocket } from "../hooks/useEventWebSocket";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent } from "@lcase/types";
 
 export type PageProps = {
   title: string;

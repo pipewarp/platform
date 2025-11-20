@@ -3,9 +3,9 @@ import type {
   QueuePort,
   StreamRegistryPort,
   ToolPort,
-} from "@pipewarp/ports";
-import { EmitterFactory } from "@pipewarp/events";
-import type { AnyEvent, Capability, WorkerMetadata } from "@pipewarp/types";
+} from "@lcase/ports";
+import { EmitterFactory } from "@lcase/events";
+import type { AnyEvent, Capability, WorkerMetadata } from "@lcase/types";
 import type { ToolClass } from "../tools/tool-factory.js";
 import { ToolRegistry } from "../tools/tool-registry.js";
 import type { JobContext } from "./types.js";
@@ -89,7 +89,7 @@ export class Worker {
             spanId
           );
           const logEmitter = this.#emitterFactory.newSystemEmitter({
-            source: "pipewarp://engine/subscribe-to-bus",
+            source: "lowercase://engine/subscribe-to-bus",
             traceId: e.traceid,
             spanId,
             traceParent,
@@ -141,7 +141,7 @@ export class Worker {
       toolSpanId
     );
     const toolEmitter = this.#emitterFactory.newToolEmitter({
-      source: "pipewarp://worker/job-done",
+      source: "lowercase://worker/job-done",
       flowid: e.flowid,
       runid: e.runid,
       stepid: e.stepid,
@@ -167,7 +167,7 @@ export class Worker {
     const traceParent = this.#emitterFactory.makeTraceParent(e.traceid, spanId);
 
     const jobEmitter = this.#emitterFactory.newJobEmitter({
-      source: "pipewarp://worker/job-done",
+      source: "lowercase://worker/job-done",
       flowid: e.flowid,
       runid: e.runid,
       stepid: e.stepid,
@@ -246,7 +246,7 @@ export class Worker {
     const traceParent = this.#emitterFactory.makeTraceParent(traceId, spanId);
 
     const workerEmitter = this.#emitterFactory.newWorkerEmitter({
-      source: "pipewarp://worker/" + this.#context.workerId,
+      source: "lowercase://worker/" + this.#context.workerId,
       workerid: this.#context.workerId,
       traceId,
       spanId,
@@ -275,7 +275,7 @@ export class Worker {
     const traceParent = this.#emitterFactory.makeTraceParent(traceId, spanId);
 
     const workerEmitter = this.#emitterFactory.newWorkerEmitter({
-      source: "pipewarp://worker/start",
+      source: "lowercase://worker/start",
       workerid: this.#context.workerId,
       traceId,
       spanId,

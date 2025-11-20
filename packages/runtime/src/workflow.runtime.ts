@@ -1,53 +1,50 @@
-import { FlowService, type Services } from "@pipewarp/services";
+import { FlowService, type Services } from "@lcase/services";
 import { RuntimeContext } from "./types/runtime.context.js";
-import { EventSink, RuntimeStatus } from "@pipewarp/ports";
+import { EventSink, RuntimeStatus } from "@lcase/ports";
 
-
-export class WorkflowRuntime { 
-  flow: FlowService
-  constructor(private readonly ctx: RuntimeContext, services: Services ) { 
+export class WorkflowRuntime {
+  flow: FlowService;
+  constructor(private readonly ctx: RuntimeContext, services: Services) {
     this.flow = services.flowService;
   }
 
-  async startRuntime(): Promise<RuntimeStatus>  {
+  async startRuntime(): Promise<RuntimeStatus> {
     try {
       await this.ctx.router.start();
-    
+
       for (const sink of Object.values(this.ctx.sinks)) {
-        await sink.start()
+        await sink.start();
       }
       this.ctx.tap.start();
-  
+
       await this.ctx.engine.start();
       await this.ctx.worker.start();
       await this.ctx.worker.requestRegistration();
 
       return "running";
-    }
-    catch {
+    } catch {
       return "stopped";
     }
-  };
+  }
   async stopRuntime(): Promise<RuntimeStatus> {
     try {
       await this.ctx.engine.stop();
       await this.ctx.worker.stopAllJobWaiters();
-      
+
       for (const sink of Object.values(this.ctx.sinks)) {
-        await sink.stop()
+        await sink.stop();
       }
       this.ctx.tap.stop();
       await this.ctx.router.stop();
       await this.ctx.bus.close();
       return "stopped";
-    }
-    catch (err) { 
-      console.error(`[workflow-runtime] error stopping runtime ${err}`)
+    } catch (err) {
+      console.error(`[workflow-runtime] error stopping runtime ${err}`);
     }
     return "running";
   }
 
-  attachSink(sink: EventSink) { 
+  attachSink(sink: EventSink) {
     this.ctx.tap.attachSink(sink);
   }
-};
+}

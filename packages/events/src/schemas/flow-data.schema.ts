@@ -3,7 +3,7 @@ import type {
   FlowCompletedData,
   FlowQueuedData,
   FlowStartedData,
-} from "@pipewarp/types";
+} from "@lcase/types";
 
 export const FlowQueuedDataSchema = z
   .object({

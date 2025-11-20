@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { EventBusPort, QueuePort, StreamRegistryPort } from "@pipewarp/ports";
+import { EventBusPort, QueuePort, StreamRegistryPort } from "@lcase/ports";
 import { Worker, type WorkerCapability } from "../../src/worker/worker.js";
-import type { AnyEvent, Capability } from "@pipewarp/types";
-import { EmitterFactory } from "@pipewarp/events";
+import type { AnyEvent, Capability } from "@lcase/types";
+import { EmitterFactory } from "@lcase/events";
 import { ToolRegistry } from "../../src/tools/tool-registry.js";
 
 const bus = {

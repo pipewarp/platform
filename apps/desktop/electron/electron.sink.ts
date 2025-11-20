@@ -1,5 +1,5 @@
-import { EventSink } from "@pipewarp/ports";
-import { AnyEvent } from "@pipewarp/types";
+import { EventSink } from "@lcase/ports";
+import { AnyEvent } from "@lcase/types";
 import { BrowserWindow } from "electron";
 
 export class ElectronSink implements EventSink {

@@ -1,5 +1,5 @@
-import { QueuePort } from "@pipewarp/ports";
-import type { AnyEvent } from "@pipewarp/types";
+import { QueuePort } from "@lcase/ports";
+import type { AnyEvent } from "@lcase/types";
 
 type QueueId = string;
 type WorkerId = string;

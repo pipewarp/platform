@@ -4,7 +4,7 @@ import type {
   Chunk,
   InputChunk,
   StreamStatus,
-} from "@pipewarp/ports";
+} from "@lcase/ports";
 
 // NOTE: not exported to public (internal package)
 // NOTE: we use a core here to then create ConsumerStream and ProducerStream

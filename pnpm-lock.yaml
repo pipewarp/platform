@@ -23,36 +23,36 @@ importers:
 
   apps/cli:
     dependencies:
+      '@lcase/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
+      '@lcase/controller':
+        specifier: workspace:*
+        version: link:../../packages/controller
+      '@lcase/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
+      '@lcase/events':
+        specifier: workspace:*
+        version: link:../../packages/events
+      '@lcase/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
+      '@lcase/ports':
+        specifier: workspace:*
+        version: link:../../packages/ports
+      '@lcase/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
+      '@lcase/specs':
+        specifier: workspace:*
+        version: link:../../packages/specs
+      '@lcase/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@modelcontextprotocol/sdk':
         specifier: ^1.19.1
         version: 1.19.1
-      '@pipewarp/adapters':
-        specifier: workspace:*
-        version: link:../../packages/adapters
-      '@pipewarp/controller':
-        specifier: workspace:*
-        version: link:../../packages/controller
-      '@pipewarp/engine':
-        specifier: workspace:*
-        version: link:../../packages/engine
-      '@pipewarp/events':
-        specifier: workspace:*
-        version: link:../../packages/events
-      '@pipewarp/observability':
-        specifier: workspace:*
-        version: link:../../packages/observability
-      '@pipewarp/ports':
-        specifier: workspace:*
-        version: link:../../packages/ports
-      '@pipewarp/runtime':
-        specifier: workspace:*
-        version: link:../../packages/runtime
-      '@pipewarp/specs':
-        specifier: workspace:*
-        version: link:../../packages/specs
-      '@pipewarp/types':
-        specifier: workspace:*
-        version: link:../../packages/types
       commander:
         specifier: ^14.0.1
         version: 14.0.1
@@ -72,10 +72,10 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@pipewarp/controller':
+      '@lcase/controller':
         specifier: workspace:*
         version: link:../../packages/controller
-      '@pipewarp/runtime':
+      '@lcase/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
       bufferutil:
@@ -97,10 +97,10 @@ importers:
       '@electron/notarize':
         specifier: ^3.1.1
         version: 3.1.1
-      '@pipewarp/ports':
+      '@lcase/ports':
         specifier: workspace:*
         version: link:../../packages/ports
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../../packages/types
       '@types/react':
@@ -167,7 +167,7 @@ importers:
       '@eslint/js':
         specifier: ^9.39.1
         version: 9.39.1
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../../packages/types
       '@tailwindcss/vite':
@@ -212,21 +212,21 @@ importers:
 
   examples:
     dependencies:
+      '@lcase/adapters':
+        specifier: workspace:*
+        version: link:../packages/adapters
+      '@lcase/engine':
+        specifier: workspace:*
+        version: link:../packages/engine
+      '@lcase/ports':
+        specifier: workspace:*
+        version: link:../packages/ports
+      '@lcase/specs':
+        specifier: workspace:*
+        version: link:../packages/specs
       '@modelcontextprotocol/sdk':
         specifier: ^1.19.1
         version: 1.19.1
-      '@pipewarp/adapters':
-        specifier: workspace:*
-        version: link:../packages/adapters
-      '@pipewarp/engine':
-        specifier: workspace:*
-        version: link:../packages/engine
-      '@pipewarp/ports':
-        specifier: workspace:*
-        version: link:../packages/ports
-      '@pipewarp/specs':
-        specifier: workspace:*
-        version: link:../packages/specs
       commander:
         specifier: ^14.0.1
         version: 14.0.1
@@ -246,21 +246,21 @@ importers:
 
   packages/adapters:
     dependencies:
+      '@lcase/events':
+        specifier: workspace:*
+        version: link:../events
+      '@lcase/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@lcase/specs':
+        specifier: workspace:*
+        version: link:../specs
+      '@lcase/types':
+        specifier: workspace:*
+        version: link:../types
       '@modelcontextprotocol/sdk':
         specifier: ^1.19.1
         version: 1.19.1
-      '@pipewarp/events':
-        specifier: workspace:*
-        version: link:../events
-      '@pipewarp/ports':
-        specifier: workspace:*
-        version: link:../ports
-      '@pipewarp/specs':
-        specifier: workspace:*
-        version: link:../specs
-      '@pipewarp/types':
-        specifier: workspace:*
-        version: link:../types
       zod:
         specifier: 3.25.76
         version: 3.25.76
@@ -271,32 +271,32 @@ importers:
 
   packages/controller:
     dependencies:
-      '@pipewarp/runtime':
+      '@lcase/runtime':
         specifier: workspace:*
         version: link:../runtime
     devDependencies:
-      '@pipewarp/ports':
+      '@lcase/ports':
         specifier: workspace:*
         version: link:../ports
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../types
 
   packages/engine:
     dependencies:
-      '@pipewarp/adapters':
+      '@lcase/adapters':
         specifier: workspace:*
         version: link:../adapters
-      '@pipewarp/events':
+      '@lcase/events':
         specifier: workspace:*
         version: link:../events
-      '@pipewarp/ports':
+      '@lcase/ports':
         specifier: workspace:*
         version: link:../ports
-      '@pipewarp/specs':
+      '@lcase/specs':
         specifier: workspace:*
         version: link:../specs
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../types
 
@@ -306,10 +306,10 @@ importers:
         specifier: 3.25.76
         version: 3.25.76
     devDependencies:
-      '@pipewarp/ports':
+      '@lcase/ports':
         specifier: workspace:*
         version: link:../ports
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../types
       vitest:
@@ -322,10 +322,10 @@ importers:
         specifier: ^8.18.3
         version: 8.18.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)
     devDependencies:
-      '@pipewarp/ports':
+      '@lcase/ports':
         specifier: workspace:*
         version: link:../ports
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../types
       '@types/ws':
@@ -337,48 +337,48 @@ importers:
 
   packages/ports:
     dependencies:
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../types
 
   packages/runtime:
     dependencies:
-      '@pipewarp/adapters':
+      '@lcase/adapters':
         specifier: workspace:*
         version: link:../adapters
-      '@pipewarp/engine':
+      '@lcase/engine':
         specifier: workspace:*
         version: link:../engine
-      '@pipewarp/events':
+      '@lcase/events':
         specifier: workspace:*
         version: link:../events
-      '@pipewarp/observability':
+      '@lcase/observability':
         specifier: workspace:*
         version: link:../observability
-      '@pipewarp/services':
+      '@lcase/services':
         specifier: workspace:*
         version: link:../services
     devDependencies:
-      '@pipewarp/ports':
+      '@lcase/ports':
         specifier: workspace:*
         version: link:../ports
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../types
 
   packages/services:
     dependencies:
-      '@pipewarp/events':
+      '@lcase/events':
         specifier: workspace:*
         version: link:../events
-      '@pipewarp/specs':
+      '@lcase/specs':
         specifier: workspace:*
         version: link:../specs
     devDependencies:
-      '@pipewarp/ports':
+      '@lcase/ports':
         specifier: workspace:*
         version: link:../ports
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../types
 
@@ -399,10 +399,10 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
     devDependencies:
-      '@pipewarp/ports':
+      '@lcase/ports':
         specifier: workspace:*
         version: link:../ports
-      '@pipewarp/types':
+      '@lcase/types':
         specifier: workspace:*
         version: link:../types
       '@types/react':

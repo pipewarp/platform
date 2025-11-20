@@ -1,5 +1,5 @@
 {
-  "name": "@pipewarp/desktop",
+  "name": "@lcase/desktop",
   "private": true,
   "version": "0.1.0-alpha.6",
   "type": "module",
@@ -12,8 +12,8 @@
     "clean": "rimraf dist dist-electron out"
   },
   "build": {
-    "appId": "com.pipewarp.desktop",
-    "productName": "Pipewarp Desktop",
+    "appId": "com.lowercase.desktop",
+    "productName": "lowercase Desktop",
     "files": [
       "dist/**",
       "dist-electron/**",
@@ -61,8 +61,8 @@
     }
   },
   "dependencies": {
-    "@pipewarp/controller": "workspace:*",
-    "@pipewarp/runtime": "workspace:*",
+    "@lcase/controller": "workspace:*",
+    "@lcase/runtime": "workspace:*",
     "bufferutil": "^4.0.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -71,8 +71,8 @@
   },
   "devDependencies": {
     "@electron/notarize": "^3.1.1",
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/types": "workspace:*",
+    "@lcase/ports": "workspace:*",
+    "@lcase/types": "workspace:*",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@types/ws": "^8.18.1",

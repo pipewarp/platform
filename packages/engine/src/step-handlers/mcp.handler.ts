@@ -1,8 +1,8 @@
 import type { StepHandler } from "./step-handler.js";
 import type { ResolveStepArgs } from "../resolve.js";
-import type { AnyEvent, JobMcpQueuedData } from "@pipewarp/types";
-import type { RunContext, Flow, McpStep } from "@pipewarp/specs";
-import type { JobEmitter } from "@pipewarp/events";
+import type { AnyEvent, JobMcpQueuedData } from "@lcase/types";
+import type { RunContext, Flow, McpStep } from "@lcase/specs";
+import type { JobEmitter } from "@lcase/events";
 import { PipeResolver } from "../pipe-resolver.js";
 
 export class McpStepHandler implements StepHandler {

@@ -1,8 +1,8 @@
 import type { EventMap, EventType } from "../event-map.js";
 
 /**
- * base cloud event envelope used for pipewarp events.
- * this is extended by a pipewarp context for some otel attributes
+ * base cloud event envelope used for lowercase events.
+ * this is extended by a lowercase context for some otel attributes
  *
  * data is related to type
  *
@@ -17,7 +17,7 @@ import type { EventMap, EventType } from "../event-map.js";
  */
 export interface CloudEvent<T extends EventType> {
   id: string;
-  source: string; //url like pipewarp://engine/id possibly
+  source: string; //url like lowercase://engine/id possibly
   specversion: "1.0"; // cloud events version
   time: string;
   type: T;

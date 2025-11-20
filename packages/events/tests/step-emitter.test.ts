@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { StepEmitter } from "../src/emitters/step.emitter.js";
-import { EventBusPort } from "@pipewarp/ports";
-import { AnyEvent } from "@pipewarp/types";
+import { EventBusPort } from "@lcase/ports";
+import { AnyEvent } from "@lcase/types";
 import { afterEach } from "node:test";
 import { registry } from "../src/event-registry.js";
 describe("[step-emitter]", () => {

@@ -1,5 +1,5 @@
 {
-  "name": "@pipewarp/events",
+  "name": "@lcase/events",
   "version": "0.1.0-alpha.6",
   "private": "true",
   "type": "module",
@@ -20,8 +20,8 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/types": "workspace:*",
+    "@lcase/ports": "workspace:*",
+    "@lcase/types": "workspace:*",
     "vitest": "^3.2.4"
   }
 }

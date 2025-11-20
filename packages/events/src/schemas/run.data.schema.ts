@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { RunStartedData, RunCompletedData } from "@pipewarp/types";
+import type { RunStartedData, RunCompletedData } from "@lcase/types";
 
 const RunDescriptorSchema = z.object({
   run: z.object({

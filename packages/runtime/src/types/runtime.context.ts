@@ -1,15 +1,15 @@
-import type {
-  EventBusPort,
-  RouterPort,
-  QueuePort,
-} from "@pipewarp/ports";
-import { Worker } from "@pipewarp/adapters/worker";
-import { FlowStore } from "@pipewarp/adapters/flow-store";
-import { Engine } from "@pipewarp/engine";
-import { ConsoleSink, ObservabilityTap, WebSocketServerSink } from "@pipewarp/observability";
+import type { EventBusPort, RouterPort, QueuePort } from "@lcase/ports";
+import { Worker } from "@lcase/adapters/worker";
+import { FlowStore } from "@lcase/adapters/flow-store";
+import { Engine } from "@lcase/engine";
+import {
+  ConsoleSink,
+  ObservabilityTap,
+  WebSocketServerSink,
+} from "@lcase/observability";
 
 export type SinkMap = {
-  "console-log-sink"?: ConsoleSink,
+  "console-log-sink"?: ConsoleSink;
   "websocket-sink"?: WebSocketServerSink;
 };
 export type SinkId = keyof SinkMap;

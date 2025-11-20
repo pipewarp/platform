@@ -1,4 +1,4 @@
-import type { RunContext, StepArgs } from "@pipewarp/specs";
+import type { RunContext, StepArgs } from "@lcase/specs";
 
 export type ResolveStepArgs = typeof resolveStepArgs;
 export function split(path: string): string[] {

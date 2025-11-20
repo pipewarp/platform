@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { EmitterFactory } from "../src/emitter-factory.js";
-import { EventBusPort } from "@pipewarp/ports";
+import { EventBusPort } from "@lcase/ports";
 import { StepEmitter } from "../src/emitters/step.emitter.js";
 
 describe("emitter factory", () => {

@@ -1,7 +1,6 @@
-import { WorkflowController } from "@pipewarp/controller";
-import { createRuntime } from "@pipewarp/runtime";
+import { WorkflowController } from "@lcase/controller";
+import { createRuntime } from "@lcase/runtime";
 import { runtimeConfig } from "./runtime-config.js";
-
 
 export function bootstrap() {
   const runtime = createRuntime(runtimeConfig);

@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { App, ControllerProvider } from "@pipewarp/ui";
+import { App, ControllerProvider } from "@lcase/ui";
 import "./index.css";
 import "./tailwind.css";
 import { ElectronController } from "../electron/electron.controller.js";

@@ -1,4 +1,4 @@
-import { CloudScope } from "@pipewarp/types";
+import { CloudScope } from "@lcase/types";
 import { OtelContext, EnvelopeHeader } from "../types.js";
 
 /**

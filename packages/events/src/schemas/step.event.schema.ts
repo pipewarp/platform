@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CloudEventContextSchema } from "./cloud-context.schema.js";
-import type { StepScope, AnyEvent } from "@pipewarp/types";
+import type { StepScope, AnyEvent } from "@lcase/types";
 import {
   StepCompletedDataSchema,
   StepFailedDataSchema,

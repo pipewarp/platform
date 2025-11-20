@@ -1,4 +1,4 @@
-import { AnyEvent } from "@pipewarp/types";
+import { AnyEvent } from "@lcase/types";
 
 export type PublishOptions = {
   internal?: boolean;

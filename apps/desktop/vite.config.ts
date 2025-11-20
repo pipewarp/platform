@@ -49,12 +49,12 @@ export default defineConfig({
   resolve: {
     alias: {
       // Example aliases into your workspace packages’ *source* (adjust paths)
-      "@pipewarp/ui": path.resolve(__dirname, "../../packages/ui/src"),
-      // "@pipewarp/runtime": path.resolve(__dirname, "../../packages/runtime/src"),
-      // '@pipewarp/app-logic': path.resolve(__dirname, '../../packages/app-logic/src'),
-      "@pipewarp/engine": path.resolve(__dirname, "../../packages/engine/src"),
-      "@pipewarp/ports": path.resolve(__dirname, "../../packages/ports/src"),
-      "@pipewarp/types": path.resolve(__dirname, "../../packages/types/src"),
+      "@lcase/ui": path.resolve(__dirname, "../../packages/ui/src"),
+      // "@lcase/runtime": path.resolve(__dirname, "../../packages/runtime/src"),
+      // '@lcase/app-logic': path.resolve(__dirname, '../../packages/app-logic/src'),
+      "@lcase/engine": path.resolve(__dirname, "../../packages/engine/src"),
+      "@lcase/ports": path.resolve(__dirname, "../../packages/ports/src"),
+      "@lcase/types": path.resolve(__dirname, "../../packages/types/src"),
     },
     // Avoid two copies of React (common in monorepos)
     dedupe: ["react", "react-dom"],

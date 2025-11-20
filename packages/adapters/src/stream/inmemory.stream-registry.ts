@@ -5,7 +5,7 @@ import type {
   ProducerStreamPort,
   StreamHandles,
   StreamRegistryPort,
-} from "@pipewarp/ports";
+} from "@lcase/ports";
 
 // currently immports InMemoryStream core for depedency.
 // NOTE: let registry accept a *factory* arg; createCore(id, options) -> Core

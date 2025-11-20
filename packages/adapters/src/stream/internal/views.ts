@@ -3,7 +3,7 @@ import type {
   InputChunk,
   ConsumerStreamPort,
   ProducerStreamPort,
-} from "@pipewarp/ports";
+} from "@lcase/ports";
 
 // TODO: implement revoked flag that throws on each method if true
 
