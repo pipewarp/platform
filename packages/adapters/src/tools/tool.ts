@@ -1,4 +1,4 @@
-import type { ToolContext, ToolPort } from "@pipewarp/ports";
+import type { ToolContext, ToolPort } from "@lcase/ports";
 
 export class Tool implements ToolPort {
   id: string;

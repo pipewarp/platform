@@ -3,9 +3,9 @@ import type {
   QueuePort,
   StreamRegistryPort,
   ToolPort,
-} from "@pipewarp/ports";
-import { EmitterFactory } from "@pipewarp/events";
-import type { AnyEvent, Capability, WorkerMetadata } from "@pipewarp/types";
+} from "@lcase/ports";
+import { EmitterFactory } from "@lcase/events";
+import type { AnyEvent, Capability, WorkerMetadata } from "@lcase/types";
 import type { ToolClass } from "../tools/tool-factory.js";
 import { ToolRegistry } from "../tools/tool-registry.js";
 import type { JobContext } from "./types.js";
@@ -16,6 +16,7 @@ export type WorkerCapability = Capability & {
   newJobWaitersAreAllowed: boolean;
   jobWaiters: Set<Promise<void>>;
   activeJobCount: number;
+  capacityRelease?: Deferred<void>;
 };
 export type WorkerContext = {
   workerId: string;
@@ -71,8 +72,6 @@ export class Worker {
     this.#toolRegistry = deps.toolRegistry;
     this.#emitterFactory = deps.emitterFactory;
     this.#streamRegistry = deps.streamRegistry;
-
-    this.#subscribeToBus();
   }
 
   #subscribeToBus(): void {
@@ -84,12 +83,16 @@ export class Worker {
           event.data.status === "accepted"
         ) {
           this.#context.isRegistered = true;
-
+          const spanId = this.#emitterFactory.generateSpanId();
+          const traceParent = this.#emitterFactory.makeTraceParent(
+            e.traceid,
+            spanId
+          );
           const logEmitter = this.#emitterFactory.newSystemEmitter({
-            source: "pipewarp://engine/subscribe-to-bus",
-            traceId: "",
-            spanId: "",
-            traceParent: "",
+            source: "lowercase://engine/subscribe-to-bus",
+            traceId: e.traceid,
+            spanId,
+            traceParent,
           });
           await logEmitter.emit("system.logged", {
             log: "[worker] received registration accepted",
@@ -138,7 +141,7 @@ export class Worker {
       toolSpanId
     );
     const toolEmitter = this.#emitterFactory.newToolEmitter({
-      source: "pipewarp://worker/job-done",
+      source: "lowercase://worker/job-done",
       flowid: e.flowid,
       runid: e.runid,
       stepid: e.stepid,
@@ -164,7 +167,7 @@ export class Worker {
     const traceParent = this.#emitterFactory.makeTraceParent(e.traceid, spanId);
 
     const jobEmitter = this.#emitterFactory.newJobEmitter({
-      source: "pipewarp://worker/job-done",
+      source: "lowercase://worker/job-done",
       flowid: e.flowid,
       runid: e.runid,
       stepid: e.stepid,
@@ -243,7 +246,7 @@ export class Worker {
     const traceParent = this.#emitterFactory.makeTraceParent(traceId, spanId);
 
     const workerEmitter = this.#emitterFactory.newWorkerEmitter({
-      source: "pipewarp://worker/" + this.#context.workerId,
+      source: "lowercase://worker/" + this.#context.workerId,
       workerid: this.#context.workerId,
       traceId,
       spanId,
@@ -262,6 +265,7 @@ export class Worker {
   }
 
   async start(): Promise<void> {
+    this.#subscribeToBus();
     for (const id in this.#context.capabilities) {
       const p = this.startCapabilityJobWaiters(id);
       this.#capabilityJobWaiters.set(id, p);
@@ -271,7 +275,7 @@ export class Worker {
     const traceParent = this.#emitterFactory.makeTraceParent(traceId, spanId);
 
     const workerEmitter = this.#emitterFactory.newWorkerEmitter({
-      source: "pipewarp://engine/resource-registry",
+      source: "lowercase://worker/start",
       workerid: this.#context.workerId,
       traceId,
       spanId,
@@ -303,7 +307,7 @@ export class Worker {
    */
   async startCapabilityJobWaiters(capabilityId: string): Promise<void> {
     const cap = this.#context.capabilities[capabilityId];
-    let capacityRelease = this.#makeDeferred<void>();
+    cap.newJobWaitersAreAllowed = true;
     while (cap.newJobWaitersAreAllowed) {
       if (cap.activeJobCount < cap.maxJobCount) {
         try {
@@ -321,8 +325,9 @@ export class Worker {
           const waiter = this.handleNewJob(event).finally(async () => {
             cap.jobWaiters.delete(waiter);
             cap.activeJobCount--;
-            capacityRelease.resolve();
-            capacityRelease = this.#makeDeferred<void>();
+            if (cap.capacityRelease) {
+              cap.capacityRelease.resolve();
+            }
           });
           cap.jobWaiters.add(waiter); // later implement graceful shutdown with this
         } catch (err) {
@@ -330,8 +335,8 @@ export class Worker {
           continue;
         }
       } else {
-        // if we don't await, loop will cycle forever once concurrency limit is met
-        await capacityRelease.promise;
+        cap.capacityRelease = this.#makeDeferred<void>();
+        await cap.capacityRelease.promise;
       }
     }
   }
@@ -345,6 +350,9 @@ export class Worker {
     // need to stop each capability from making new ones first
     for (const id in caps) {
       caps[id].newJobWaitersAreAllowed = false;
+      caps[id].jobWaiters.clear();
+      caps[id].activeJobCount = 0;
+      if (caps[id].capacityRelease) caps[id].capacityRelease.resolve();
     }
     this.#queue.abortAllForWorker(this.#context.workerId);
   }

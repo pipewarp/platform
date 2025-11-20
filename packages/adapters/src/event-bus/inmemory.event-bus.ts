@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
-import type { EventBusPort, PublishOptions } from "@pipewarp/ports";
-import type { AnyEvent } from "@pipewarp/types";
+import type { EventBusPort, PublishOptions } from "@lcase/ports";
+import type { AnyEvent } from "@lcase/types";
 
 export class InMemoryEventBus implements EventBusPort {
   #ee = new EventEmitter().setMaxListeners(0);

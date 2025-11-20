@@ -5,7 +5,7 @@ import type {
   WorkerStoppedData,
   WorkerRegistrationRequestedData,
   WorkerRegisteredData,
-} from "@pipewarp/types";
+} from "@lcase/types";
 
 const WorkerDescriptorDataSchema = z
   .object({

@@ -3,7 +3,7 @@ import type {
   StepStartedData,
   StepCompletedData,
   StepFailedData,
-} from "@pipewarp/types";
+} from "@lcase/types";
 
 const RunDescriptorSchema = z.object({
   step: z.object({

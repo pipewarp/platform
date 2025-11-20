@@ -4,7 +4,7 @@ import type {
   ToolStartedData,
   ToolCompletedData,
   ToolFailedData,
-} from "@pipewarp/types";
+} from "@lcase/types";
 
 const ToolDescriptorDataSchema = z
   .object({

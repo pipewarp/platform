@@ -1,0 +1,38 @@
+{
+  "name": "Demo Flow (Non Streaming)",
+  "version": "0.1.0-alpha.6",
+  "description": "Demo flow that connections to two mcp servers, makes a tool call to the first, gets the results, then uses those results in a tool call to the second server.",
+  "start": "mario",
+  "steps": {
+    "mario": {
+      "type": "mcp",
+      "url": "http://localhost:3004/sse",
+      "transport": "sse",
+      "args": {
+        "delayMs": 25,
+        "useStream": false
+      },
+      "feature": {
+        "primitive": "tool",
+        "name": "draw"
+      },
+      "on": {
+        "success": "luigi"
+      }
+    },
+    "luigi": {
+      "type": "mcp",
+      "url": "http://localhost:3005/sse",
+      "transport": "sse",
+      "args": {
+        "art": "${steps.mario.result.structuredContent.data}",
+        "useStream": false,
+        "delayMs": 10
+      },
+      "feature": {
+        "primitive": "tool",
+        "name": "transform"
+      }
+    }
+  }
+}

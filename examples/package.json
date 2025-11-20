@@ -1,6 +1,6 @@
 {
-  "name": "@pipewarp/examples",
-  "version": "0.1.0-alpha.5",
+  "name": "@lcase/examples",
+  "version": "0.1.0-alpha.6",
   "private": "true",
   "type": "module",
   "exports": {
@@ -10,7 +10,7 @@
     }
   },
   "scripts": {
-    "build": "tsc --incremental false",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "echo test",
     "test:e2e": "vitest test",
@@ -25,10 +25,10 @@
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.1",
-    "@pipewarp/adapters": "workspace:*",
-    "@pipewarp/engine": "workspace:*",
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/specs": "workspace:*",
+    "@lcase/adapters": "workspace:*",
+    "@lcase/engine": "workspace:*",
+    "@lcase/ports": "workspace:*",
+    "@lcase/specs": "workspace:*",
     "commander": "^14.0.1",
     "express": "^5.1.0",
     "zod": "3.25.76"

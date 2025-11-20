@@ -1,4 +1,4 @@
-import type { EventBusPort } from "@pipewarp/ports";
+import type { EventBusPort } from "@lcase/ports";
 import type {
   StepScope,
   CloudScope,
@@ -9,7 +9,7 @@ import type {
   ToolScope,
   WorkerScope,
   SystemScope,
-} from "@pipewarp/types";
+} from "@lcase/types";
 import { StepEmitter } from "./emitters/step.emitter.js";
 import { FlowEmitter } from "./emitters/flow.emitter.js";
 import { OtelContext } from "./types.js";

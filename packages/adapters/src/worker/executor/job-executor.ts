@@ -2,7 +2,7 @@ import {
   ConsumerStreamPort,
   ProducerStreamPort,
   StreamRegistryPort,
-} from "@pipewarp/ports";
+} from "@lcase/ports";
 import { ToolRegistry } from "../../tools/tool-registry.js";
 import type { JobContext } from "../types.js";
 

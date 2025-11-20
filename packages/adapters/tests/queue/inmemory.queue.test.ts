@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { InMemoryQueue } from "../../src/queue/inmemory.queue.js";
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent } from "@lcase/types";
 
 describe("InMemoryQueue", () => {
   it("reserve resolves when event is enqueued and empty", async () => {

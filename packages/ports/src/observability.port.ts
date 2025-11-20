@@ -1,10 +1,9 @@
-import { AnyEvent } from "@pipewarp/types";
+import { AnyEvent } from "@lcase/types";
 
 export interface EventSink {
   readonly id: string;
 
-  start(): Promise<void> | void;
-  stop(): Promise<void> | void;
-
+  start(): Promise<void>;
+  stop(): Promise<void>;
   handle(event: AnyEvent): Promise<void> | void;
 }

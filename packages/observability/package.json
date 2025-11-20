@@ -1,7 +1,7 @@
 {
-  "name": "@pipewarp/observability",
-  "version": "0.1.0-alpha.5",
-  "private": "true",
+  "name": "@lcase/observability",
+  "version": "0.1.0-alpha.6",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -10,7 +10,7 @@
     }
   },
   "scripts": {
-    "build": "tsc --incremental false",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "echo test",
     "lint": "echo lint"
@@ -20,8 +20,8 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
-    "@pipewarp/ports": "workspace:*",
-    "@pipewarp/types": "workspace:*",
+    "@lcase/ports": "workspace:*",
+    "@lcase/types": "workspace:*",
     "@types/ws": "^8.18.1",
     "vitest": "^3.2.4"
   }

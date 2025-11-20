@@ -1,4 +1,4 @@
-# @pipewarp/cli
+# @lcase/cli
 
 Command line interface for running and validating pipewarp flows.
 
@@ -9,7 +9,7 @@ May expand later to a general application layer to manage pipewarp processes as 
 ### run a flow
 
 ```bash
-pnpm -F @pipewarp/cli start run <flow.json>
+pnpm -F @lcase/cli start run <flow.json>
 ```
 
 or in `apps/cli` directory:
@@ -33,7 +33,7 @@ pwp run <flow.json>
 
 ```bash
 # from project root
-pnpm -F @pipewarp/cli start validate <flow.json>
+pnpm -F @lcase/cli start validate <flow.json>
 
 # after linked globally
 pwp validate <flow.json>
@@ -43,7 +43,7 @@ pwp validate <flow.json>
 
 ```bash
 # from project root
-pnpm -F @pipewarp/cli start run examples/demo.streaming.flow.json -d
+pnpm -F @lcase/cli start run examples/demo.streaming.flow.json -d
 ```
 
 ## Commands

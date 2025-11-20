@@ -5,10 +5,10 @@ import type {
   FlowScope,
   CloudScope,
   FlowEvent,
-} from "@pipewarp/types";
+} from "@lcase/types";
 import type { OtelContext } from "../types.js";
 import { BaseEmitter } from "./base.emitter.js";
-import { EventBusPort } from "@pipewarp/ports";
+import { EventBusPort } from "@lcase/ports";
 import { flowOtelAttributes } from "../otel-attributes.js";
 import { registry } from "../event-registry.js";
 

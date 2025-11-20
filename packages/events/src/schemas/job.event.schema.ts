@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { AnyEvent, JobScope } from "@pipewarp/types";
+import type { AnyEvent, JobScope } from "@lcase/types";
 import { CloudEventContextSchema } from "./cloud-context.schema.js";
 import {
   JobCompletedDataSchema,

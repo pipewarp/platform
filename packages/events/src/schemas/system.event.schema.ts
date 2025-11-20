@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CloudEventContextSchema } from "./cloud-context.schema.js";
-import type { AnyEvent, SystemScope } from "@pipewarp/types";
+import type { AnyEvent, SystemScope } from "@lcase/types";
 import { SystemLoggedDataSchema } from "./system.data.schema.js";
 
 export const SystemContextSchema = z

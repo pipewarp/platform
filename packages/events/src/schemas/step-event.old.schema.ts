@@ -1,5 +1,5 @@
 // import { z } from "zod";
-// import type { AnyEvent, StepScope } from "@pipewarp/types";
+// import type { AnyEvent, StepScope } from "@lcase/types";
 // import { CloudEventContextSchema } from "./cloud-context.schema.js";
 // import {
 //   StepActionQueuedDataSchema,

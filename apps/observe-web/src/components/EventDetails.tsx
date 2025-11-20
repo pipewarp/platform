@@ -1,4 +1,4 @@
-import type { AnyEvent } from "@pipewarp/types";
+import type { AnyEvent } from "@lcase/types";
 
 export function EventDetails({ event }: { event: AnyEvent }) {
   return (
