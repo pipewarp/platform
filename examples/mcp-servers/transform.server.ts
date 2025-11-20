@@ -11,7 +11,7 @@ const sessions = new Map<string, SSEServerTransport>();
 const port = 3005;
 const mcp = new McpServer({
   name: "transform-server",
-  version: "0.1.0-alpha.5",
+  version: "0.1.0-alpha.6",
   capabilities: { logging: {} },
 });
 
@@ -182,13 +182,6 @@ process.on("SIGINT", () => {
   process.exit();
 });
 process.on("SIGTERM", () => {
-  for (const [id, transport] of sessions.entries()) {
-    transport.close();
-  }
-  sessions.clear();
-  process.exit();
-});
-process.on("exit", () => {
   for (const [id, transport] of sessions.entries()) {
     transport.close();
   }

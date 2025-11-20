@@ -1,12 +1,11 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import { bootstrap } from "./bootstrap.js";
 
-
 // import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { FlowQueuedData } from "@pipewarp/types";
 import { runtimeConfig } from "./runtime-config.js";
+import { ElectronSink } from "./electron.sink.js";
 
 // const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -32,6 +31,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   : RENDERER_DIST;
 
 let win: BrowserWindow | null;
+export const { controller } = bootstrap(runtimeConfig);
 
 function createWindow() {
   win = new BrowserWindow({
@@ -46,8 +46,15 @@ function createWindow() {
     },
   });
 
+  /**
+   * need to return this sink for future control (start/stop) functionality)
+   */
+  const electronSink = new ElectronSink("electron-sink", win);
+
   // Test active push message to Renderer-process.
   win.webContents.on("did-finish-load", () => {
+    electronSink.start();
+    controller.attachSink(electronSink);
     win?.webContents.send("main-process-message", new Date().toLocaleString());
   });
 
@@ -59,30 +66,27 @@ function createWindow() {
   }
 }
 
-export const { controller } = bootstrap(runtimeConfig);
-
-ipcMain.handle("controller:startRuntime", async (): Promise<string> => { 
-  return await controller.startRuntime()
+ipcMain.handle("controller:startRuntime", async (): Promise<string> => {
+  return await controller.startRuntime();
 });
-ipcMain.handle("controller:startFlow", async (_event, args: FlowQueuedData) => { 
-  await controller.startFlow(args)
+ipcMain.handle("controller:startFlow", async (_event, args) => {
+  await controller.startFlow(args);
 });
-ipcMain.handle("controller:stopRuntime", async () => { 
-  return await controller.stopRuntime()
+ipcMain.handle("controller:stopRuntime", async () => {
+  return await controller.stopRuntime();
 });
-ipcMain.handle("controller:listFlows", async (_event, args: { absoluteDirPath?: string }) => { 
-  // dialog.showOpenDialog({properties: ["openDirectory"]})
-  return await controller.listFlows(args);
-
-});
-ipcMain.handle("controller:pickFlowDir", async () => { 
-  const path = await dialog.showOpenDialog({ properties: ["openDirectory"] })
+ipcMain.handle(
+  "controller:listFlows",
+  async (_event, args: { absoluteDirPath?: string }) => {
+    // dialog.showOpenDialog({properties: ["openDirectory"]})
+    return await controller.listFlows(args);
+  }
+);
+ipcMain.handle("controller:pickFlowDir", async () => {
+  const path = await dialog.showOpenDialog({ properties: ["openDirectory"] });
   console.log(path);
-  return path.filePaths
-
+  return path.filePaths;
 });
-
-
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

@@ -35,7 +35,6 @@ export default defineConfig({
             // rollupOptions: { output: {format: "cjs", entryFileNames: "preload.cjs", chunkFileNames: "preload.[name].cjs"} }
           },
         },
-        
       },
       // Ployfill the Electron and Node.js API for Renderer process.
       // If you want use Node.js in Renderer process, the `nodeIntegration` needs to be enabled in the Main process.
