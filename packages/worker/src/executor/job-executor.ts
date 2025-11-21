@@ -3,7 +3,7 @@ import {
   ProducerStreamPort,
   StreamRegistryPort,
 } from "@lcase/ports";
-import { ToolRegistry } from "../../tools/tool-registry.js";
+import { ToolRegistry } from "@lcase/tools";
 import type { JobContext } from "../types.js";
 
 export type JobExecutorDeps = {

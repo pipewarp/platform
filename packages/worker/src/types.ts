@@ -1,4 +1,4 @@
-import type { ToolId } from "../tools/tool-factory.js";
+import type { ToolId } from "@lcase/tools";
 
 export type JobDescription = {
   id: string;

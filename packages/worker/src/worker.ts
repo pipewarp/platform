@@ -6,8 +6,7 @@ import type {
 } from "@lcase/ports";
 import { EmitterFactory } from "@lcase/events";
 import type { AnyEvent, Capability, WorkerMetadata } from "@lcase/types";
-import type { ToolClass } from "../tools/tool-factory.js";
-import { ToolRegistry } from "../tools/tool-registry.js";
+import { type ToolClass, ToolRegistry } from "@lcase/tools";
 import type { JobContext } from "./types.js";
 import { JobExecutor } from "./executor/job-executor.js";
 import { interpretJob } from "./interpreter/interpret-job.js";

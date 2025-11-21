@@ -1,4 +1,4 @@
-import { AnyEvent, EventData } from "@lcase/types";
+import { AnyEvent } from "@lcase/types";
 import type { JobDescription } from "../types.js";
 
 // parses a job envelope and returns structured data
