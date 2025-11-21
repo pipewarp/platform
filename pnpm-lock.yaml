@@ -384,6 +384,10 @@ importers:
       zod:
         specifier: 3.25.76
         version: 3.25.76
+    devDependencies:
+      '@lcase/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/tools:
     dependencies:

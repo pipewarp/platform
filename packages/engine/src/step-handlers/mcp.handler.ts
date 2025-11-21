@@ -42,6 +42,19 @@ export class McpStepHandler implements StepHandler {
       };
 
       await emitter.emit("job.mcp.queued", data);
+
+      emitter.emit("job.httpjson.requested", {
+        job: {
+          id: "",
+          capability: "",
+        },
+        url: "",
+        type: "httpjson",
+        pipe: {
+          to: undefined,
+          from: undefined,
+        },
+      });
       context.steps[stepName].status = "queued";
     } catch (err) {
       console.error(

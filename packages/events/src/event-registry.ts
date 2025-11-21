@@ -37,13 +37,17 @@ import {
 import {
   JobCompletedSchema,
   JobFailedSchema,
+  JobHttpJsonRequested,
   JobMcpQueuedSchema,
+  JobQueuedSchema,
   JobStartedSchema,
 } from "./schemas/job.event.schema.js";
 import {
   JobCompletedDataSchema,
   JobFailedDataSchema,
+  JobHttpJsonRequestedData,
   JobMcpQueuedDataSchema,
+  JobQueuedDataSchema,
   JobStartedDataSchema,
 } from "./schemas/job.data.schema.js";
 import {
@@ -161,6 +165,13 @@ export const registry = {
       data: JobMcpQueuedDataSchema,
     },
   },
+  "job.queued": {
+    topic: "jobs.lifecycle",
+    schema: {
+      data: JobQueuedDataSchema,
+      event: JobQueuedSchema,
+    },
+  },
   "job.started": {
     topic: "jobs.lifecycle",
     schema: {
@@ -180,6 +191,13 @@ export const registry = {
     schema: {
       event: JobFailedSchema,
       data: JobFailedDataSchema,
+    },
+  },
+  "job.httpjson.requested": {
+    topic: "jobs.lifecycle",
+    schema: {
+      event: JobHttpJsonRequested,
+      data: JobHttpJsonRequestedData,
     },
   },
   "tool.started": {
