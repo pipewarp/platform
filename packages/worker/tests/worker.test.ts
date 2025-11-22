@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { EventBusPort, QueuePort, StreamRegistryPort } from "@lcase/ports";
-import { Worker, type WorkerCapability } from "../../src/worker/worker.js";
+import { Worker } from "../src/worker.js";
 import type { AnyEvent, Capability } from "@lcase/types";
 import { EmitterFactory } from "@lcase/events";
-import { ToolRegistry } from "../../src/tools/tool-registry.js";
+import { ToolRegistry } from "@lcase/tools";
 
 const bus = {
   subscribe: async () => {

@@ -30,7 +30,7 @@ export class Engine {
   ) {}
 
   async subscribeToTopics(): Promise<void> {
-    await this.bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
+    this.bus.subscribe("flows.lifecycle", async (e: AnyEvent) => {
       if (e.type === "flow.queued") {
         const event = e as AnyEvent<"flow.queued">;
 
@@ -59,14 +59,14 @@ export class Engine {
       }
     });
 
-    await this.bus.subscribe("jobs.lifecycle", async (e: AnyEvent) => {
+    this.bus.subscribe("jobs.lifecycle", async (e: AnyEvent) => {
       if (e.type === "job.completed") {
         const jobCompletedEvent = e as AnyEvent<"job.completed">;
         await this.handleWorkerDone(jobCompletedEvent);
       }
     });
 
-    await this.bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
+    this.bus.subscribe("workers.lifecycle", async (e: AnyEvent) => {
       if (e.type === "worker.registration.requested") {
         const event = e as AnyEvent<"worker.registration.requested">;
         this.resourceRegistry.registerWorker(event.data);
@@ -192,7 +192,7 @@ export class Engine {
       },
       status: "started",
     });
-    await this.queueStreamingSteps(flow, context, flow.start);
+    await this.startStreamingSteps(flow, context, flow.start);
     return;
   }
 
@@ -203,14 +203,14 @@ export class Engine {
    * @param context RunContext
    * @param stepName name of first step
    */
-  async queueStreamingSteps(
+  async startStreamingSteps(
     flow: Flow,
     context: RunContext,
     stepName: string
   ): Promise<void> {
     while (true) {
       context = this.#initStepContext(context, stepName);
-      await this.queueStep(flow, context, stepName);
+      await this.startStep(flow, context, stepName);
       const pipeToStep = flow.steps[stepName].pipe?.to?.step;
       if (context.steps[stepName].pipe.to && pipeToStep) {
         stepName = pipeToStep;
@@ -220,27 +220,28 @@ export class Engine {
     }
   }
   // queues a single step vs multiple
-  async queueStep(
+  async startStep(
     flow: Flow,
     context: RunContext,
     stepName: string
   ): Promise<void> {
     const stepType = flow.steps[stepName].type;
-    const stepSpanId = this.emitterFactory.generateSpanId();
-    const stepTraceParent = this.emitterFactory.makeTraceParent(
-      context.traceId,
-      stepSpanId
+
+    const flowid = context.flowName;
+    const runid = context.runId;
+    const stepid = stepName;
+    const steptype = stepType;
+
+    const stepEmitter = this.emitterFactory.newStepEmitterNewSpan(
+      {
+        source: "lowercase://engine/start-step",
+        flowid,
+        runid,
+        stepid,
+        steptype,
+      },
+      context.traceId
     );
-    const stepEmitter = this.emitterFactory.newStepEmitter({
-      source: "lowercase://engine/queue-step",
-      flowid: context.flowName,
-      runid: context.runId,
-      stepid: stepName,
-      steptype: stepType,
-      traceId: context.traceId,
-      spanId: stepSpanId,
-      traceParent: stepTraceParent,
-    });
     stepEmitter.emit("step.started", {
       step: {
         id: stepName,
@@ -250,35 +251,46 @@ export class Engine {
       status: "started",
     });
 
-    // const stepEmitter = this.emitterFactory.newStepEmitter();
-    const spanId = this.emitterFactory.generateSpanId();
-    const traceParent = this.emitterFactory.makeTraceParent(
-      context.traceId,
-      spanId
+    const jobId = String(crypto.randomUUID());
+    const jobEmitter = this.emitterFactory.newJobEmitterNewSpan(
+      {
+        source: "lowercase://engine/queue-step",
+        flowid,
+        runid,
+        stepid,
+        jobid: jobId,
+      },
+      context.traceId
     );
-    const jobEmitter = this.emitterFactory.newJobEmitter({
-      source: "lowercase://engine/queue-step",
-      flowid: context.flowName,
-      runid: context.runId,
-      stepid: stepName,
-      jobid: String(crypto.randomUUID()),
-      traceId: context.traceId,
-      spanId,
-      traceParent,
-    });
 
-    if (stepType === "mcp") {
-      const capName = flow.steps[stepName].type;
-      const caps = this.resourceRegistry.getCapability(capName);
-      if (caps === undefined) {
-        throw new Error(
-          `[engine] no capability in local resource registry for ${capName}`
-        );
-      }
-
-      const handler = this.stepHandlerRegistry[stepType];
-      await handler.queue(flow, context, stepName, jobEmitter);
+    const capName = flow.steps[stepName].type;
+    const caps = this.resourceRegistry.getCapability(capName);
+    if (caps === undefined) {
+      const systemEmitter = this.emitterFactory.newStepEmitterNewSpan(
+        {
+          source: "lowercase://engine/start-step/caps-undefined",
+          flowid,
+          runid,
+          stepid,
+          steptype,
+        },
+        context.traceId
+      );
+      await systemEmitter.emit("step.failed", {
+        step: {
+          id: stepid,
+          name: stepName,
+          type: steptype,
+        },
+        status: "failed",
+        reason: `[engine] no capability in local resource registry for ${capName}`,
+      });
+      context.steps[stepid].status = "failure";
+      return;
     }
+
+    const handler = this.stepHandlerRegistry[stepType];
+    await handler.queue(flow, context, stepName, jobEmitter);
 
     context.queuedSteps.add(stepName);
     context.outstandingSteps++;
@@ -391,7 +403,7 @@ export class Engine {
     const nextStep = this.#getNextStepName(flow, context, e.stepid);
 
     if (nextStep) {
-      this.queueStreamingSteps(flow, context, nextStep);
+      this.startStreamingSteps(flow, context, nextStep);
     } else if (context.outstandingSteps === 0) {
       const logEmitter = this.emitterFactory.newSystemEmitter({
         source: "lowercase://engine/handle-work-done",

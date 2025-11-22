@@ -1,6 +1,8 @@
+import { JobEventData, JobEventType, JobRequestedType } from "@lcase/types";
 import { ConsumerStreamPort, ProducerStreamPort } from "./stream.port.js";
 
-export type ToolContext = {
+export type ToolContext<T extends JobRequestedType> = {
+  data: JobEventData<T>;
   flowId: string;
   runId: string;
   stepId: string;
@@ -16,5 +18,5 @@ export type ToolContext = {
 export interface ToolPort {
   id: string;
   name: string;
-  invoke(input: unknown, context: ToolContext): Promise<any>;
+  invoke(input: unknown, context: ToolContext<JobRequestedType>): Promise<any>;
 }

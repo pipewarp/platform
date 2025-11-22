@@ -46,4 +46,6 @@ export type AnyEvent<T extends EventType = EventType> = CloudEvent<T> &
   ScopeFor<T>;
 
 export type lowercaseFlowEvent = AnyEvent<FlowEventType>;
+export type AnyJobEvent = AnyEvent<JobEventType>;
+export type AllJobEvents = AnyEvent<JobEventType>;
 export type LowercaseEvent = AnyEvent<EventType>;

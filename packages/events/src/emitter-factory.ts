@@ -9,6 +9,7 @@ import type {
   ToolScope,
   WorkerScope,
   SystemScope,
+  AllJobEvents,
 } from "@lcase/types";
 import { StepEmitter } from "./emitters/step.emitter.js";
 import { FlowEmitter } from "./emitters/flow.emitter.js";
@@ -48,25 +49,7 @@ import { SystemEmitter } from "./emitters/system.emitter.js";
  */
 
 export class EmitterFactory {
-  #cloudScope?: CloudScope;
-  #stepScope?: StepScope;
-  #otel: OtelContext = {
-    spanId: "",
-    traceId: "",
-    traceParent: "",
-    parentSpanId: undefined,
-  };
-
-  constructor(private readonly bus: EventBusPort) {
-    this.startTrace();
-  }
-
-  setCloudScope(scope: CloudScope) {
-    this.#cloudScope = scope;
-  }
-  setStepScope(scope: StepScope) {
-    this.#stepScope = scope;
-  }
+  constructor(private readonly bus: EventBusPort) {}
 
   newSystemEmitter(
     scope: CloudScope & SystemScope & OtelContext
@@ -84,7 +67,6 @@ export class EmitterFactory {
   ): WorkerEmitter {
     return new WorkerEmitter(this.bus, scope);
   }
-
   newFlowEmitter(scope: CloudScope & FlowScope & OtelContext): FlowEmitter {
     return new FlowEmitter(this.bus, scope);
   }
@@ -93,57 +75,64 @@ export class EmitterFactory {
   }
 
   newStepEmitter(scope: CloudScope & StepScope & OtelContext): StepEmitter {
-    return new StepEmitter(this.bus, scope);
+    const combinedScope = { ...scope, ...this.startNewTrace() };
+    return new StepEmitter(this.bus, combinedScope);
   }
+  newStepEmitterNewTrace(scope: CloudScope & StepScope): StepEmitter {
+    const combinedScope = { ...scope, ...this.startNewTrace() };
+    return new StepEmitter(this.bus, combinedScope);
+  }
+  newStepEmitterNewSpan(
+    scope: CloudScope & StepScope,
+    traceId: string
+  ): StepEmitter {
+    const combinedScope = { ...scope, ...this.makeNewSpan(traceId), traceId };
+    return new StepEmitter(this.bus, combinedScope);
+  }
+
   newJobEmitter(scope: CloudScope & JobScope & OtelContext): JobEmitter {
     return new JobEmitter(this.bus, scope);
+  }
+  newJobEmitterNewSpan(
+    scope: CloudScope & JobScope,
+    traceId: string
+  ): JobEmitter {
+    const combinedScope = { ...scope, ...this.makeNewSpan(traceId), traceId };
+    return new JobEmitter(this.bus, combinedScope);
+  }
+  newJobEmitterFromEvent(event: AllJobEvents, source: string) {
+    const { spanId, traceParent } = this.makeNewSpan(event.traceid);
+    return this.newJobEmitter({
+      source,
+      flowid: event.flowid,
+      runid: event.runid,
+      stepid: event.stepid,
+      jobid: event.jobid,
+      traceId: event.traceid,
+      spanId,
+      traceParent,
+    });
   }
   newToolEmitter(scope: CloudScope & ToolScope & OtelContext): ToolEmitter {
     return new ToolEmitter(this.bus, scope);
   }
 
-  startTrace(sampled = true): OtelContext {
+  makeNewSpan(traceId: string): { spanId: string; traceParent: string } {
+    const spanId = this.generateSpanId();
+    const traceParent = this.makeTraceParent(traceId, spanId);
+    return { spanId, traceParent };
+  }
+
+  startNewTrace(sampled = true): {
+    traceId: string;
+    spanId: string;
+    traceParent: string;
+  } {
     const traceId = this.generateTraceId();
     const spanId = this.generateSpanId();
     const traceParent = this.makeTraceParent(traceId, spanId, sampled);
 
-    this.#otel.traceId = traceId;
-    this.#otel.spanId = spanId;
-    this.#otel.traceParent = traceParent;
-    this.#otel.parentSpanId = undefined;
-    return this.#otel;
-  }
-
-  setParentSpanId(parentSpanId: string) {
-    this.#otel.parentSpanId = parentSpanId;
-  }
-
-  getOtelContext(): OtelContext {
-    return { ...this.#otel };
-  }
-
-  startSpan({
-    hasParent = true,
-    parentSpanId,
-  }: {
-    hasParent?: boolean;
-    parentSpanId?: string;
-  }) {
-    if (parentSpanId && hasParent) {
-      this.setParentSpanId(parentSpanId);
-    } else if (!this.#otel.parentSpanId && hasParent) {
-      throw new Error("[emitter-factory] no parent span declared");
-    } else {
-      this.#otel.parentSpanId = undefined;
-    }
-    this.#otel.spanId = this.generateSpanId();
-    this.#otel.traceParent = this.makeTraceParent(
-      this.#otel.traceId,
-      this.#otel.spanId
-    );
-  }
-  hasParent(): boolean {
-    return this.#otel.parentSpanId ? true : false;
+    return { traceId, spanId, traceParent };
   }
 
   makeTraceParent(traceId: string, spanId: string, sampled = true): string {

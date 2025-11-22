@@ -1,11 +1,11 @@
 import type { StepHandler } from "./step-handler.js";
 import type { ResolveStepArgs } from "../resolve.js";
-import type { AnyEvent, JobMcpQueuedData } from "@lcase/types";
-import type { RunContext, Flow, McpStep } from "@lcase/specs";
+import type { AnyEvent, StepHttpJson } from "@lcase/types";
+import type { RunContext, Flow } from "@lcase/specs";
 import type { JobEmitter } from "@lcase/events";
 import { PipeResolver } from "../pipe-resolver.js";
 
-export class McpStepHandler implements StepHandler {
+export class HttpJsonHandler implements StepHandler {
   constructor(
     private readonly resolveArgs: ResolveStepArgs,
     private readonly pipeResolver: PipeResolver
@@ -17,9 +17,10 @@ export class McpStepHandler implements StepHandler {
     stepName: string,
     emitter: JobEmitter
   ): Promise<void> {
-    const step: McpStep = flow.steps[stepName] as McpStep;
-
-    const args = step.args ? this.resolveArgs(context, step.args) : undefined;
+    const step = flow.steps[stepName] as StepHttpJson;
+    if (step.type !== "httpjson") {
+      throw new Error("[http-json-handler] step type must be `httpjson`");
+    }
 
     const pipes = this.pipeResolver.resolve(flow, context, stepName);
     try {
@@ -28,34 +29,19 @@ export class McpStepHandler implements StepHandler {
         args = this.resolveArgs(context, args);
       }
 
-      // making data here just to log it
-      const data: JobMcpQueuedData = {
-        job: {
-          id: String(crypto.randomUUID()),
-          capability: step.type,
-        },
-        args,
-        pipe: pipes,
-        url: step.url,
-        transport: step.transport,
-        feature: step.feature,
-      };
-
-      await emitter.emit("job.mcp.queued", data);
-
       emitter.emit("job.httpjson.requested", {
         job: {
-          id: "",
-          capability: "",
+          id: String(crypto.randomUUID()),
+          capability: "httpjson",
         },
-        url: "",
+        url: step.url,
         type: "httpjson",
         pipe: {
           to: undefined,
           from: undefined,
         },
       });
-      context.steps[stepName].status = "queued";
+      context.steps[stepName].status = "waiting";
     } catch (err) {
       console.error(
         `[mcp-step-handler] emitting step ${stepName} in flow ${flow.name}`

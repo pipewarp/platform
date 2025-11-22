@@ -19,13 +19,27 @@ export class WorkflowRuntime {
 
       await this.ctx.engine.start();
       await this.ctx.worker.start();
+
       await this.ctx.worker.requestRegistration();
 
       return "running";
-    } catch {
+    } catch (err) {
+      const traceId = this.ctx.ef.generateTraceId();
+      const { spanId, traceParent } = this.ctx.ef.makeNewSpan(traceId);
+      const systemEmitter = this.ctx.ef.newSystemEmitter({
+        source: "lowercase://runtime/workflow-runtime/start-runtime",
+        traceId,
+        spanId,
+        traceParent,
+      });
+      systemEmitter.emit("system.logged", {
+        log: "Error starting runtime: " + err,
+      });
+
       return "stopped";
     }
   }
+
   async stopRuntime(): Promise<RuntimeStatus> {
     try {
       await this.ctx.engine.stop();

@@ -38,7 +38,7 @@ export const WorkerRegistrationRequestedDataSchema =
           queueId: z.string(),
           maxJobCount: z.number(),
           tool: z.object({
-            id: z.literal("mcp"),
+            id: z.enum(["mcp", "httpjson"]),
             type: z.enum(["inprocess", "remote", "dynamic"]),
           }),
           concurrencty: z

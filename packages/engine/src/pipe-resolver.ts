@@ -1,5 +1,5 @@
 import { StreamRegistryPort } from "@lcase/ports";
-import type { ActionStep, Flow, RunContext } from "@lcase/specs";
+import type { Flow, RunContext, Step } from "@lcase/specs";
 import { randomUUID } from "crypto";
 
 export type ResolvedPipes = {
@@ -17,7 +17,7 @@ export class PipeResolver {
   constructor(private readonly streamRegistry: StreamRegistryPort) {}
 
   resolve(flow: Flow, context: RunContext, stepName: string): ResolvedPipes {
-    const step = flow.steps[stepName] as ActionStep;
+    const step = flow.steps[stepName] as Step;
     if (step === undefined) {
       throw new Error(`[pipe-resolver] no step with name ${stepName}`);
     }

@@ -6,6 +6,5 @@
     "incremental": false,
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
-  "include": ["src"],
-  "exclude": ["src/stream/internal"]
+  "include": ["src"]
 }

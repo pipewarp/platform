@@ -1,11 +1,14 @@
+import { HttpJsonTool } from "./httpjson.tool.js";
 import { McpTool } from "./mcp.tool.js";
 
 export interface ToolMap {
   mcp: McpTool;
+  httpjson: HttpJsonTool;
 }
 
 export interface ToolFactoryMap {
   mcp: () => McpTool;
+  httpjson: () => HttpJsonTool;
 }
 
 export type ToolFactory = ToolFactoryMap[keyof ToolFactoryMap];

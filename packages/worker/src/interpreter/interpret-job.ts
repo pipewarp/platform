@@ -1,5 +1,5 @@
-import { AnyEvent, EventData } from "@lcase/types";
-import type { JobDescription } from "../types.js";
+import { AllJobEvents, AnyEvent, JobEventType } from "@lcase/types";
+import type { JobDescriptor } from "../types.js";
 
 // parses a job envelope and returns structured data
 
@@ -11,8 +11,10 @@ import type { JobDescription } from "../types.js";
  * @param event AnyEvent
  * @returns
  */
-export function interpretJob(event: AnyEvent): JobDescription {
-  const ctx: JobDescription = {
+export function interpretJob<T extends JobEventType>(
+  event: AllJobEvents
+): JobDescriptor<T> {
+  const ctx: JobDescriptor<T> = {
     id: String(crypto.randomUUID()),
     isConsumer: false,
     isProducer: false,
@@ -21,7 +23,7 @@ export function interpretJob(event: AnyEvent): JobDescription {
   };
   switch (event.type) {
     case "job.mcp.queued":
-      const e = event as AnyEvent<"job.mcp.queued">;
+      let e = event as AnyEvent<"job.mcp.queued">;
 
       ctx.capability = e.entity!;
       if (e.data.pipe.to) {
@@ -32,6 +34,21 @@ export function interpretJob(event: AnyEvent): JobDescription {
         ctx.streamId = e.data.pipe.from.id;
       }
       ctx.key = e.data.url;
+      return ctx;
+
+    case "job.httpjson.requested":
+      const jhr = event as AnyEvent<"job.httpjson.requested">;
+
+      ctx.capability = jhr.entity!;
+      if (jhr.data.pipe.to) {
+        ctx.isProducer = true;
+        ctx.streamId = jhr.data.pipe.to.id;
+      } else if (jhr.data.pipe.from) {
+        ctx.isConsumer = true;
+        ctx.streamId = jhr.data.pipe.from.id;
+      }
+      ctx.key = jhr.data.url;
+      ctx.id = jhr.data.job.id;
       return ctx;
 
     default:

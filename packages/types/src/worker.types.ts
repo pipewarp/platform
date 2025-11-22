@@ -9,7 +9,7 @@ export type Capability = {
 
   // tool binding information
   tool: {
-    id: "mcp"; //TODO: move this to external tool types aligned with tools adapter
+    id: "mcp" | "httpjson"; //TODO: move this to external tool types aligned with tools adapter
     // type category to map routing ("process", "remote", "sdk"),
     type: "inprocess" | "remote" | "dynamic";
 
@@ -35,3 +35,34 @@ export type WorkerMetadata = {
   type: "inprocess" | "remote";
   capabilities: Capability[];
 };
+
+type ToolMetadata = {};
+export type CapContext = {
+  [capid: string]: Cap;
+};
+
+export type Cap = {
+  name: "llm.generate";
+  concurrency: number;
+  version: string;
+  description: string;
+  tools: {
+    [toolid: string]: ToolMetadata; // internal? look up from registry, run with payload
+    // external? use transport specified, send payload.
+  };
+};
+
+export class CapManager {
+  #ctx: CapContext = {};
+  constructor(ctx: CapContext) {}
+
+  addTool() {
+    const tool = {
+      concurrency: 2,
+      timeout: 50,
+      location: "internal",
+    };
+  }
+  removeTool() {}
+  disableTool() {}
+}
