@@ -82,6 +82,8 @@ export type EventTopic =
   | "engines.lifecycle"
   | "runs.lifecycle"
   | "jobs.lifecycle"
+  | "job.requested"
+  | "job.queued"
   | "tools.lifecycle"
   | "system";
 
@@ -194,7 +196,7 @@ export const registry = {
     },
   },
   "job.httpjson.requested": {
-    topic: "jobs.lifecycle",
+    topic: "job.requested",
     schema: {
       event: JobHttpJsonRequested,
       data: JobHttpJsonRequestedData,

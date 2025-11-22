@@ -5,6 +5,7 @@ import {
 } from "@lcase/ports";
 import { ToolRegistry } from "@lcase/tools";
 import type { JobContext } from "../types.js";
+import { JobEventType } from "@lcase/types";
 
 export type JobExecutorDeps = {
   toolRegistry: ToolRegistry;
@@ -18,9 +19,9 @@ export type JobExecutorDeps = {
  * Finally actually invokes the tool and returns its results.
  *
  */
-export class JobExecutor {
+export class JobExecutor<T extends JobEventType> {
   constructor(
-    private job: JobContext,
+    private job: JobContext<T>,
     private readonly deps: JobExecutorDeps
   ) {}
 
@@ -58,6 +59,17 @@ export class JobExecutor {
       workerId: this.job.id,
       ...(consumer ? { consumer } : {}),
       ...(producer ? { producer } : {}),
+      data: {
+        job: {
+          id: this.job.metadata.flowId,
+          capability: this.job.capability,
+        },
+        pipe: {},
+        type: "httpjson",
+        url: "",
+        body: {},
+        headers: {},
+      },
     });
 
     return result;

@@ -26,6 +26,12 @@
     },
     "clean": {
       "cache": false
+    },
+    "clean-dist": {
+      "cache": false
+    },
+    "clean-node-modules": {
+      "cache": false
     }
   }
 }

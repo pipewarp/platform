@@ -1,16 +1,18 @@
+import type { JobEventData, JobEventType } from "@lcase/types";
 import type { ToolId } from "@lcase/tools";
 
-export type JobDescription = {
+export type JobDescriptor<T extends JobEventType> = {
   id: string;
   isProducer: boolean;
   isConsumer: boolean;
   streamId?: string;
   capability: ToolId;
   key?: string;
-  data: unknown;
+  data: JobEventData<T>;
 };
+
 // created for each dequeued job; lives until job completes or fails
-export type JobContext = {
+export type JobContext<T extends JobEventType> = {
   id: string;
   capability: ToolId;
   tool: string;
@@ -23,7 +25,7 @@ export type JobContext = {
     stepType: string;
     workerId: string;
   };
-  description: JobDescription;
+  description: JobDescriptor<T>;
   resolved: {
     // resolved dependencies (input files, tokens, session handles)
   };

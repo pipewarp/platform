@@ -5,7 +5,7 @@ import type {
   InputChunk,
   ConsumerStreamPort,
 } from "@lcase/ports";
-import type { JobMcpQueuedData } from "@lcase/types";
+import type { JobMcpQueuedData, JobRequestedType } from "@lcase/types";
 import { Client } from "@modelcontextprotocol/sdk/client";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { LoggingMessageNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -38,7 +38,10 @@ export class McpTool implements ToolPort {
     this.#client = new Client({ name: "mcp-tool", version: "0.1.0-alpha.4" });
     this.#addShutdownHooks();
   }
-  async invoke(input: unknown, context: ToolContext): Promise<unknown> {
+  async invoke(
+    input: unknown,
+    context: ToolContext<JobRequestedType>
+  ): Promise<unknown> {
     console.log(`[tool-mcp] ${input}`);
     const data = input as JobMcpQueuedData;
     await this.connect(data.url);

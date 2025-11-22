@@ -33,6 +33,9 @@ export type JobEventMap = {
 export type JobEventType = keyof JobEventMap;
 
 export type JobEventData<T extends JobEventType> = JobEventMap[T]["data"];
+export type JobDataFor<T extends JobRequestedType> = JobEventMap[T]["data"];
 export type JobOtelAttributesMap = {
   [T in JobEventType]: Omit<JobEventMap[T], "data">;
 };
+
+export type JobRequestedType = Extract<JobEventType, `${string}.requested`>;

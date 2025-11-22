@@ -54,7 +54,6 @@ export class WorkerEmitter extends BaseEmitter {
         : {}),
     } satisfies WorkerEvent<T>;
 
-    // console.log("event", JSON.stringify(event, null, 2));
     const entry = registry[type];
     const result = entry.schema.event.safeParse(event);
     if (result.error) {

@@ -19,8 +19,8 @@ export class ResourceRegistry {
     }
   }
 
-  getCapability(name: string) {
-    return { ...this.#capabilities.get(name) };
+  getCapability(name: string): Capability | undefined {
+    return { ...this.#capabilities.get(name) } as Capability;
   }
   getCapabilities() {
     const caps: Capability[] = [];

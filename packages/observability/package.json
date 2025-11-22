@@ -13,7 +13,9 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "echo test",
-    "lint": "echo lint"
+    "lint": "echo lint",
+    "clean-dist": "rm -rf ./dist",
+    "clean-node-modules": "rm -rf ./node_modules"
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {

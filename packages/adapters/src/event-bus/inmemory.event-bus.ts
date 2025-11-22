@@ -31,7 +31,6 @@ export class InMemoryEventBus implements EventBusPort {
       );
       return;
     }
-
     const payload = Object.freeze(event);
 
     queueMicrotask(() => {

@@ -1,5 +1,6 @@
+import { EmitterFactory } from "@lcase/events";
 import type { RouterPort, QueuePort, EventBusPort } from "@lcase/ports";
-import type { AnyEvent } from "@lcase/types";
+import type { AnyEvent, AnyJobEvent } from "@lcase/types";
 
 export type RouterContext = {
   [capability: string]: {
@@ -12,26 +13,28 @@ export type RouterContext = {
 export class NodeRouter implements RouterPort {
   constructor(
     private readonly bus: EventBusPort,
-    private readonly queue: QueuePort
+    private readonly queue: QueuePort,
+    private readonly ef: EmitterFactory
   ) {}
   async route(event: AnyEvent): Promise<void> {
-    console.log("[router] route() called;");
     if (event === undefined || event.type === undefined) {
-      console.error(
-        "[router] cannot route; event is undefined or kind is undefined; event:",
-        event
-      );
+      console.error("[router] event or event type is undefined; event:", event);
       return;
     }
-
-    if (event.type === "job.mcp.queued") {
-      const e = event as AnyEvent<"job.mcp.queued">;
+    if (event.domain === "job") {
+      const e = event as AnyJobEvent;
       this.queue.enqueue(e.data.job.capability, event);
+      const source = "lowercase://router/route/job";
+      const jobEmitter = this.ef.newJobEmitterFromEvent(e, source);
+      await jobEmitter.emit("job.queued", {
+        job: e.data.job,
+        status: "queued",
+      });
     }
   }
 
   async start() {
-    this.bus.subscribe("jobs.lifecycle", async (e) => await this.route(e));
+    this.bus.subscribe("job.requested", async (e) => await this.route(e));
   }
   async stop() {
     this.bus.close();

@@ -355,6 +355,12 @@ importers:
       '@lcase/services':
         specifier: workspace:*
         version: link:../services
+      '@lcase/tools':
+        specifier: workspace:*
+        version: link:../tools
+      '@lcase/worker':
+        specifier: workspace:*
+        version: link:../worker
     devDependencies:
       '@lcase/ports':
         specifier: workspace:*
