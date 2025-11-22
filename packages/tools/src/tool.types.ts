@@ -17,3 +17,7 @@ export type ToolClassFor<T extends ToolId> = ToolMap[T];
 export type ToolClass = ToolMap[keyof ToolMap];
 
 export type ToolFactories = Record<ToolId, ToolFactory>;
+
+export type ToolFactorySubset<K extends ToolId> = {
+  [T in K]: ToolFactoryMap[T];
+};

@@ -3,7 +3,7 @@ import type {
   ToolClassFor,
   ToolFactories,
   ToolId,
-} from "./tool-factory.js";
+} from "./tool.types.js";
 
 export class ToolRegistry {
   #toolObjects = new Map<string, ToolClassFor<ToolId>>();

@@ -50,8 +50,21 @@ export type WorkerDeps = {
   emitterFactory: EmitterFactory;
   streamRegistry: StreamRegistryPort;
 };
-
+// export type WorkerCtx = {
+//   tools: {
+//     // registry of tools
+//     [toolid: string]: {
+//       //tool registry by id
+//       registry: ;
+//     };
+//   };
+//   jobs: {
+//     active: number;
+//   };
+//   registration: {};
+// };
 export class Worker {
+  // #ctx: WorkerCtx = {};
   #context: WorkerContext = {
     workerId: "generic-worker",
     totalActiveJobCount: 0,
@@ -386,6 +399,53 @@ export class Worker {
       }
     }
   }
+
+  // async startJobWaiters(toolId: string): Promise<void> {
+  //   const cap = this.#context.capabilities[capabilityId];
+  //   cap.newJobWaitersAreAllowed = true;
+  //   while (cap.newJobWaitersAreAllowed) {
+  //     if (cap.activeJobCount < cap.maxJobCount) {
+  //       try {
+  //         const event = await this.#queue.reserve(
+  //           cap.queueId,
+  //           this.#context.workerId
+  //         );
+
+  //         // TODO: change queue from null to rejected?
+  //         if (event === null) {
+  //           if (!cap.newJobWaitersAreAllowed) break;
+  //           continue;
+  //         }
+
+  //         const e = event as AllJobEvents;
+  //         const jobEmitter = this.#emitterFactory.newJobEmitterFromEvent(
+  //           e,
+  //           "lowercase://worker/waiters/job"
+  //         );
+  //         await jobEmitter.emit("job.started", {
+  //           job: e.data.job,
+  //           status: "started",
+  //         });
+
+  //         cap.activeJobCount++;
+  //         const waiter = this.handleNewJob(event).finally(async () => {
+  //           cap.jobWaiters.delete(waiter);
+  //           cap.activeJobCount--;
+  //           if (cap.capacityRelease) {
+  //             cap.capacityRelease.resolve();
+  //           }
+  //         });
+  //         cap.jobWaiters.add(waiter); // later implement graceful shutdown with this
+  //       } catch (err) {
+  //         if (!cap.newJobWaitersAreAllowed) break;
+  //         continue;
+  //       }
+  //     } else {
+  //       cap.capacityRelease = this.#makeDeferred<void>();
+  //       await cap.capacityRelease.promise;
+  //     }
+  //   }
+  // }
 
   /**
    * Stops all job waiters in the queue and marks each capability to stop
