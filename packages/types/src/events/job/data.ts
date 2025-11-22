@@ -1,3 +1,6 @@
+import { StepHttpJson } from "../../flow/http-json.step.js";
+import { PipeData } from "../shared/pipe.js";
+
 export type JobDescriptor = {
   job: {
     id: string;
@@ -19,17 +22,13 @@ export type JobMcpQueuedData = JobDescriptor & {
     name: string;
   };
   args?: Record<string, unknown>;
-  pipe: {
-    to?: {
-      id: string;
-      payload: string;
-    };
-    from?: {
-      id: string;
-      buffer?: number;
-    };
-  };
+  pipe: PipeData;
 };
+
+export type JobHttpJsonData = JobDescriptor &
+  Omit<StepHttpJson, "pipe"> & {
+    pipe: PipeData;
+  };
 
 export type JobStartedData = JobDescriptor & {
   status: "started";
@@ -45,3 +44,10 @@ export type JobFailedData = JobDescriptor & {
   result?: unknown;
   reason: string;
 };
+
+export type JobQueuedData = JobDescriptor & {
+  status: "queued";
+};
+
+// job.http:json.queued
+// job.

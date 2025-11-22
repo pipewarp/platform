@@ -4,7 +4,9 @@ import { CloudEventContextSchema } from "./cloud-context.schema.js";
 import {
   JobCompletedDataSchema,
   JobFailedDataSchema,
+  JobHttpJsonRequestedData,
   JobMcpQueuedDataSchema,
+  JobQueuedDataSchema,
   JobStartedDataSchema,
 } from "./job.data.schema.js";
 
@@ -28,6 +30,30 @@ export const JobMcpQueuedSchema = CloudEventContextSchema.merge(JobScopeSchema)
     })
   )
   .strict() satisfies z.ZodType<AnyEvent<"job.mcp.queued">>;
+
+export const JobHttpJsonRequested = CloudEventContextSchema.merge(
+  JobScopeSchema
+)
+  .merge(
+    z.object({
+      type: z.literal("job.httpjson.requested"),
+      entity: z.literal("httpjson"),
+      action: z.literal("requested"),
+      data: JobHttpJsonRequestedData,
+    })
+  )
+  .strict() satisfies z.ZodType<AnyEvent<"job.httpjson.requested">>;
+
+export const JobQueuedSchema = CloudEventContextSchema.merge(JobScopeSchema)
+  .merge(
+    z.object({
+      type: z.literal("job.queued"),
+      action: z.literal("queued"),
+      entity: z.undefined().optional(),
+      data: JobQueuedDataSchema,
+    })
+  )
+  .strict() satisfies z.ZodType<AnyEvent<"job.queued">>;
 
 export const JobStartedSchema = CloudEventContextSchema.merge(JobScopeSchema)
   .merge(

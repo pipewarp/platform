@@ -5,10 +5,15 @@ import type {
   ToolPort,
 } from "@lcase/ports";
 import { EmitterFactory } from "@lcase/events";
-import type { AnyEvent, Capability, WorkerMetadata } from "@lcase/types";
-import type { ToolClass } from "../tools/tool-factory.js";
-import { ToolRegistry } from "../tools/tool-registry.js";
-import type { JobContext } from "./types.js";
+import type {
+  AllJobEvents,
+  AnyEvent,
+  Capability,
+  JobEventType,
+  WorkerMetadata,
+} from "@lcase/types";
+import { type ToolClass, ToolRegistry } from "@lcase/tools";
+import type { JobContext, JobDescriptor } from "./types.js";
 import { JobExecutor } from "./executor/job-executor.js";
 import { interpretJob } from "./interpreter/interpret-job.js";
 
@@ -27,7 +32,7 @@ export type WorkerContext = {
     [id: string]: WorkerCapability;
   };
   isRegistered: boolean;
-  jobs: Map<string, JobContext>;
+  jobs: Map<string, JobContext<JobEventType>>;
 };
 
 type PromiseResolve<T> = (value: T | PromiseLike<T>) => void;
@@ -45,8 +50,21 @@ export type WorkerDeps = {
   emitterFactory: EmitterFactory;
   streamRegistry: StreamRegistryPort;
 };
-
+// export type WorkerCtx = {
+//   tools: {
+//     // registry of tools
+//     [toolid: string]: {
+//       //tool registry by id
+//       registry: ;
+//     };
+//   };
+//   jobs: {
+//     active: number;
+//   };
+//   registration: {};
+// };
 export class Worker {
+  // #ctx: WorkerCtx = {};
   #context: WorkerContext = {
     workerId: "generic-worker",
     totalActiveJobCount: 0,
@@ -64,12 +82,14 @@ export class Worker {
   #toolRegistry;
   #emitterFactory;
   #streamRegistry;
+  #capabilityManager;
 
   constructor(workerId: string, deps: WorkerDeps) {
     this.#context.workerId = workerId;
     this.#bus = deps.bus;
     this.#queue = deps.queue;
     this.#toolRegistry = deps.toolRegistry;
+    this.#capabilityManager = deps.bus;
     this.#emitterFactory = deps.emitterFactory;
     this.#streamRegistry = deps.streamRegistry;
   }
@@ -89,7 +109,7 @@ export class Worker {
             spanId
           );
           const logEmitter = this.#emitterFactory.newSystemEmitter({
-            source: "lowercase://engine/subscribe-to-bus",
+            source: "lowercase://worker/subscribe-to-bus/worker-registered",
             traceId: e.traceid,
             spanId,
             traceParent,
@@ -108,11 +128,25 @@ export class Worker {
   }
 
   async handleNewJob(event: AnyEvent): Promise<void> {
-    const e = event as AnyEvent<"job.mcp.queued">;
+    const e = event as AllJobEvents;
 
-    // invoke some sort of tool from a tool registry
-    const jobDescription = interpretJob(event);
-    const jobContext: JobContext = {
+    let jobDescription: JobDescriptor<typeof e.type>;
+    try {
+      jobDescription = interpretJob(e);
+    } catch (err) {
+      const jobEmitter = this.#emitterFactory.newJobEmitterFromEvent(
+        e,
+        "lowercase://worker/handle-new-job/interpret-job"
+      );
+      await jobEmitter.emit("job.failed", {
+        job: e.data.job,
+        status: "failed",
+        reason: `"Error interpretting job.  ${err}`,
+      });
+      return;
+    }
+
+    const jobContext: JobContext<typeof e.type> = {
       id: jobDescription.id,
       capability: jobDescription.capability,
       metadata: {
@@ -161,7 +195,22 @@ export class Worker {
       log: "about to execute a tool",
       status: "started",
     });
-    const result = await executor.run();
+
+    let result;
+    try {
+      result = await executor.run();
+    } catch (err) {
+      const jobEmitter = this.#emitterFactory.newJobEmitterFromEvent(
+        e,
+        "lowercase://worker/handle-new-job/job-executor/run"
+      );
+      await jobEmitter.emit("job.failed", {
+        job: e.data.job,
+        status: "failed",
+        reason: `"Error executing job.  ${err}`,
+      });
+      return;
+    }
 
     const spanId = this.#emitterFactory.generateSpanId();
     const traceParent = this.#emitterFactory.makeTraceParent(e.traceid, spanId);
@@ -240,7 +289,6 @@ export class Worker {
 
   async requestRegistration(): Promise<void> {
     const meta = this.getMetadata();
-
     const spanId = this.#emitterFactory.generateSpanId();
     const traceId = this.#emitterFactory.generateTraceId();
     const traceParent = this.#emitterFactory.makeTraceParent(traceId, spanId);
@@ -321,6 +369,17 @@ export class Worker {
             if (!cap.newJobWaitersAreAllowed) break;
             continue;
           }
+
+          const e = event as AllJobEvents;
+          const jobEmitter = this.#emitterFactory.newJobEmitterFromEvent(
+            e,
+            "lowercase://worker/waiters/job"
+          );
+          await jobEmitter.emit("job.started", {
+            job: e.data.job,
+            status: "started",
+          });
+
           cap.activeJobCount++;
           const waiter = this.handleNewJob(event).finally(async () => {
             cap.jobWaiters.delete(waiter);
@@ -340,6 +399,53 @@ export class Worker {
       }
     }
   }
+
+  // async startJobWaiters(toolId: string): Promise<void> {
+  //   const cap = this.#context.capabilities[capabilityId];
+  //   cap.newJobWaitersAreAllowed = true;
+  //   while (cap.newJobWaitersAreAllowed) {
+  //     if (cap.activeJobCount < cap.maxJobCount) {
+  //       try {
+  //         const event = await this.#queue.reserve(
+  //           cap.queueId,
+  //           this.#context.workerId
+  //         );
+
+  //         // TODO: change queue from null to rejected?
+  //         if (event === null) {
+  //           if (!cap.newJobWaitersAreAllowed) break;
+  //           continue;
+  //         }
+
+  //         const e = event as AllJobEvents;
+  //         const jobEmitter = this.#emitterFactory.newJobEmitterFromEvent(
+  //           e,
+  //           "lowercase://worker/waiters/job"
+  //         );
+  //         await jobEmitter.emit("job.started", {
+  //           job: e.data.job,
+  //           status: "started",
+  //         });
+
+  //         cap.activeJobCount++;
+  //         const waiter = this.handleNewJob(event).finally(async () => {
+  //           cap.jobWaiters.delete(waiter);
+  //           cap.activeJobCount--;
+  //           if (cap.capacityRelease) {
+  //             cap.capacityRelease.resolve();
+  //           }
+  //         });
+  //         cap.jobWaiters.add(waiter); // later implement graceful shutdown with this
+  //       } catch (err) {
+  //         if (!cap.newJobWaitersAreAllowed) break;
+  //         continue;
+  //       }
+  //     } else {
+  //       cap.capacityRelease = this.#makeDeferred<void>();
+  //       await cap.capacityRelease.promise;
+  //     }
+  //   }
+  // }
 
   /**
    * Stops all job waiters in the queue and marks each capability to stop

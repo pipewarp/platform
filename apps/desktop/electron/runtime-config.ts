@@ -31,6 +31,15 @@ export const runtimeConfig = {
           type: "inprocess",
         },
       },
+      {
+        name: "httpjson",
+        queueId: "httpjson",
+        maxJobCount: 2,
+        tool: {
+          id: "httpjson",
+          type: "inprocess",
+        },
+      },
     ],
   },
   stream: {

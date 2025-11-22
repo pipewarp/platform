@@ -1,7 +1,12 @@
 import { InMemoryQueue } from "@lcase/adapters/queue";
 import { NodeRouter } from "@lcase/adapters/router";
-import { Worker } from "@lcase/adapters/worker";
-import { McpTool, ToolFactories, ToolRegistry } from "@lcase/adapters/tools";
+import { Worker } from "@lcase/worker";
+import {
+  McpTool,
+  ToolFactories,
+  ToolRegistry,
+  HttpJsonTool,
+} from "@lcase/tools";
 import { InMemoryStreamRegistry } from "@lcase/adapters/stream";
 import { FlowStore, FlowStoreFs } from "@lcase/adapters/flow-store";
 import {
@@ -58,23 +63,18 @@ export function makeRuntimeContext(config: RuntimeConfig): RuntimeContext {
   );
   const queue = queueFactory();
 
-  const router = new NodeRouter(bus, queue);
+  const ef = new EmitterFactory(bus);
+  const router = new NodeRouter(bus, queue, ef);
   const streamRegistry = new InMemoryStreamRegistry();
-  const emitterFactory = new EmitterFactory(bus);
   const flowStore = new FlowStore();
 
-  const engine = createInProcessEngine(
-    flowStore,
-    bus,
-    streamRegistry,
-    emitterFactory
-  );
+  const engine = createInProcessEngine(flowStore, bus, streamRegistry, ef);
   const worker = createInProcessWorker(
     config.worker.id,
     bus,
     queue,
     streamRegistry,
-    emitterFactory,
+    ef,
     config.worker
   );
 
@@ -89,6 +89,7 @@ export function makeRuntimeContext(config: RuntimeConfig): RuntimeContext {
     flowStore,
     tap,
     sinks,
+    ef,
   };
 }
 
@@ -155,6 +156,7 @@ export function createInProcessWorker(
 ): Worker {
   const toolFactories: ToolFactories = {
     mcp: () => new McpTool(),
+    httpjson: () => new HttpJsonTool(),
   };
   const toolRegistry = new ToolRegistry(toolFactories);
   const worker = new Worker(id, {

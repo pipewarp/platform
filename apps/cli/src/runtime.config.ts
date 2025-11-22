@@ -1,6 +1,6 @@
 import type { RuntimeConfig } from "@lcase/runtime";
 
-export const runtimeConfig = {
+export const config = {
   bus: {
     id: "",
     placement: "embedded",
@@ -20,7 +20,7 @@ export const runtimeConfig = {
     id: "",
   },
   worker: {
-    id: "",
+    id: "default-worker",
     capabilities: [
       {
         name: "mcp",
@@ -28,6 +28,15 @@ export const runtimeConfig = {
         maxJobCount: 2,
         tool: {
           id: "mcp",
+          type: "inprocess",
+        },
+      },
+      {
+        name: "httpjson",
+        queueId: "httpjson",
+        maxJobCount: 2,
+        tool: {
+          id: "httpjson",
           type: "inprocess",
         },
       },

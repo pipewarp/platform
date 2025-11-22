@@ -92,6 +92,16 @@ export const jobOtelAttributesMap = {
     domain: "job",
     entity: undefined,
   },
+  "job.httpjson.requested": {
+    action: "requested",
+    domain: "job",
+    entity: "httpjson",
+  },
+  "job.queued": {
+    action: "queued",
+    domain: "job",
+    entity: undefined,
+  },
 } satisfies JobOtelAttributesMap;
 
 export const toolOtelAttributesMap = {

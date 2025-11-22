@@ -24,17 +24,9 @@
       "types": "./dist/queue/index.d.ts",
       "import": "./dist/queue/index.js"
     },
-    "./worker": {
-      "types": "./dist/worker/index.d.ts",
-      "import": "./dist/worker/index.js"
-    },
     "./stream": {
       "types": "./dist/stream/index.d.ts",
       "import": "./dist/stream/index.js"
-    },
-    "./tools": {
-      "types": "./dist/tools/index.d.ts",
-      "import": "./dist/tools/index.js"
     }
   },
   "scripts": {

@@ -1,6 +1,6 @@
 {
-  "name": "@lcase/observability",
-  "version": "0.1.0-alpha.6",
+  "name": "@lcase/worker",
+  "version": "0.1.0-alpha.7",
   "private": true,
   "type": "module",
   "exports": {
@@ -13,18 +13,16 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "echo test",
-    "lint": "echo lint",
-    "clean-dist": "rm -rf ./dist",
-    "clean-node-modules": "rm -rf ./node_modules"
+    "lint": "echo lint"
   },
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
-    "ws": "^8.18.3"
+    "@lcase/events": "workspace:*",
+    "@lcase/tools": "workspace:*"
   },
   "devDependencies": {
     "@lcase/ports": "workspace:*",
     "@lcase/types": "workspace:*",
-    "@types/ws": "^8.18.1",
     "vitest": "^3.2.4"
   }
 }

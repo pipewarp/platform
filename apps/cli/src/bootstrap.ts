@@ -1,9 +1,9 @@
 import { WorkflowController } from "@lcase/controller";
 import { createRuntime } from "@lcase/runtime";
-import { runtimeConfig } from "./runtime-config.js";
+import { config } from "./runtime.config.js";
 
 export function bootstrap() {
-  const runtime = createRuntime(runtimeConfig);
+  const runtime = createRuntime(config);
   const controller = new WorkflowController(runtime);
   return controller;
 }

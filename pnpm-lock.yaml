@@ -355,6 +355,12 @@ importers:
       '@lcase/services':
         specifier: workspace:*
         version: link:../services
+      '@lcase/tools':
+        specifier: workspace:*
+        version: link:../tools
+      '@lcase/worker':
+        specifier: workspace:*
+        version: link:../worker
     devDependencies:
       '@lcase/ports':
         specifier: workspace:*
@@ -384,6 +390,26 @@ importers:
       zod:
         specifier: 3.25.76
         version: 3.25.76
+    devDependencies:
+      '@lcase/types':
+        specifier: workspace:*
+        version: link:../types
+
+  packages/tools:
+    dependencies:
+      '@lcase/events':
+        specifier: workspace:*
+        version: link:../events
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.19.1
+        version: 1.19.1
+    devDependencies:
+      '@lcase/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@lcase/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/types: {}
 
@@ -408,6 +434,25 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.0
         version: 18.3.7(@types/react@18.3.26)
+
+  packages/worker:
+    dependencies:
+      '@lcase/events':
+        specifier: workspace:*
+        version: link:../events
+      '@lcase/tools':
+        specifier: workspace:*
+        version: link:../tools
+    devDependencies:
+      '@lcase/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@lcase/types':
+        specifier: workspace:*
+        version: link:../types
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.10.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)
 
 packages:
 

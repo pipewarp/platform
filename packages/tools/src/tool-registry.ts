@@ -3,7 +3,7 @@ import type {
   ToolClassFor,
   ToolFactories,
   ToolId,
-} from "./tool-factory.js";
+} from "./tool.types.js";
 
 export class ToolRegistry {
   #toolObjects = new Map<string, ToolClassFor<ToolId>>();
@@ -14,13 +14,13 @@ export class ToolRegistry {
     contextKey?: string
   ): ToolClassFor<T> | undefined {
     const key = contextKey ? `${toolId}:${contextKey}` : toolId;
-    return this.#toolObjects.get(key);
+    return this.#toolObjects.get(key) as ToolClassFor<T>;
   }
 
   resolve(toolId: ToolId, contextKey?: string) {
     const key = contextKey ? `${toolId}:${contextKey}` : toolId;
     let tool = this.#toolObjects.get(toolId);
-    // make an instance only if we dont already have it
+    // make an instance only if we don't already have it
     if (!tool) {
       const factory = this.toolFactories[toolId];
       if (!factory) {
